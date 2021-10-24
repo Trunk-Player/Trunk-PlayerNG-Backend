@@ -25,7 +25,7 @@ class City(generics.ListAPIView):
     queryset = City.objects.all()
     serializer_class = CitySerializer
 
-class SysteAgencymACL(generics.ListAPIView):
+class Agency(generics.ListAPIView):
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
 
