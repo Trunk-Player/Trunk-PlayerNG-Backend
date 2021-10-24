@@ -5,3 +5,4 @@ venv/
 trunkplayerNG/trunkplayerNG/__pycache__/*
 trunkplayerNG/db.sqlite3
 trunkplayerNG/trunkplayerNG/__pycache__/settings.cpython-38.pyc
+trunkplayerNG/trunkplayerNG/__pycache__/settings.cpython-38.pyc

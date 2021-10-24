@@ -66,8 +66,6 @@ class Agency(models.Model):
     def __str__(self):
         return self.name
 
-
-
 class TalkGroup(models.Model):
     UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
