@@ -98,7 +98,6 @@ class Unit(models.Model):
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     decimalID = models.IntegerField(db_index=True)
     description = models.CharField(max_length=100, blank=True, null=True)    
-    encrypted = models.BooleanField(default=True)
 
     def __str__(self):
         return self.decimalID
@@ -165,7 +164,7 @@ class GlobalAnnouncement(models.Model):
     UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=30)
     enabled = models.BooleanField(default=False)
-    Description = models.TextField()
+    description = models.TextField()
 
     def __str__(self):
         return self.name
