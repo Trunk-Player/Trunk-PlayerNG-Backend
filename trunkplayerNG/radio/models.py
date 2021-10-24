@@ -10,7 +10,7 @@ from datetime import datetime
 
 class UserProfile(models.Model):
     UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     enabled = models.BooleanField(default=False)
     siteAdmin = models.BooleanField(default=False)
     Description = models.TextField(blank=True, null=True)
@@ -88,8 +88,8 @@ class SystemRecorder(models.Model):
     siteID = models.CharField(max_length=100, blank=True, null=True)
     enabled = models.BooleanField(default=False)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    talkgroupsAllowed = models.ManyToManyField(TalkGroup)
-    talkgroupsDenyed = models.ManyToManyField(TalkGroup)
+    talkgroupsAllowed = models.ManyToManyField(TalkGroup, related_name='SRTGAllow')
+    talkgroupsDenyed = models.ManyToManyField(TalkGroup, related_name='SRTGDeny')
     forwarderWebhookUUID = models.UUIDField(default=uuid.uuid4)
 
     def __str__(self):
@@ -111,7 +111,7 @@ class Transmission(models.Model):
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     startTime = models.DateTimeField(db_index=True)
     endTime = models.DateTimeField(null=True, blank=True)
-    audioFile = models.FieldFile()
+    audioFile = models.FileField()
     talkgroup =  models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
     encrypted = models.BooleanField(default=False)
     units =  models.ManyToManyField(Unit)
@@ -142,7 +142,6 @@ class TalkGroupACL(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class ScanList(models.Model):
     UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
@@ -217,7 +216,7 @@ class SystemRecorderMetrics(models.Model):
     UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
     systemRecorder = models.ForeignKey(System, on_delete=models.CASCADE)
     rates = models.ManyToManyField(SystemReciveRate)   
-    calls = models.ManyToManyField(SystemReciveRate)    
+    calls = models.ManyToManyField(Call)    
 
     def __str__(self):
         return f'{self.time.strftime("%c")} - {str(self.rate)}'
