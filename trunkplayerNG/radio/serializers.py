@@ -33,7 +33,7 @@ class AgencySerializer(serializers.ModelSerializer):
 
 class TalkGroupSerializer(serializers.ModelSerializer):
     class Meta:
-        model = City
+        model = TalkGroup
         fields = ['UUID', 'system', 'decimalID', 'alphaTag', 'commonName', 'description', 'encrypted', 'agency']
 
 class SystemRecorderSerializer(serializers.ModelSerializer):
@@ -89,7 +89,7 @@ class SystemReciveRateSerializer(serializers.ModelSerializer):
 
 class CallSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ScanList
+        model = Call
         fields = ['UUID', 'trunkRecorderID', 'startTime', 'endTime', 'units', 'active', 'emergency', 'encrypted', 'frequency', 'phase2', 'talkgroup']
 
 class SystemRecorderMetricsSerializer(serializers.ModelSerializer):

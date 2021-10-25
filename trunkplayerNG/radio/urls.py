@@ -22,5 +22,3 @@ urlpatterns = [
     path('radio/SystemRecorderMetrics/', views.SystemRecorderMetrics.as_view()),
     
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)
