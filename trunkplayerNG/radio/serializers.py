@@ -34,10 +34,9 @@ class AgencySerializer(serializers.ModelSerializer):
         fields = ['UUID', 'name', 'description', 'city']
 
 class TalkGroupSerializer(serializers.ModelSerializer):
-    agency = AgencySerializer()
     class Meta:
         model = TalkGroup
-        fields = ['UUID', 'system', 'decimalID', 'alphaTag', 'commonName', 'description', 'encrypted', 'agency']
+        fields = ['UUID', 'system', 'decimalID', 'alphaTag',  'description', 'encrypted', 'agency']
 
 class SystemRecorderSerializer(serializers.ModelSerializer):
     class Meta:
@@ -72,7 +71,7 @@ class IncidentSerializer(serializers.ModelSerializer):
 class TalkGroupACLSerializer(serializers.ModelSerializer):
     class Meta:
         model = TalkGroupACL
-        fields = ['UUID', 'name', 'users', 'allowedTalkgroups', 'defualtNewUsers', 'defualtNewTalkgroups']
+        fields = ['UUID', 'name', 'users', 'allowedTalkgroups', 'defaultNewUsers', 'defaultNewTalkgroups']
 
 class ScanListSerializer(serializers.ModelSerializer):
     talkgroups = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='TalkGroupView')

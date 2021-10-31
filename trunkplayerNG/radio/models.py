@@ -80,7 +80,6 @@ class TalkGroup(models.Model):
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     decimalID = models.IntegerField(db_index=True)
     alphaTag = models.CharField(max_length=30)
-    commonName = models.CharField(max_length=10, blank=True, null=True)
     description = models.CharField(max_length=100, blank=True, null=True)    
     encrypted = models.BooleanField(default=True)
     agency = models.ManyToManyField(Agency, null=True)
@@ -133,7 +132,7 @@ class Transmission(models.Model):
     audioFile = models.FileField()
     talkgroup =  models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
     encrypted = models.BooleanField(default=False)
-    units =  models.ManyToManyField(Unit)
+    units =  models.ManyToManyField(TransmissionUnit)
     frequency = models.FloatField(default=0.0)
     length =  models.FloatField(default=0.0)
 
@@ -156,8 +155,8 @@ class TalkGroupACL(models.Model):
     name = models.CharField(max_length=30)
     users = models.ManyToManyField(UserProfile)
     allowedTalkgroups = models.ManyToManyField(TalkGroup)  
-    defualtNewUsers = models.BooleanField(default=True)
-    defualtNewTalkgroups = models.BooleanField(default=True)
+    defaultNewUsers = models.BooleanField(default=True)
+    defaultNewTalkgroups = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
