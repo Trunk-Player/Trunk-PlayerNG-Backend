@@ -1,27 +1,22 @@
 from django.db import models
 import uuid
-from django.contrib.auth.models import User
 from django.db.models.base import ModelBase
 from django.db.models.enums import Choices
 from datetime import datetime
 
 
-# Create your models here.
-
 class UserProfile(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    enabled = models.BooleanField(default=False)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     siteAdmin = models.BooleanField(default=False)
-    Description = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     siteTheme = models.TextField(blank=True, null=True)
     feedAllowed = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.first_name} {self.user.first_name}" 
+        return f"{self.UUID}" 
 
 class SystemACL(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=100, db_index=True, unique=True)
     users = models.ManyToManyField(UserProfile)
     public = models.BooleanField(default=False)
@@ -29,8 +24,21 @@ class SystemACL(models.Model):
     def __str__(self):
         return self.name
 
+    def to_json(self):
+        data =  {
+            "UUID": str(self.UUID),
+            "name": str(self.name),
+            "public": self.public,
+            "users": []
+        }
+
+        for user in self.users.all():
+            data["users"].append(user.UUID)
+
+        return data
+
 class System(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=100, db_index=True, unique=True)
     systemACL = models.ForeignKey(SystemACL , on_delete=models.CASCADE)
 
@@ -38,8 +46,9 @@ class System(models.Model):
         return self.name
 
 class SystemForwarder(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=100, db_index=True, unique=True)
+    enabled = models.BooleanField(default=False)
     feedKey = models.UUIDField(default=uuid.uuid4,  unique=True)
     
     def __str__(self):
@@ -50,7 +59,7 @@ class SystemForwarder(models.Model):
         # add forward logic
 
 class City(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)   
 
@@ -58,7 +67,7 @@ class City(models.Model):
         return self.name
 
 class Agency(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)   
     city =  models.ForeignKey(City, on_delete=models.CASCADE)   
@@ -67,20 +76,20 @@ class Agency(models.Model):
         return self.name
 
 class TalkGroup(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     decimalID = models.IntegerField(db_index=True)
     alphaTag = models.CharField(max_length=30)
     commonName = models.CharField(max_length=10, blank=True, null=True)
     description = models.CharField(max_length=100, blank=True, null=True)    
     encrypted = models.BooleanField(default=True)
-    agency = models.ManyToManyField(Agency)
+    agency = models.ManyToManyField(Agency, null=True)
 
     def __str__(self):
         return self.alphaTag
 
 class SystemRecorder(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
     siteID = models.CharField(max_length=100, blank=True, null=True)
@@ -94,7 +103,7 @@ class SystemRecorder(models.Model):
         return self.name
 
 class Unit(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     decimalID = models.IntegerField(db_index=True)
     description = models.CharField(max_length=100, blank=True, null=True)    
@@ -102,8 +111,21 @@ class Unit(models.Model):
     def __str__(self):
         return str(self.decimalID)
 
+class TransmissionUnit(models.Model):
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
+    time = models.DateTimeField(db_index=True)
+    unit =  models.ForeignKey(Unit, on_delete=models.CASCADE)
+    pos = models.IntegerField(default=0)
+    emergency = models.IntegerField(default=0)
+    signal_system = models.IntegerField(default=0)
+    tag = models.IntegerField(default=0)
+    length =  models.FloatField(default=0.0)
+
+    def __str__(self):
+        return f"[{self.talkgroup}][{self.startTime}] {self.UUID}"
+
 class Transmission(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     startTime = models.DateTimeField(db_index=True)
@@ -119,7 +141,7 @@ class Transmission(models.Model):
         return f"[{self.talkgroup}][{self.startTime}] {self.UUID}"
 
 class Incident(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     transmission = models.ManyToManyField(Transmission)
     name = models.CharField(max_length=30)
@@ -130,7 +152,7 @@ class Incident(models.Model):
         return self.name
 
 class TalkGroupACL(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=30)
     users = models.ManyToManyField(UserProfile)
     allowedTalkgroups = models.ManyToManyField(TalkGroup)  
@@ -141,7 +163,7 @@ class TalkGroupACL(models.Model):
         return self.name
 
 class ScanList(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)
@@ -152,7 +174,7 @@ class ScanList(models.Model):
         return self.name
 
 class GlobalScanList(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     scanList = models.ForeignKey(ScanList, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
     enabled = models.BooleanField(default=False)
@@ -161,7 +183,7 @@ class GlobalScanList(models.Model):
         return self.name
 
 class GlobalAnnouncement(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=30)
     enabled = models.BooleanField(default=False)
     description = models.TextField()
@@ -175,7 +197,7 @@ class GlobalEmailTemplate(models.Model):
         ('alert','alert'),
     )
 
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     name = models.CharField(max_length=30)
     type = models.CharField(max_length=30, unique=True, choices=mailTypes)
     enabled = models.BooleanField(default=False)
@@ -185,7 +207,7 @@ class GlobalEmailTemplate(models.Model):
         return self.name
 
 class SystemReciveRate(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     time = models.DateTimeField(default=datetime.now())
     rate = models.FloatField()    
 
@@ -193,7 +215,7 @@ class SystemReciveRate(models.Model):
         return f'{self.time.strftime("%c")} - {str(self.rate)}'
 
 class Call(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     trunkRecorderID = models.CharField(max_length=30)
     startTime = models.DateTimeField(db_index=True)
     endTime = models.DateTimeField(null=True, blank=True)
@@ -210,7 +232,7 @@ class Call(models.Model):
         return f'{self.time.strftime("%c")} - {str(self.rate)}'
 
 class SystemRecorderMetrics(models.Model):
-    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
+    UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     systemRecorder = models.ForeignKey(System, on_delete=models.CASCADE)
     rates = models.ManyToManyField(SystemReciveRate)   
     calls = models.ManyToManyField(Call)    

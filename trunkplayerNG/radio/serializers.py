@@ -4,14 +4,16 @@ from radio.models import *
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ['UUID', 'user', 'enabled', 'siteAdmin', 'Description', 'siteTheme', 'feedAllowed']
+        fields = ['UUID', 'siteAdmin', 'description', 'siteTheme', 'feedAllowed']
 
 class SystemACLSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemACL
         fields = ['UUID', 'name', 'users', 'public']
 
+
 class SystemSerializer(serializers.ModelSerializer):
+    #systemACL = SystemACLSerializer()
     class Meta:
         model = System
         fields = ['UUID', 'name', 'systemACL']
@@ -19,7 +21,7 @@ class SystemSerializer(serializers.ModelSerializer):
 class SystemForwarderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemForwarder
-        fields = ['UUID', 'name', 'feedKey', 'webhook']
+        fields = ['UUID', 'name', 'enabled', 'feedKey', 'webhook']
 
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,6 +34,7 @@ class AgencySerializer(serializers.ModelSerializer):
         fields = ['UUID', 'name', 'description', 'city']
 
 class TalkGroupSerializer(serializers.ModelSerializer):
+    agency = AgencySerializer()
     class Meta:
         model = TalkGroup
         fields = ['UUID', 'system', 'decimalID', 'alphaTag', 'commonName', 'description', 'encrypted', 'agency']
@@ -46,13 +49,22 @@ class UnitSerializer(serializers.ModelSerializer):
         model = Unit
         fields = ['UUID', 'system', 'decimalID', 'description']
 
+class TransmissionUnitSerializer(serializers.ModelSerializer):
+    unit = UnitSerializer()
+    class Meta:
+        model = TransmissionUnit
+        fields = ['UUID', 'time', 'unit', 'pos', 'emergency', 'signal_system', 'tag',  'length']
+
 
 class TransmissionSerializer(serializers.ModelSerializer):
+    units = TransmissionUnitSerializer()
     class Meta:
         model = Transmission
         fields = ['UUID', 'system', 'recorder', 'startTime', 'endTime', 'audioFile', 'talkgroup', 'encrypted', 'units', 'frequency', 'length']
 
 class IncidentSerializer(serializers.ModelSerializer):
+    transmission = TransmissionSerializer()
+
     class Meta:
         model = Incident
         fields = ['UUID', 'system', 'transmission', 'name', 'description', 'agency']
@@ -63,6 +75,8 @@ class TalkGroupACLSerializer(serializers.ModelSerializer):
         fields = ['UUID', 'name', 'users', 'allowedTalkgroups', 'defualtNewUsers', 'defualtNewTalkgroups']
 
 class ScanListSerializer(serializers.ModelSerializer):
+    talkgroups = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='TalkGroupView')
+
     class Meta:
         model = ScanList
         fields = ['UUID', 'owner', 'name', 'description', 'public', 'talkgroups']
