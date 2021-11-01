@@ -949,7 +949,6 @@ class TalkGroupACLView(APIView):
 
     @swagger_auto_schema(tags=['TalkGroupACL'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=[],
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
             'users': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup Allowed UUIDs'),
@@ -993,7 +992,6 @@ class ScanListCreate(APIView):
         required=['name', 'public', 'talkgroups'],
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
-            #'owner': openapi.Schema(type=openapi.TYPE_STRING, description='Owner User UUID'),
             'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
             'public': openapi.Schema(type=openapi.TYPE_STRING, description='Wether it is shared or user-only'),
             'talkgroups': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup UUIDs'),
@@ -1005,7 +1003,7 @@ class ScanListCreate(APIView):
         if not "UUID" in data:
             data["UUID"] =  uuid.uuid4()
 
-        data["user"] = request.user.UserProfile.UUID
+        #data["user"] = request.user.UserProfile.UUID
 
 
         serializer = ScanListSerializer(data=data)
@@ -1032,7 +1030,6 @@ class ScanListView(APIView):
 
     @swagger_auto_schema(tags=['ScanList'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=[],
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
             'owner': openapi.Schema(type=openapi.TYPE_STRING, description='Owner User UUID'),
@@ -1110,7 +1107,6 @@ class GlobalScanListView(APIView):
 
     @swagger_auto_schema(tags=['GlobalScanList'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=[],
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
             'scanList': openapi.Schema(type=openapi.TYPE_STRING, description=' Scan List UUID'),
@@ -1186,7 +1182,6 @@ class GlobalAnnouncementView(APIView):
 
     @swagger_auto_schema(tags=['GlobalAnnouncement'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=[],
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
             'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
@@ -1225,7 +1220,6 @@ class GlobalEmailTemplateCreate(APIView):
 
     @swagger_auto_schema(tags=['GlobalEmailTemplate'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=[],
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
             'type': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
@@ -1263,7 +1257,6 @@ class GlobalEmailTemplateView(APIView):
 
     @swagger_auto_schema(tags=['GlobalEmailTemplate'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        required=[],
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
             'type': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),

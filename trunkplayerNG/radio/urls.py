@@ -49,13 +49,38 @@ urlpatterns = [
     path('radio/incident/create', views.IncidentCreate.as_view(), name='incident_create'),
     path('radio/incident/<uuid:UUID>', views.IncidentView.as_view(), name='incident_view'),
 
-    path('radio/TalkGroupACL/', views.TalkGroupACLView.as_view()),
-    path('radio/GlobalScanList/', views.GlobalScanListView.as_view()),
-    path('radio/ScanList/', views.ScanListView.as_view()),
-    path('radio/GlobalAnnouncement/', views.GlobalAnnouncementView.as_view()),
-    path('radio/GlobalEmailTemplate/', views.GlobalEmailTemplateView.as_view()),
-    path('radio/SystemReciveRate/', views.SystemReciveRateView.as_view()),
-    path('radio/Call/', views.CallView.as_view()),
-    path('radio/SystemRecorderMetrics/', views.SystemRecorderMetricsView.as_view()),
+    path('radio/talkGroupacl/list', views.TalkGroupACLList.as_view(), name='talkGroupacl_list'),
+    path('radio/talkGroupacl/create', views.TalkGroupACLCreate.as_view(), name='talkGroupacl_create'),
+    path('radio/talkGroupacl/<uuid:UUID>', views.TalkGroupACLView.as_view(), name='talkGroupacl_view'),
+
+    path('radio/globalscanlist/list', views.GlobalScanListList.as_view(), name='globalscanlist_list'),
+    path('radio/globalscanlist/create', views.GlobalScanListCreate.as_view(), name='globalscanlist_create'),
+    path('radio/globalscanlist/<uuid:UUID>', views.GlobalScanListView.as_view(), name='globalscanlist_view'),
+
+    path('radio/scanlist/list', views.ScanListList.as_view(), name='scanlist_list'),
+    path('radio/scanlist/create', views.ScanListCreate.as_view(), name='scanlist_create'),
+    path('radio/scanlist/<uuid:UUID>', views.ScanListView.as_view(), name='scanlist_view'),
+
+    path('radio/globalannouncement/list', views.GlobalAnnouncementList.as_view(), name='globalannouncement_list'),
+    path('radio/globalannouncement/create', views.GlobalAnnouncementCreate.as_view(), name='globalannouncement_create'),
+    path('radio/globalannouncement/<uuid:UUID>', views.GlobalAnnouncementView.as_view(), name='globalannouncement_view'),
+
+    path('radio/globalemailtemplate/list', views.GlobalEmailTemplateList.as_view(), name='globalemailtemplate_list'),
+    path('radio/globalemailtemplate/create', views.GlobalEmailTemplateCreate.as_view(), name='globalemailtemplate_create'),
+    path('radio/globalemailtemplate/<uuid:UUID>', views.GlobalEmailTemplateView.as_view(), name='globalemailtemplate_view'),
+
+    path('radio/systemreciverate/list', views.SystemReciveRateList.as_view(), name='systemreciverate_list'),
+    path('radio/systemreciverate/create', views.SystemReciveRateCreate.as_view(), name='systemreciverate_create'),
+    path('radio/systemreciverate/<uuid:UUID>', views.SystemReciveRateView.as_view(), name='systemreciverate_view'),
+
+    path('radio/call/list', views.CallList.as_view(), name='call_list'),
+    #path('radio/systemreciverate/create', views.SystemReciveRateCreate.as_view(), name='systemreciverate_create'),
+    path('radio/call/<uuid:UUID>', views.CallView.as_view(), name='call_view'),
+
+    path('radio/systemrecordermetrics/list', views.SystemRecorderMetricsList.as_view(), name='systemrecordermetrics_list'),
+    #path('radio/systemreciverate/create', views.SystemReciveRateCreate.as_view(), name='systemreciverate_create'),
+    path('radio/systemrecordermetrics/<uuid:UUID>', views.SystemRecorderMetricsView.as_view(), name='systemrecordermetrics_view'),
+
+
     
 ]
