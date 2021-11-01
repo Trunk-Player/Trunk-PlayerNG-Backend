@@ -24,8 +24,6 @@ class UserProfileList(APIView):
         serializer = UserProfileSerializer(userProfile)
         return Response(serializer.data)
     
-
-
 class UserProfileView(APIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
@@ -82,7 +80,15 @@ class SystemACLCreate(APIView):
     queryset = SystemACL.objects.all()
     serializer_class = SystemACLSerializer
 
-    @swagger_auto_schema(tags=['SystemACL'])
+    @swagger_auto_schema(tags=['SystemACL'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'public'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='string'),
+            'users': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='List of user UUID'),
+            'public': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Make viable to all users'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
         if not "UUID" in data:
@@ -131,6 +137,7 @@ class SystemACLView(APIView):
         SystemACL.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class SystemList(APIView):
     queryset = System.objects.all()
     serializer_class = SystemSerializer
@@ -141,12 +148,18 @@ class SystemList(APIView):
         serializer = SystemSerializer(Systems)
         return Response(serializer.data)
 
-
 class SystemCreate(APIView):
     queryset = System.objects.all()
     serializer_class = SystemSerializer
 
-    @swagger_auto_schema(tags=['System'])
+    @swagger_auto_schema(tags=['System'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'systemACL'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='string'),
+            'systemACL': openapi.Schema(type=openapi.TYPE_STRING, description='System ACL UUID'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
@@ -158,7 +171,6 @@ class SystemCreate(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class SystemView(APIView):
     queryset = System.objects.all()
@@ -203,6 +215,7 @@ class SystemView(APIView):
         System.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class SystemForwarderList(APIView):
     queryset = SystemForwarder.objects.all()
     serializer_class = SystemForwarderSerializer
@@ -213,17 +226,25 @@ class SystemForwarderList(APIView):
         serializer = SystemForwarderSerializer(SystemForwarders)
         return Response(serializer.data)
 
-
 class SystemForwarderCreate(APIView):
     queryset = SystemForwarder.objects.all()
     serializer_class = SystemForwarderSerializer
 
-    @swagger_auto_schema(tags=['SystemForwarder'])
+    @swagger_auto_schema(tags=['SystemForwarder'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'enabled'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Forwarder Name'),
+            'enabled': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='enabled'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
             data["UUID"] =  uuid.uuid4()
+
+        data["feedKey"] =  uuid.uuid4()
 
         serializer = SystemSerializer(data=data)
         if serializer.is_valid():
@@ -271,6 +292,7 @@ class SystemForwarderView(APIView):
         SystemForwarder.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class CityList(APIView):
     queryset = City.objects.all()
     serializer_class = CitySerializer
@@ -285,7 +307,14 @@ class CityCreate(APIView):
     queryset = City.objects.all()
     serializer_class = CitySerializer
 
-    @swagger_auto_schema(tags=['City'])
+    @swagger_auto_schema(tags=['City'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='City Name'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='description'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
@@ -336,6 +365,7 @@ class CityView(APIView):
         City.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class AgencyList(APIView):
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
@@ -350,7 +380,15 @@ class AgencyCreate(APIView):
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
 
-    @swagger_auto_schema(tags=['Agency'])
+    @swagger_auto_schema(tags=['Agency'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'city'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Agency Name'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='description'),
+            'city': openapi.Schema(type=openapi.TYPE_STRING, description='City UUID'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
@@ -417,7 +455,18 @@ class TalkGroupCreate(APIView):
     queryset = TalkGroup.objects.all()
     serializer_class = TalkGroupSerializer
 
-    @swagger_auto_schema(tags=['TalkGroup'])
+    @swagger_auto_schema(tags=['TalkGroup'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT, 
+        required=['system', 'decimalID', 'alphaTag', 'encrypted'],
+        properties={
+            'system': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
+            'decimalID': openapi.Schema(type=openapi.TYPE_STRING, description='decimalID'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='decimalID'),
+            'alphaTag': openapi.Schema(type=openapi.TYPE_STRING, description='alphaTag'),
+            'encrypted': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='encrypted'),
+            'agency': openapi.Schema(type=openapi.TYPE_STRING, description='Agency UUID'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
@@ -472,6 +521,7 @@ class TalkGroupView(APIView):
         TalkGroup.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class SystemRecorderList(APIView):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
@@ -486,12 +536,26 @@ class SystemRecorderCreate(APIView):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
 
-    @swagger_auto_schema(tags=['SystemRecorder'])
+    @swagger_auto_schema(tags=['SystemRecorder'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT, 
+        required=['system', 'siteID', 'name', 'user'],
+        properties={
+            'system': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
+            'siteID': openapi.Schema(type=openapi.TYPE_STRING, description='Site ID'),
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'enabled': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Enabled'),
+            #'user': openapi.Schema(type=openapi.TYPE_STRING, description='User UUID'),
+            'talkgroupsAllowed': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroups Allowed UUIDs'),
+            'talkgroupsDenyed': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroups Allowed UUIDs'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
             data["UUID"] =  uuid.uuid4()
+
+        data["forwarderWebhookUUID"] = uuid.uuid4()
 
         serializer = SystemRecorderSerializer(data=data)
         if serializer.is_valid():
@@ -557,7 +621,15 @@ class UnitCreate(APIView):
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
 
-    @swagger_auto_schema(tags=['Unit'])
+    @swagger_auto_schema(tags=['Unit'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT, 
+        required=['system', 'decimalID'],
+        properties={
+            'system': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
+            'decimalID': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
@@ -606,6 +678,7 @@ class UnitView(APIView):
         Unit = self.get_object(UUID)
         Unit.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class TransmissionUnitList(APIView):
     queryset = TransmissionUnit.objects.all()
@@ -688,6 +761,7 @@ class TransmissionCreate(APIView):
 
     @swagger_auto_schema(tags=['Transmission'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT, 
+        required=['system', 'recorder', 'json', 'audio'],
         properties={            
             'system': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
             'recorder': openapi.Schema(type=openapi.TYPE_STRING, description='Recorder UUID'),
@@ -741,9 +815,6 @@ class TransmissionView(APIView):
         Transmission.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class IncidentView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
-    queryset = Incident.objects.all()
-    serializer_class = IncidentSerializer
 
 class IncidentList(APIView):
     queryset = Incident.objects.all()
@@ -759,7 +830,17 @@ class IncidentCreate(APIView):
     queryset = Incident.objects.all()
     serializer_class = IncidentSerializer
 
-    @swagger_auto_schema(tags=['Incident'])
+    @swagger_auto_schema(tags=['Incident'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT, 
+        required=['system', 'name', 'transmission'],
+        properties={
+            'system': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
+            'transmission': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='TRANMISSIONS UUID'),
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+            'agency': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Agency UUIDs'),
+        }
+    ))
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
@@ -792,6 +873,7 @@ class IncidentView(APIView):
         type=openapi.TYPE_OBJECT, 
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+            'transmission': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='TRANMISSIONS UUID'),
             'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
             'agency': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Agency UUIDs'),
         }
@@ -812,39 +894,619 @@ class IncidentView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TalkGroupACLView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
+class TalkGroupACLList(APIView):
     queryset = TalkGroupACL.objects.all()
     serializer_class = TalkGroupACLSerializer
 
-class ScanListView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
+    @swagger_auto_schema(tags=['TalkGroupACL'])
+    def get(self, request, format=None):
+        TalkGroupACLs = TalkGroupACL.objects.all()
+        serializer = TalkGroupACLSerializer(TalkGroupACLs)
+        return Response(serializer.data)
+
+class TalkGroupACLCreate(APIView):
+    queryset = TalkGroupACL.objects.all()
+    serializer_class = TalkGroupACLSerializer
+
+    @swagger_auto_schema(tags=['TalkGroupACL'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'users', 'defaultNewUsers', 'defaultNewTalkgroups'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'users': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup Allowed UUIDs'),
+            'defaultNewUsers': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Add New Users to ACL'),
+            'defaultNewTalkgroups': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Add New Talkgroups to ACL'),
+            'allowedTalkgroups': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup Allowed UUIDs'),
+        }
+    ))
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] =  uuid.uuid4()
+
+        serializer = TalkGroupACLSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TalkGroupACLView(APIView):
+    queryset = TalkGroupACL.objects.all()
+    serializer_class = TalkGroupACLSerializer
+
+    def get_object(self, UUID):
+        try:
+            return TalkGroupACL.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['TalkGroupACL'])
+    def get(self, request, UUID, format=None):
+        TalkGroupACL = self.get_object(UUID)
+        serializer = TalkGroupACLSerializer(TalkGroupACL)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(tags=['TalkGroupACL'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=[],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'users': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup Allowed UUIDs'),
+            'defaultNewUsers': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Add New Users to ACL'),
+            'defaultNewTalkgroups': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Add New Talkgroups to ACL'),
+            'allowedTalkgroups': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup Allowed UUIDs'),
+        }
+    ))
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)        
+        TalkGroupACL = self.get_object(UUID)
+        serializer = TalkGroupACLSerializer(TalkGroupACL, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=['TalkGroupACL'])
+    def delete(self, request, UUID, format=None):
+        TalkGroupACL = self.get_object(UUID)
+        TalkGroupACL.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ScanListList(APIView):
     queryset = ScanList.objects.all()
     serializer_class = ScanListSerializer
 
-class GlobalScanListView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
+    @swagger_auto_schema(tags=['ScanList'])
+    def get(self, request, format=None):
+        ScanLists = ScanList.objects.all()
+        serializer = ScanListSerializer(ScanLists)
+        return Response(serializer.data)
+
+class ScanListCreate(APIView):
+    queryset = ScanList.objects.all()
+    serializer_class = ScanListSerializer
+
+    @swagger_auto_schema(tags=['ScanList'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'public', 'talkgroups'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            #'owner': openapi.Schema(type=openapi.TYPE_STRING, description='Owner User UUID'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+            'public': openapi.Schema(type=openapi.TYPE_STRING, description='Wether it is shared or user-only'),
+            'talkgroups': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup UUIDs'),
+        }
+    ))
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] =  uuid.uuid4()
+
+        data["user"] = request.user.UserProfile.UUID
+
+
+        serializer = ScanListSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ScanListView(APIView):
+    queryset = ScanList.objects.all()
+    serializer_class = ScanListSerializer
+
+    def get_object(self, UUID):
+        try:
+            return ScanList.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['ScanList'])
+    def get(self, request, UUID, format=None):
+        ScanList = self.get_object(UUID)
+        serializer = ScanListSerializer(ScanList)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(tags=['ScanList'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=[],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'owner': openapi.Schema(type=openapi.TYPE_STRING, description='Owner User UUID'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+            'public': openapi.Schema(type=openapi.TYPE_STRING, description='Wether it is shared or user-only'),
+            'talkgroups': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup UUIDs'),
+        }
+    ))
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)        
+        ScanList = self.get_object(UUID)
+        serializer = ScanListSerializer(ScanList, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=['ScanList'])
+    def delete(self, request, UUID, format=None):
+        ScanList = self.get_object(UUID)
+        ScanList.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GlobalScanListList(APIView):
     queryset = GlobalScanList.objects.all()
     serializer_class = GlobalScanListSerializer
 
-class GlobalAnnouncementView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
+    @swagger_auto_schema(tags=['GlobalScanList'])
+    def get(self, request, format=None):
+        GlobalScanLists = GlobalScanList.objects.all()
+        serializer = GlobalScanListSerializer(GlobalScanLists)
+        return Response(serializer.data)
+
+class GlobalScanListCreate(APIView):
+    queryset = GlobalScanList.objects.all()
+    serializer_class = GlobalScanListSerializer
+
+    @swagger_auto_schema(tags=['GlobalScanList'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'scanList', 'enabled'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'scanList': openapi.Schema(type=openapi.TYPE_STRING, description=' Scan List UUID'),
+            'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+        }
+    ))
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] =  uuid.uuid4()
+
+        serializer = GlobalScanListSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GlobalScanListView(APIView):
+    queryset = GlobalScanList.objects.all()
+    serializer_class = GlobalScanListSerializer
+
+    def get_object(self, UUID):
+        try:
+            return GlobalScanList.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['GlobalScanList'])
+    def get(self, request, UUID, format=None):
+        GlobalScanList = self.get_object(UUID)
+        serializer = GlobalScanListSerializer(GlobalScanList)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(tags=['GlobalScanList'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=[],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'scanList': openapi.Schema(type=openapi.TYPE_STRING, description=' Scan List UUID'),
+            'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+        }
+    ))
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)        
+        GlobalScanList = self.get_object(UUID)
+        serializer = GlobalScanListSerializer(GlobalScanList, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=['GlobalScanList'])
+    def delete(self, request, UUID, format=None):
+        GlobalScanList = self.get_object(UUID)
+        GlobalScanList.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GlobalAnnouncementList(APIView):
     queryset = GlobalAnnouncement.objects.all()
     serializer_class = GlobalAnnouncementSerializer
 
-class GlobalEmailTemplateView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
+    @swagger_auto_schema(tags=['GlobalAnnouncement'])
+    def get(self, request, format=None):
+        GlobalAnnouncements = GlobalAnnouncement.objects.all()
+        serializer = GlobalAnnouncementSerializer(GlobalAnnouncements)
+        return Response(serializer.data)
+
+class GlobalAnnouncementCreate(APIView):
+    queryset = GlobalAnnouncement.objects.all()
+    serializer_class = GlobalAnnouncementSerializer
+
+    @swagger_auto_schema(tags=['GlobalAnnouncement'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['name', 'enabled'],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+            'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+        }
+    ))
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] =  uuid.uuid4()
+
+        serializer = GlobalAnnouncementSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GlobalAnnouncementView(APIView):
+    queryset = GlobalAnnouncement.objects.all()
+    serializer_class = GlobalAnnouncementSerializer
+
+    def get_object(self, UUID):
+        try:
+            return GlobalAnnouncement.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['GlobalAnnouncement'])
+    def get(self, request, UUID, format=None):
+        GlobalAnnouncement = self.get_object(UUID)
+        serializer = GlobalAnnouncementSerializer(GlobalAnnouncement)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(tags=['GlobalAnnouncement'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=[],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+            'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+        }
+    ))
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)        
+        GlobalAnnouncement = self.get_object(UUID)
+        serializer = GlobalAnnouncementSerializer(GlobalAnnouncement, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=['GlobalAnnouncement'])
+    def delete(self, request, UUID, format=None):
+        GlobalAnnouncement = self.get_object(UUID)
+        GlobalAnnouncement.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GlobalEmailTemplateList(APIView):
     queryset = GlobalEmailTemplate.objects.all()
     serializer_class = GlobalEmailTemplateSerializer
 
-class SystemReciveRateView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
+    @swagger_auto_schema(tags=['GlobalEmailTemplate'])
+    def get(self, request, format=None):
+        GlobalEmailTemplates = GlobalEmailTemplate.objects.all()
+        serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplates)
+        return Response(serializer.data)
+
+class GlobalEmailTemplateCreate(APIView):
+    queryset = GlobalEmailTemplate.objects.all()
+    serializer_class = GlobalEmailTemplateSerializer
+
+    @swagger_auto_schema(tags=['GlobalEmailTemplate'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=[],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'type': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
+            'HTML': openapi.Schema(type=openapi.TYPE_STRING, description='HTML'),
+            'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+        }
+    ))
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] =  uuid.uuid4()
+
+        serializer = GlobalEmailTemplateSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GlobalEmailTemplateView(APIView):
+    queryset = GlobalEmailTemplate.objects.all()
+    serializer_class = GlobalEmailTemplateSerializer
+
+    def get_object(self, UUID):
+        try:
+            return GlobalEmailTemplate.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['GlobalEmailTemplate'])
+    def get(self, request, UUID, format=None):
+        GlobalEmailTemplate = self.get_object(UUID)
+        serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplate)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(tags=['GlobalEmailTemplate'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=[],
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+            'type': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
+            'HTML': openapi.Schema(type=openapi.TYPE_STRING, description='HTML'),
+            'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+        }
+    ))
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)        
+        GlobalEmailTemplate = self.get_object(UUID)
+        serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplate, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=['GlobalEmailTemplate'])
+    def delete(self, request, UUID, format=None):
+        GlobalEmailTemplate = self.get_object(UUID)
+        GlobalEmailTemplate.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+class SystemReciveRateList(APIView):
     queryset = SystemReciveRate.objects.all()
     serializer_class = SystemReciveRateSerializer
 
-class CallView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
+    @swagger_auto_schema(tags=['SystemReciveRate'])
+    def get(self, request, format=None):
+        SystemReciveRates = SystemReciveRate.objects.all()
+        serializer = SystemReciveRateSerializer(SystemReciveRates)
+        return Response(serializer.data)
+
+class SystemReciveRateCreate(APIView):
+    queryset = SystemReciveRate.objects.all()
+    serializer_class = SystemReciveRateSerializer
+
+    @swagger_auto_schema(tags=['SystemReciveRate'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['time','rate'],
+        properties={
+            'time': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
+            'rate': openapi.Schema(type=openapi.TYPE_STRING, description='HTML'),            
+        }
+    ))
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] =  uuid.uuid4()
+
+        serializer = SystemReciveRateSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SystemReciveRateView(APIView):
+    queryset = SystemReciveRate.objects.all()
+    serializer_class = SystemReciveRateSerializer
+
+    def get_object(self, UUID):
+        try:
+            return SystemReciveRate.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['SystemReciveRate'])
+    def get(self, request, UUID, format=None):
+        SystemReciveRate = self.get_object(UUID)
+        serializer = SystemReciveRateSerializer(SystemReciveRate)
+        return Response(serializer.data)
+
+    # @swagger_auto_schema(tags=['SystemReciveRate'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     required=[],
+    #     properties={
+    #         'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+    #         'type': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
+    #         'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+    #         'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+    #     }
+    # ))
+    # def put(self, request, UUID, format=None):
+    #     data = JSONParser().parse(request)        
+    #     SystemReciveRate = self.get_object(UUID)
+    #     serializer = SystemReciveRateSerializer(SystemReciveRate, data=data, partial=True)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=['SystemReciveRate'])
+    def delete(self, request, UUID, format=None):
+        SystemReciveRate = self.get_object(UUID)
+        SystemReciveRate.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CallList(APIView):
     queryset = Call.objects.all()
     serializer_class = CallSerializer
 
-class SystemRecorderMetricsView(generics.ListCreateAPIView, generics.RetrieveUpdateDestroyAPIView ):
+    @swagger_auto_schema(tags=['Call'])
+    def get(self, request, format=None):
+        Calls = Call.objects.all()
+        serializer = CallSerializer(Calls)
+        return Response(serializer.data)
+
+# class CallCreate(APIView):
+#     queryset = Call.objects.all()
+#     serializer_class = CallSerializer
+
+#     @swagger_auto_schema(tags=['Call'])
+#     def post(self, request, format=None):
+#         data = JSONParser().parse(request)
+
+#         if not "UUID" in data:
+#             data["UUID"] =  uuid.uuid4()
+
+#         serializer = CallSerializer(data=data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CallView(APIView):
+    queryset = Call.objects.all()
+    serializer_class = CallSerializer
+
+    def get_object(self, UUID):
+        try:
+            return Call.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['Call'])
+    def get(self, request, UUID, format=None):
+        Call = self.get_object(UUID)
+        serializer = CallSerializer(Call)
+        return Response(serializer.data)
+
+    # @swagger_auto_schema(tags=['Call'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     required=[],
+    #     properties={
+    #         'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+    #         'type': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
+    #         'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+    #         'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+    #     }
+    # ))
+    # def put(self, request, UUID, format=None):
+    #     data = JSONParser().parse(request)        
+    #     Call = self.get_object(UUID)
+    #     serializer = CallSerializer(Call, data=data, partial=True)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=['Call'])
+    def delete(self, request, UUID, format=None):
+        Call = self.get_object(UUID)
+        Call.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SystemRecorderMetricsList(APIView):
     queryset = SystemRecorderMetrics.objects.all()
     serializer_class = SystemRecorderMetricsSerializer
 
+    @swagger_auto_schema(tags=['SystemRecorderMetrics'])
+    def get(self, request, format=None):
+        SystemRecorderMetricss = SystemRecorderMetrics.objects.all()
+        serializer = SystemRecorderMetricsSerializer(SystemRecorderMetricss)
+        return Response(serializer.data)
 
+# class SystemRecorderMetricsCreate(APIView):
+#     queryset = SystemRecorderMetrics.objects.all()
+#     serializer_class = SystemRecorderMetricsSerializer
+
+#     @swagger_auto_schema(tags=['SystemRecorderMetrics'], request_body=openapi.Schema(
+#         type=openapi.TYPE_OBJECT,
+#         required=['time','rate'],
+#         properties={
+#             'time': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
+#             'rate': openapi.Schema(type=openapi.TYPE_STRING, description='HTML'),            
+#         }
+#     ))
+#     def post(self, request, format=None):
+#         data = JSONParser().parse(request)
+
+#         if not "UUID" in data:
+#             data["UUID"] =  uuid.uuid4()
+
+#         serializer = SystemRecorderMetricsSerializer(data=data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SystemRecorderMetricsView(APIView):
+    queryset = SystemRecorderMetrics.objects.all()
+    serializer_class = SystemRecorderMetricsSerializer
+
+    def get_object(self, UUID):
+        try:
+            return SystemRecorderMetrics.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['SystemRecorderMetrics'])
+    def get(self, request, UUID, format=None):
+        SystemRecorderMetrics = self.get_object(UUID)
+        serializer = SystemRecorderMetricsSerializer(SystemRecorderMetrics)
+        return Response(serializer.data)
+
+    # @swagger_auto_schema(tags=['SystemRecorderMetrics'], request_body=openapi.Schema(
+    #     type=openapi.TYPE_OBJECT,
+    #     required=[],
+    #     properties={
+    #         'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
+    #         'type': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
+    #         'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+    #         'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
+    #     }
+    # ))
+    # def put(self, request, UUID, format=None):
+    #     data = JSONParser().parse(request)        
+    #     SystemRecorderMetrics = self.get_object(UUID)
+    #     serializer = SystemRecorderMetricsSerializer(SystemRecorderMetrics, data=data, partial=True)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=['SystemRecorderMetrics'])
+    def delete(self, request, UUID, format=None):
+        SystemRecorderMetrics = self.get_object(UUID)
+        SystemRecorderMetrics.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
