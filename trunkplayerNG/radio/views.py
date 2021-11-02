@@ -9,6 +9,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.parsers import FileUploadParser
 from rest_framework import status
 import json
+from uuid import UUID
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -21,7 +22,7 @@ class UserProfileList(APIView):
     @swagger_auto_schema(tags=['UserProfile'])
     def get(self, request, format=None):
         userProfile = UserProfile.objects.all()
-        serializer = UserProfileSerializer(userProfile)
+        serializer = UserProfileSerializer(userProfile, many=True)
         return Response(serializer.data)
     
 class UserProfileView(APIView):
@@ -73,7 +74,7 @@ class SystemACLList(APIView):
     @swagger_auto_schema(tags=['SystemACL'])
     def get(self, request, format=None):
         SystemACLs = SystemACL.objects.all()
-        serializer = SystemACLSerializer(SystemACLs)
+        serializer = SystemACLSerializer(SystemACLs, many=True)
         return Response(serializer.data)
 
 class SystemACLCreate(APIView):
@@ -93,7 +94,7 @@ class SystemACLCreate(APIView):
         data = JSONParser().parse(request)
         if not "UUID" in data:
             data["UUID"] =  uuid.uuid4()
-        serializer = SystemACLSerializer( data=data)
+        serializer = SystemACLSerializer( data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -145,7 +146,7 @@ class SystemList(APIView):
     @swagger_auto_schema(tags=['System'])
     def get(self, request, format=None):
         Systems = System.objects.all()
-        serializer = SystemSerializer(Systems)
+        serializer = SystemSerializer(Systems, many=True)
         return Response(serializer.data)
 
 class SystemCreate(APIView):
@@ -223,7 +224,7 @@ class SystemForwarderList(APIView):
     @swagger_auto_schema(tags=['SystemForwarder'])
     def get(self, request, format=None):
         SystemForwarders = SystemForwarder.objects.all()
-        serializer = SystemForwarderSerializer(SystemForwarders)
+        serializer = SystemForwarderSerializer(SystemForwarders, many=True)
         return Response(serializer.data)
 
 class SystemForwarderCreate(APIView):
@@ -300,7 +301,7 @@ class CityList(APIView):
     @swagger_auto_schema(tags=['City'])
     def get(self, request, format=None):
         Citys = City.objects.all()
-        serializer = CitySerializer(Citys)
+        serializer = CitySerializer(Citys, many=True)
         return Response(serializer.data)
 
 class CityCreate(APIView):
@@ -373,7 +374,7 @@ class AgencyList(APIView):
     @swagger_auto_schema(tags=['Agency'])
     def get(self, request, format=None):
         Agencys = Agency.objects.all()
-        serializer = AgencySerializer(Agencys)
+        serializer = AgencySerializer(Agencys, many=True)
         return Response(serializer.data)
 
 class AgencyCreate(APIView):
@@ -448,7 +449,7 @@ class TalkGroupList(APIView):
     @swagger_auto_schema(tags=['TalkGroup'])
     def get(self, request, format=None):
         TalkGroups = TalkGroup.objects.all()
-        serializer = TalkGroupSerializer(TalkGroups)
+        serializer = TalkGroupSerializer(TalkGroups, many=True)
         return Response(serializer.data)
 
 class TalkGroupCreate(APIView):
@@ -529,7 +530,7 @@ class SystemRecorderList(APIView):
     @swagger_auto_schema(tags=['SystemRecorder'])
     def get(self, request, format=None):
         SystemRecorders = SystemRecorder.objects.all()
-        serializer = SystemRecorderSerializer(SystemRecorders)
+        serializer = SystemRecorderSerializer(SystemRecorders, many=True)
         return Response(serializer.data)
 
 class SystemRecorderCreate(APIView):
@@ -614,7 +615,7 @@ class UnitList(APIView):
     @swagger_auto_schema(tags=['Unit'])
     def get(self, request, format=None):
         Units = Unit.objects.all()
-        serializer = UnitSerializer(Units)
+        serializer = UnitSerializer(Units, many=True)
         return Response(serializer.data)
 
 class UnitCreate(APIView):
@@ -687,7 +688,7 @@ class TransmissionUnitList(APIView):
     @swagger_auto_schema(tags=['TransmissionUnit'])
     def get(self, request, format=None):
         TransmissionUnits = TransmissionUnit.objects.all()
-        serializer = TransmissionUnitSerializer(TransmissionUnits)
+        serializer = TransmissionUnitSerializer(TransmissionUnits, many=True)
         return Response(serializer.data)
 
 # class TransmissionUnitCreate(APIView):
@@ -752,7 +753,7 @@ class TransmissionList(APIView):
     @swagger_auto_schema(tags=['Transmission'])
     def get(self, request, format=None):
         Transmissions = Transmission.objects.all()
-        serializer = TransmissionSerializer(Transmissions)
+        serializer = TransmissionSerializer(Transmissions, many=True)
         return Response(serializer.data)
 
 class TransmissionCreate(APIView):
@@ -769,11 +770,11 @@ class TransmissionCreate(APIView):
             'audio': openapi.Schema(type=openapi.TYPE_STRING, description='M4A Base64')            
         }
     ))
-    def post(self, request, filename, format=None):
+    def post(self, request, format=None):
         data = JSONParser().parse(request)
 
         try:
-            Callback = new_transmission_handler(data)
+            Callback = new_transmission_handler()
             return Response(Callback)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
@@ -823,7 +824,7 @@ class IncidentList(APIView):
     @swagger_auto_schema(tags=['Incident'])
     def get(self, request, format=None):
         Incidents = Incident.objects.all()
-        serializer = IncidentSerializer(Incidents)
+        serializer = IncidentSerializer(Incidents, many=True)
         return Response(serializer.data)
 
 class IncidentCreate(APIView):
@@ -901,7 +902,7 @@ class TalkGroupACLList(APIView):
     @swagger_auto_schema(tags=['TalkGroupACL'])
     def get(self, request, format=None):
         TalkGroupACLs = TalkGroupACL.objects.all()
-        serializer = TalkGroupACLSerializer(TalkGroupACLs)
+        serializer = TalkGroupACLSerializer(TalkGroupACLs, many=True)
         return Response(serializer.data)
 
 class TalkGroupACLCreate(APIView):
@@ -980,7 +981,7 @@ class ScanListList(APIView):
     @swagger_auto_schema(tags=['ScanList'])
     def get(self, request, format=None):
         ScanLists = ScanList.objects.all()
-        serializer = ScanListSerializer(ScanLists)
+        serializer = ScanListSerializer(ScanLists, many=True)
         return Response(serializer.data)
 
 class ScanListCreate(APIView):
@@ -1061,7 +1062,7 @@ class GlobalScanListList(APIView):
     @swagger_auto_schema(tags=['GlobalScanList'])
     def get(self, request, format=None):
         GlobalScanLists = GlobalScanList.objects.all()
-        serializer = GlobalScanListSerializer(GlobalScanLists)
+        serializer = GlobalScanListSerializer(GlobalScanLists, many=True)
         return Response(serializer.data)
 
 class GlobalScanListCreate(APIView):
@@ -1136,7 +1137,7 @@ class GlobalAnnouncementList(APIView):
     @swagger_auto_schema(tags=['GlobalAnnouncement'])
     def get(self, request, format=None):
         GlobalAnnouncements = GlobalAnnouncement.objects.all()
-        serializer = GlobalAnnouncementSerializer(GlobalAnnouncements)
+        serializer = GlobalAnnouncementSerializer(GlobalAnnouncements, many=True)
         return Response(serializer.data)
 
 class GlobalAnnouncementCreate(APIView):
@@ -1211,7 +1212,7 @@ class GlobalEmailTemplateList(APIView):
     @swagger_auto_schema(tags=['GlobalEmailTemplate'])
     def get(self, request, format=None):
         GlobalEmailTemplates = GlobalEmailTemplate.objects.all()
-        serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplates)
+        serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplates, many=True)
         return Response(serializer.data)
 
 class GlobalEmailTemplateCreate(APIView):
@@ -1288,7 +1289,7 @@ class SystemReciveRateList(APIView):
     @swagger_auto_schema(tags=['SystemReciveRate'])
     def get(self, request, format=None):
         SystemReciveRates = SystemReciveRate.objects.all()
-        serializer = SystemReciveRateSerializer(SystemReciveRates)
+        serializer = SystemReciveRateSerializer(SystemReciveRates, many=True)
         return Response(serializer.data)
 
 class SystemReciveRateCreate(APIView):
@@ -1364,25 +1365,74 @@ class CallList(APIView):
     @swagger_auto_schema(tags=['Call'])
     def get(self, request, format=None):
         Calls = Call.objects.all()
-        serializer = CallSerializer(Calls)
+        serializer = CallSerializer(Calls, many=True,read_only=True)
         return Response(serializer.data)
 
-# class CallCreate(APIView):
-#     queryset = Call.objects.all()
-#     serializer_class = CallSerializer
+class CallCreate(APIView):
+    queryset = Call.objects.all()
+    serializer_class = CallCreateSerializer
 
-#     @swagger_auto_schema(tags=['Call'])
-#     def post(self, request, format=None):
-#         data = JSONParser().parse(request)
+    @swagger_auto_schema(tags=['Call'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['trunkRecorderID','startTime', 'endTime', 'units', 'emergency', 'encrypted', 'frequency', 'phase2', 'talkgroup'],
+        properties={
+            'trunkRecorderID': openapi.Schema(type=openapi.TYPE_STRING, description='Trunk Recorder ID'),
+            'startTime': openapi.Schema(type=openapi.TYPE_STRING, description='Start Time'),  
+            'endTime': openapi.Schema(type=openapi.TYPE_STRING, description='End Time'),  
+            'units': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Unit Decimal IDs'),            
+            'emergency': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Emergency Call'),
+            'active': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Active Call'),
+            'encrypted': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Encrypted Call'),
+            'frequency': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Frequency'),
+            'phase2': openapi.Schema(type=openapi.TYPE_STRING, description='Phase2'),
+            'talkgroup': openapi.Schema(type=openapi.TYPE_STRING, description='Talk Group DecimalID')
+        }
+    ))
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
 
-#         if not "UUID" in data:
-#             data["UUID"] =  uuid.uuid4()
+        if not "UUID" in data:
+            data["UUID"] =  uuid.uuid4()
 
-#         serializer = CallSerializer(data=data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = CallCreateSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CallUpdate(APIView):
+    queryset = Call.objects.all()
+    serializer_class = CallUpdateSerializer
+
+    def get_object(self, UUID):
+        try:
+            return Call.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['Call'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=[],
+        properties={
+            'endTime': openapi.Schema(type=openapi.TYPE_STRING, description='End Time'),  
+            'units': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Unit Decimal IDs or UUIDs'),            
+            'active': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Active Call'),
+            'emergency': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Emergency Call'),
+            'encrypted': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Encrypted Call'),
+            'frequency': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Frequency'),
+            'phase2': openapi.Schema(type=openapi.TYPE_STRING, description='Phase2'),
+            'talkgroup': openapi.Schema(type=openapi.TYPE_STRING, description='Talk Group DecimalID or UUID')
+        }
+    ))
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)        
+        Call = self.get_object(UUID)
+        serializer = CallUpdateSerializer(Call, data=data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CallView(APIView):
     queryset = Call.objects.all()
@@ -1400,24 +1450,6 @@ class CallView(APIView):
         serializer = CallSerializer(Call)
         return Response(serializer.data)
 
-    # @swagger_auto_schema(tags=['Call'], request_body=openapi.Schema(
-    #     type=openapi.TYPE_OBJECT,
-    #     required=[],
-    #     properties={
-    #         'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
-    #         'type': openapi.Schema(type=openapi.TYPE_STRING, description='Email type'),
-    #         'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
-    #         'enabled': openapi.Schema(type=openapi.TYPE_STRING, description='Enabled')
-    #     }
-    # ))
-    # def put(self, request, UUID, format=None):
-    #     data = JSONParser().parse(request)        
-    #     Call = self.get_object(UUID)
-    #     serializer = CallSerializer(Call, data=data, partial=True)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=['Call'])
     def delete(self, request, UUID, format=None):
@@ -1433,7 +1465,7 @@ class SystemRecorderMetricsList(APIView):
     @swagger_auto_schema(tags=['SystemRecorderMetrics'])
     def get(self, request, format=None):
         SystemRecorderMetricss = SystemRecorderMetrics.objects.all()
-        serializer = SystemRecorderMetricsSerializer(SystemRecorderMetricss)
+        serializer = SystemRecorderMetricsSerializer(SystemRecorderMetricss, many=True)
         return Response(serializer.data)
 
 # class SystemRecorderMetricsCreate(APIView):

@@ -215,10 +215,10 @@ class SystemReciveRate(models.Model):
 
 class Call(models.Model):
     UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
-    trunkRecorderID = models.CharField(max_length=30)
+    trunkRecorderID = models.CharField(max_length=30, unique=True)
     startTime = models.DateTimeField(db_index=True)
     endTime = models.DateTimeField(null=True, blank=True)
-    units = models.ManyToManyField(Unit)   
+    units = models.ManyToManyField(Unit,related_name='TG_UNITS')   
     active = models.BooleanField(default=True)
     emergency = models.BooleanField(default=True)
     encrypted = models.BooleanField(default=True)

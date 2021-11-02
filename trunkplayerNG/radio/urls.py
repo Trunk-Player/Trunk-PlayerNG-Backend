@@ -74,11 +74,12 @@ urlpatterns = [
     path('radio/systemreciverate/<uuid:UUID>', views.SystemReciveRateView.as_view(), name='systemreciverate_view'),
 
     path('radio/call/list', views.CallList.as_view(), name='call_list'),
-    #path('radio/systemreciverate/create', views.SystemReciveRateCreate.as_view(), name='systemreciverate_create'),
+    path('radio/call/create', views.CallCreate.as_view(), name='call_create'),
+    path('radio/call/<uuid:UUID>/update', views.CallUpdate.as_view(), name='call_update'),
     path('radio/call/<uuid:UUID>', views.CallView.as_view(), name='call_view'),
 
     path('radio/systemrecordermetrics/list', views.SystemRecorderMetricsList.as_view(), name='systemrecordermetrics_list'),
-    #path('radio/systemreciverate/create', views.SystemReciveRateCreate.as_view(), name='systemreciverate_create'),
+    #path('radio/systemrecordermetrics/create', views.SystemReciveRateCreate.as_view(), name='systemrecordermetrics_create'),
     path('radio/systemrecordermetrics/<uuid:UUID>', views.SystemRecorderMetricsView.as_view(), name='systemrecordermetrics_view'),
 
 

@@ -1,2 +1,2 @@
-def new_transmission_handler(json, file):
+def new_transmission_handler():
     pass
