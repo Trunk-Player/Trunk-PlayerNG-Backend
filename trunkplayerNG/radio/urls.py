@@ -47,6 +47,7 @@ urlpatterns = [
 
     path('radio/incident/list', views.IncidentList.as_view(), name='incident_list'),
     path('radio/incident/create', views.IncidentCreate.as_view(), name='incident_create'),
+    path('radio/incident/<uuid:UUID>/update', views.IncidentUpdate.as_view(), name='incident_update'),
     path('radio/incident/<uuid:UUID>', views.IncidentView.as_view(), name='incident_view'),
 
     path('radio/talkGroupacl/list', views.TalkGroupACLList.as_view(), name='talkGroupacl_list'),

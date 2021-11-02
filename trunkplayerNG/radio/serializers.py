@@ -63,8 +63,13 @@ class TransmissionSerializer(serializers.ModelSerializer):
         fields = ['UUID', 'system', 'recorder', 'startTime', 'endTime', 'audioFile', 'talkgroup', 'encrypted', 'units', 'frequency', 'length']
 
 class IncidentSerializer(serializers.ModelSerializer):
-    transmission = TransmissionSerializer()
+    transmission = TransmissionSerializer(many=True)
 
+    class Meta:
+        model = Incident
+        fields = ['UUID', 'system', 'transmission', 'name', 'description', 'agency']
+
+class IncidentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident
         fields = ['UUID', 'system', 'transmission', 'name', 'description', 'agency']

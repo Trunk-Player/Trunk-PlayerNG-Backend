@@ -829,7 +829,7 @@ class IncidentList(APIView):
 
 class IncidentCreate(APIView):
     queryset = Incident.objects.all()
-    serializer_class = IncidentSerializer
+    serializer_class = IncidentCreateSerializer
 
     @swagger_auto_schema(tags=['Incident'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT, 
@@ -848,11 +848,40 @@ class IncidentCreate(APIView):
         if not "UUID" in data:
             data["UUID"] =  uuid.uuid4()
 
-        serializer = IncidentSerializer(data=data)
+        serializer = IncidentCreateSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class IncidentUpdate(APIView):
+    queryset = Incident.objects.all()
+    serializer_class = IncidentCreateSerializer
+
+    def get_object(self, UUID):
+        try:
+            return Incident.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=['Incident'], request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT, 
+        properties={
+            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+            'transmission': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='TRANMISSIONS UUID'),
+            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
+            'agency': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Agency UUIDs'),
+        }
+    ))
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)        
+        Incident = self.get_object(UUID)
+        serializer = IncidentCreateSerializer(Incident, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class IncidentView(APIView):
     queryset = Incident.objects.all()
@@ -869,24 +898,6 @@ class IncidentView(APIView):
         Incident = self.get_object(UUID)
         serializer = IncidentSerializer(Incident)
         return Response(serializer.data)
-
-    @swagger_auto_schema(tags=['Incident'], request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT, 
-        properties={
-            'name': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
-            'transmission': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='TRANMISSIONS UUID'),
-            'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
-            'agency': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Agency UUIDs'),
-        }
-    ))
-    def put(self, request, UUID, format=None):
-        data = JSONParser().parse(request)        
-        Incident = self.get_object(UUID)
-        serializer = IncidentSerializer(Incident, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=['Incident'])
     def delete(self, request, UUID, format=None):

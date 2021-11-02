@@ -142,10 +142,10 @@ class Transmission(models.Model):
 class Incident(models.Model):
     UUID = models.UUIDField(primary_key=True, default=uuid.uuid4, db_index=True, unique=True)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
-    transmission = models.ManyToManyField(Transmission)
+    transmission = models.ManyToManyField(Transmission, blank=True)
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)    
-    agency = models.ManyToManyField(Agency)
+    agency = models.ManyToManyField(Agency, blank=True)
 
     def __str__(self):
         return self.name
