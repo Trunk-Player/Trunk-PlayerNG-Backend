@@ -504,7 +504,7 @@ class TalkGroupView(APIView):
             'description': openapi.Schema(type=openapi.TYPE_STRING, description='decimalID'),
             'alphaTag': openapi.Schema(type=openapi.TYPE_STRING, description='alphaTag'),
             'encrypted': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='encrypted'),
-            'agency': openapi.Schema(type=openapi.TYPE_STRING, description='Agency UUID'),
+            'agency': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Agency UUIDs'),
         }
     ))
     def put(self, request, UUID, format=None):
@@ -1005,7 +1005,7 @@ class ScanListCreate(APIView):
         properties={
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
             'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
-            'public': openapi.Schema(type=openapi.TYPE_STRING, description='Wether it is shared or user-only'),
+            'public': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Wether it is shared or user-only'),
             'talkgroups': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroup UUIDs'),
         }
     ))

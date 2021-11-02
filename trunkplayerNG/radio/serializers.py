@@ -80,7 +80,7 @@ class TalkGroupACLSerializer(serializers.ModelSerializer):
         fields = ['UUID', 'name', 'users', 'allowedTalkgroups', 'defaultNewUsers', 'defaultNewTalkgroups']
 
 class ScanListSerializer(serializers.ModelSerializer):
-    talkgroups = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='TalkGroupView')
+    #talkgroups = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='TalkGroupView')
 
     class Meta:
         model = ScanList

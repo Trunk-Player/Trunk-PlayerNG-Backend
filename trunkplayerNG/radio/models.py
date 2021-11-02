@@ -82,7 +82,7 @@ class TalkGroup(models.Model):
     alphaTag = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)    
     encrypted = models.BooleanField(default=True)
-    agency = models.ManyToManyField(Agency, null=True)
+    agency = models.ManyToManyField(Agency, blank=True, null=True)
 
     def __str__(self):
         return self.alphaTag
