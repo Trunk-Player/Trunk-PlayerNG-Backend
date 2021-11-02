@@ -1370,7 +1370,7 @@ class CallList(APIView):
 
 class CallCreate(APIView):
     queryset = Call.objects.all()
-    serializer_class = CallCreateSerializer
+    serializer_class = CallUpdateCreateSerializer
 
     @swagger_auto_schema(tags=['Call'], request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
@@ -1394,7 +1394,7 @@ class CallCreate(APIView):
         if not "UUID" in data:
             data["UUID"] =  uuid.uuid4()
 
-        serializer = CallCreateSerializer(data=data)
+        serializer = CallUpdateCreateSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -1402,7 +1402,7 @@ class CallCreate(APIView):
 
 class CallUpdate(APIView):
     queryset = Call.objects.all()
-    serializer_class = CallUpdateSerializer
+    serializer_class = CallUpdateCreateSerializer
 
     def get_object(self, UUID):
         try:
@@ -1427,7 +1427,7 @@ class CallUpdate(APIView):
     def put(self, request, UUID, format=None):
         data = JSONParser().parse(request)        
         Call = self.get_object(UUID)
-        serializer = CallUpdateSerializer(Call, data=data, partial=True)
+        serializer = CallUpdateCreateSerializer(Call, data=data, partial=True)
 
         if serializer.is_valid():
             serializer.save()

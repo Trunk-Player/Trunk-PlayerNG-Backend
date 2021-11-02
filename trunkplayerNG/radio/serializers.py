@@ -107,72 +107,21 @@ class CallSerializer(serializers.ModelSerializer):
         model = Call
         fields = ['UUID', 'trunkRecorderID', 'startTime', 'endTime', 'units', 'active', 'emergency', 'encrypted', 'frequency', 'phase2', 'talkgroup']
 
-class CallCreateSerializer(serializers.ModelSerializer):
-    talkgroup = serializers.IntegerField(write_only=True)
-    units = serializers.ListField(child=serializers.IntegerField(), write_only=True)
-
-    class Meta:
-        model = Call
-        fields = ['UUID', 'trunkRecorderID', 'startTime', 'endTime', 'units', 'active', 'emergency', 'encrypted', 'frequency', 'phase2', 'talkgroup']
-
-
-    def create(self, validated_data):
-        if validated_data["talkgroup"]:
-            TGOBJ:TalkGroup =  TalkGroup.objects.get(decimalID=int(validated_data['talkgroup']))
-            validated_data["talkgroup"] = TGOBJ
-        
-        if validated_data["units"]:
-            units = []
-            for unit in validated_data["units"]:
-                unitObj:Unit = Unit.objects.get(decimalID=unit)
-                units.append(unitObj.UUID)
-
-            validated_data["units"] = units
-        return super().create(validated_data)
-
-class CallUpdateSerializer(serializers.ModelSerializer):
+class CallUpdateCreateSerializer(serializers.ModelSerializer):
     talkgroup = serializers.SlugRelatedField(
         read_only=False,
         queryset=TalkGroup.objects.all(),
         slug_field='decimalID'
     )
-    #units = serializers.ListField(child=serializers.IntegerField(), write_only=True)
     units = serializers.SlugRelatedField(
         many=True,
         read_only=False,
         queryset=Unit.objects.all(),
         slug_field='decimalID'
     )
-    startTime = serializers.DateTimeField(required=False)
     class Meta:
         model = Call
         fields = ['UUID', 'trunkRecorderID', 'startTime', 'endTime', 'units', 'active', 'emergency', 'encrypted', 'frequency', 'phase2', 'talkgroup']
-
-    # def update(self, instance, validated_data):
-
-    #     if validated_data["units"]:
-    #         units = []
-    #         for unit in validated_data["units"]:
-    #             unitObj:Unit = Unit.objects.get(decimalID=unit)
-    #             units.append(unitObj)
-
-    #         instance.units.set(units)
-    #         instance.save()
-    #     return super(CallUpdateSerializer, self).update(instance, validated_data)
-
-    def create(self, validated_data):
-        if validated_data["talkgroup"]:
-            TGOBJ:TalkGroup =  TalkGroup.objects.get(decimalID=int(validated_data['talkgroup']))
-            validated_data["talkgroup"] = TGOBJ
-        
-        if validated_data["units"]:
-            units = []
-            for unit in validated_data["units"]:
-                unitObj:Unit = Unit.objects.get(decimalID=unit)
-                units.append(unitObj.UUID)
-
-            validated_data["units"] = units
-        return super().create(validated_data)
 
 class SystemRecorderMetricsSerializer(serializers.ModelSerializer):
     class Meta:
