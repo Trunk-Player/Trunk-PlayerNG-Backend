@@ -93,7 +93,7 @@ class SystemRecorder(models.Model):
     name = models.CharField(max_length=30)
     siteID = models.CharField(max_length=100, blank=True, null=True)
     enabled = models.BooleanField(default=False)
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.CASCADE)
     talkgroupsAllowed = models.ManyToManyField(TalkGroup, blank=True, related_name='SRTGAllow')
     talkgroupsDenyed = models.ManyToManyField(TalkGroup, blank=True, related_name='SRTGDeny')
     forwarderWebhookUUID = models.UUIDField(default=uuid.uuid4)

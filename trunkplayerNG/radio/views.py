@@ -545,7 +545,7 @@ class SystemRecorderCreate(APIView):
             'siteID': openapi.Schema(type=openapi.TYPE_STRING, description='Site ID'),
             'name': openapi.Schema(type=openapi.TYPE_STRING, description='Name'),
             'enabled': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Enabled'),
-            #'user': openapi.Schema(type=openapi.TYPE_STRING, description='User UUID'),
+            'user': openapi.Schema(type=openapi.TYPE_STRING, description='User UUID'), # Replace me with resuestuser
             'talkgroupsAllowed': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroups Allowed UUIDs'),
             'talkgroupsDenyed': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_STRING), description='Talkgroups Allowed UUIDs'),
         }
@@ -774,7 +774,7 @@ class TransmissionCreate(APIView):
         data = JSONParser().parse(request)
 
         try:
-            Callback = new_transmission_handler()
+            Callback = new_transmission_handler(data)
             return Response(Callback)
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
