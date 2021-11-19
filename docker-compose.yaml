@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  trunk-player:
+    restart: always
+    build: .
+    command: "bash -c 'python manage.py migrate && python manage.py runserver 0.0.0.0:8000'"
+    ports:
+      - 8000:8000
+    environment:
+      DEBUG: "True"
+      FORCE_SECURE: "False"
+      SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
+      SQL_DATABASE: tp
+      SQL_USER: root
+      SQL_PASSWORD: s3CuRiTy
+      SQL_HOST: db
+      TZ: America/Chicago
+      CELERY_BROKER_URL: amqp://user:pass@rabbitmq/
+      
+    depends_on:
+      - db
+      - rabbitmq
+
+  trunk-player-worker:
+    restart: always
+    build: .
+    command: celery -A trunkplayerNG worker -l info
+    environment:
+      DEBUG: "True"
+      FORCE_SECURE: "False"
+      SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
+      SQL_DATABASE: tp
+      SQL_USER: root
+      SQL_PASSWORD: s3CuRiTy
+      SQL_HOST: db
+      TZ: America/Chicago
+      CELERY_BROKER_URL: amqp://user:pass@rabbitmq/
+      
+    depends_on:
+      - db
+      - rabbitmq
+
+  db:
+    image: mysql
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: s3CuRiTy
+      MYSQL_DATABASE: tp
+      MYSQL_USER: TrunkPlayer
+      MYSQL_PASSWORD: s3CuRiTy
+
+  rabbitmq:
+    image: 'rabbitmq:management'
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: pass
+        
+  

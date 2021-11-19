@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 from datetime import timedelta
 import sentry_sdk
@@ -30,19 +31,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4w244o6@o!&&pfi*1#bc0koi5z2+**d-m7z@e^3d-=!am0ns)('
+SECRET_KEY = os.environ.get("SECRET_KEY", '%2%xjx4c3obf_xa8hsdbd@ci+8!4)@x16_!auo*h(%*p_z(g')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", default="*").split(" ")
 
-
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", 'ampq://user:pass@127.0.0.1/0')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = str(os.getenv("TZ", 'America/Los_Angeles'))
+DJANGO_CELERY_RESULTS_TASK_ID_MAX_LENGTH=191
+CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # Application definition
 
 INSTALLED_APPS = [
     'radio',
     'users',
+    'django_celery_beat',
+    'django_celery_results',
     'rest_framework_simplejwt',
     'rest_framework',
     'rest_framework.authtoken',
@@ -97,14 +107,15 @@ WSGI_APPLICATION = 'trunkplayerNG.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', 
-        'NAME': 'tp',
-        'USER': 'root',
-        'PASSWORD': 'pass',
-        'HOST': '127.0.0.1',   # Or an IP Address that your DB is hosted on
-        'PORT': '32306',
+        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.mysql"),
+        "NAME": os.environ.get("SQL_DATABASE", "TrunkPlayer"),
+        "USER": os.environ.get("SQL_USER", "TrunkPlayer"),
+        "PASSWORD": os.environ.get("SQL_PASSWORD", "s3CuRiTy"),
+        "HOST": os.environ.get("SQL_HOST", "localhost"),
+        "PORT": os.environ.get("SQL_PORT", "3306"),
     }
 }
+
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
@@ -132,13 +143,18 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = str(os.getenv("TZ", 'America/Los_Angeles'))
 
 USE_I18N = True
 
 USE_L10N = True
 
 USE_TZ = True
+
+
+if os.getenv("FORCE_SECURE", 'False').lower() in ('true', '1', 't'):
+  # Honor the 'X-Forwarded-Proto' header for request.is_secure()
+  SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Static files (CSS, JavaScript, Images)
