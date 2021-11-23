@@ -7,13 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0003_alter_systemreciverate_time'),
+        ("radio", "0003_alter_systemreciverate_time"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2021, 11, 2, 2, 44, 49, 446324)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2021, 11, 2, 2, 44, 49, 446324)
+            ),
         ),
     ]

@@ -26,28 +26,34 @@ from rest_framework_simplejwt.views import (
 )
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="TrunkPlayer API",
-      default_version='v1',
-      description="",
-      terms_of_service="",
-      contact=openapi.Contact(email=""),
-      license=openapi.License(name="GPLv3 License"),
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,)
+    openapi.Info(
+        title="TrunkPlayer API",
+        default_version="v1",
+        description="",
+        terms_of_service="",
+        contact=openapi.Contact(email=""),
+        license=openapi.License(name="GPLv3 License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('radio.urls'), name='Radio'),
-    path('api/auth/', include('dj_rest_auth.urls')),
-    path('api/registration/', include('dj_rest_auth.registration.urls')),
-    
-    url(r'^account/', include('allauth.urls')),
-    url(r'^accounts-rest/registration/account-confirm-email/(?P<key>.+)/$', confirm_email, name='account_confirm_email'),
-    path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    
+    path("admin/", admin.site.urls),
+    path("api/", include("radio.urls"), name="Radio"),
+    path("api/auth/", include("dj_rest_auth.urls")),
+    path("api/registration/", include("dj_rest_auth.registration.urls")),
+    url(r"^account/", include("allauth.urls")),
+    url(
+        r"^accounts-rest/registration/account-confirm-email/(?P<key>.+)/$",
+        confirm_email,
+        name="account_confirm_email",
+    ),
+    path("swagger.json", schema_view.without_ui(cache_timeout=0), name="schema-json"),
+    path(
+        "swagger/",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ]

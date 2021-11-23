@@ -12,23 +12,22 @@ from users.managers import CustomUserManager
 
 class CustomUser(AbstractUser):
     username = None
-    email = models.EmailField(_('email address'), unique=True)
+    email = models.EmailField(_("email address"), unique=True)
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
 
     userProfile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, null=True)
     enabled = models.BooleanField(default=True)
-    
 
     def __str__(self):
         return self.email
 
 
 @receiver(post_save, sender=CustomUser)
-def createUserProfile(sender, instance:CustomUser, **kwargs):
+def createUserProfile(sender, instance: CustomUser, **kwargs):
     if instance.userProfile:
         return True
 
@@ -37,9 +36,9 @@ def createUserProfile(sender, instance:CustomUser, **kwargs):
         siteAdmin=False,
         description="",
         siteTheme="",
-        feedAllowed=False
+        feedAllowed=False,
     )
 
     UP.save()
-    instance.userProfile=UP
+    instance.userProfile = UP
     instance.save()
