@@ -19,7 +19,7 @@ from kombu.entity import Exchange
 import sentry_sdk
 
 sentry_sdk.init(
-    "http://d83fa527e0044728b20de7dab246ea6f@172.42.32.110:9000/2",
+    "https://39df0e1e9f694faa877dbcd4ec1ad07f@bigbrother.weathermelon.io//3",
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production.
@@ -166,7 +166,7 @@ if os.getenv("FORCE_SECURE", "False").lower() in ("true", "1", "t"):
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-USE_S3 = os.getenv("USE_S3") == "TRUE"
+USE_S3 = os.getenv("USE_S3", "False").lower() in ("true", "1", "t")
 
 if USE_S3:
     # aws settings
@@ -179,14 +179,15 @@ if USE_S3:
     # s3 static settings
     STATIC_LOCATION = "static"
     STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
-    STATICFILES_STORAGE = "hello_django.storage_backends.StaticStorage"
+    STATICFILES_STORAGE = "trunkplayerNG.storage_backends.StaticStorage"
     # s3 public media settings
     PUBLIC_MEDIA_LOCATION = "media"
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
-    DEFAULT_FILE_STORAGE = "hello_django.storage_backends.PublicMediaStorage"
     # s3 private media settings
     PRIVATE_MEDIA_LOCATION = "private"
-    PRIVATE_FILE_STORAGE = "hello_django.storage_backends.PrivateMediaStorage"
+    PRIVATE_FILE_STORAGE = "trunkplayerNG.storage_backends.PrivateMediaStorage"
+
+    DEFAULT_FILE_STORAGE = "trunkplayerNG.storage_backends.PrivateMediaStorage"
 else:
     STATIC_URL = "/staticfiles/"
     STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")

@@ -3,7 +3,6 @@ import uuid
 from django.db.models.base import ModelBase
 from django.db.models.enums import Choices
 from datetime import datetime
-from trunkplayerNG.radio.utils import TransmissionFrequency
 from trunkplayerNG.storage_backends import PrivateMediaStorage
 
 
@@ -101,9 +100,9 @@ class TalkGroup(models.Model):
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     decimalID = models.IntegerField(db_index=True)
-    alphaTag = models.CharField(max_length=30)
+    alphaTag = models.CharField(max_length=30,blank=True)
     description = models.CharField(max_length=100, blank=True, null=True)
-    encrypted = models.BooleanField(default=True)
+    encrypted = models.BooleanField(default=True, blank=True)
     agency = models.ManyToManyField(Agency, blank=True, null=True)
 
     def __str__(self):
@@ -152,9 +151,9 @@ class TransmissionUnit(models.Model):
     time = models.DateTimeField(db_index=True)
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
     pos = models.IntegerField(default=0)
-    emergency = models.IntegerField(default=0)
-    signal_system = models.IntegerField(default=0)
-    tag = models.IntegerField(default=0)
+    emergency = models.BooleanField(default=0)
+    signal_system = models.CharField(default="", blank=True, max_length=50)
+    tag = models.CharField(default="", blank=True,  max_length=255)
     length = models.FloatField(default=0.0)
 
     def __str__(self):
@@ -184,12 +183,12 @@ class Transmission(models.Model):
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     startTime = models.DateTimeField()
     endTime = models.DateTimeField(null=True, blank=True)
-    audioFile = models.FileField(storage=PrivateMediaStorage())
+    audioFile = models.FileField()
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
     encrypted = models.BooleanField(default=False, db_index=True)
     emergency = models.BooleanField(default=False, db_index=True)
     units = models.ManyToManyField(TransmissionUnit)
-    frequencys = models.ManyToManyField(TransmissionFrequency)
+    frequencys = models.ManyToManyField(TransmissionFreq)
     frequency = models.FloatField(default=0.0)
     length = models.FloatField(default=0.0)
     json = models.JSONField(null=True, blank=True)

@@ -1,3 +1,4 @@
+import base64
 from django.shortcuts import render
 from rest_framework.views import APIView
 from django.http import Http404
@@ -14,6 +15,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from radio.transmission import new_transmission_handler
+from .utils import TransmissionDetails
 
 
 class UserProfileList(APIView):
@@ -559,7 +561,7 @@ class TalkGroupCreate(APIView):
         tags=["TalkGroup"],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=["system", "decimalID", "alphaTag", "encrypted"],
+            required=["system", "decimalID"],
             properties={
                 "system": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System UUID"
@@ -872,22 +874,22 @@ class TransmissionUnitList(APIView):
         return Response(serializer.data)
 
 
-# class TransmissionUnitCreate(APIView):
-#     queryset = TransmissionUnit.objects.all()
-#     serializer_class = TransmissionUnitSerializer
+class TransmissionUnitCreate(APIView):
+    queryset = TransmissionUnit.objects.all()
+    serializer_class = TransmissionUnitSerializer
 
-#     @swagger_auto_schema(tags=['TransmissionUnit'])
-#     def post(self, request, format=None):
-#         data = JSONParser().parse(request)
+    @swagger_auto_schema(tags=['TransmissionUnit'])
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
 
-#         if not "UUID" in data:
-#             data["UUID"] =  uuid.uuid4()
+        if not "UUID" in data:
+            data["UUID"] =  uuid.uuid4()
 
-#         serializer = TransmissionUnitSerializer(data=data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = TransmissionUnitSerializer(data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TransmissionUnitView(APIView):
@@ -941,7 +943,7 @@ class TransmissionList(APIView):
 
 class TransmissionCreate(APIView):
     queryset = Transmission.objects.all()
-    serializer_class = TransmissionSerializer
+    serializer_class = TransmissionUploadSerializer
 
     @swagger_auto_schema(
         tags=["Transmission"],
@@ -959,6 +961,9 @@ class TransmissionCreate(APIView):
                 "audioFile": openapi.Schema(
                     type=openapi.TYPE_STRING, description="M4A Base64"
                 ),
+                "name": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Audio File Name"
+                ),
             },
         ),
     )
@@ -967,11 +972,24 @@ class TransmissionCreate(APIView):
 
         try:
             Callback = new_transmission_handler(data)
-            Callback["UUID"] = uuid.uuid4()
-            return Response(Callback)
-        except Exception as e:
-            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
+            Callback["UUID"] = uuid.uuid4()
+
+            recorderX:SystemRecorder =  SystemRecorder.objects.get(UUID=Callback["recorder"])
+            Callback["system"] = str(recorderX.system.UUID)
+            
+            TX = TransmissionUploadSerializer(data=Callback, partial=True)  
+
+            if TX.is_valid():
+                TX.save()
+            print(TX.data)
+            print(TX.errors)
+            #return Response(TX.data)
+            return Response({"success":True})
+        except Exception as e:
+            raise(e)
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+            
 
 class TransmissionView(APIView):
     queryset = Transmission.objects.all()

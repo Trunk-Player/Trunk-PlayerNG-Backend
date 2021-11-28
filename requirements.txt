@@ -35,6 +35,7 @@ six==1.16.0
 sqlparse==0.4.2
 uritemplate==4.1.1
 urllib3==1.26.7
+boto3
 celery
 django-celery
 django-celery-results
