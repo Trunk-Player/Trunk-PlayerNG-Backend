@@ -2,6 +2,7 @@ import base64, json
 from .utils import TransmissionDetails
 from django.core.files.base import ContentFile
 from radio.models import System, SystemRecorder, TalkGroup
+
 def new_transmission_handler(data):
     recorderUUID = data["recorder"]
     jsonx = data["json"]
@@ -14,8 +15,10 @@ def new_transmission_handler(data):
     Payload: TransmissionDetails = TransmissionDetails(jsonx)
     audio_bytes:bytes = base64.b64decode(audio)
 
-    Payload = Payload._to_json()
-    print(json.dumps(Payload,indent=4))
+    if Payload.validate_upload(recorderUUID):
+        Payload = Payload._to_json()
+    else:
+        return False
 
     Payload["recorder"] = recorderUUID
     Payload["audioFile"] = ContentFile(audio_bytes, name=f'{data["name"]}.m4a')

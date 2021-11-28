@@ -874,22 +874,22 @@ class TransmissionUnitList(APIView):
         return Response(serializer.data)
 
 
-class TransmissionUnitCreate(APIView):
-    queryset = TransmissionUnit.objects.all()
-    serializer_class = TransmissionUnitSerializer
+# class TransmissionUnitCreate(APIView):
+#     queryset = TransmissionUnit.objects.all()
+#     serializer_class = TransmissionUnitSerializer
 
-    @swagger_auto_schema(tags=['TransmissionUnit'])
-    def post(self, request, format=None):
-        data = JSONParser().parse(request)
+#     @swagger_auto_schema(tags=['TransmissionUnit'])
+#     def post(self, request, format=None):
+#         data = JSONParser().parse(request)
 
-        if not "UUID" in data:
-            data["UUID"] =  uuid.uuid4()
+#         if not "UUID" in data:
+#             data["UUID"] =  uuid.uuid4()
 
-        serializer = TransmissionUnitSerializer(data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         serializer = TransmissionUnitSerializer(data=data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TransmissionUnitView(APIView):
@@ -943,7 +943,7 @@ class TransmissionList(APIView):
 
 class TransmissionCreate(APIView):
     queryset = Transmission.objects.all()
-    serializer_class = TransmissionUploadSerializer
+    serializer_class = TransmissionSerializer
 
     @swagger_auto_schema(
         tags=["Transmission"],
@@ -973,21 +973,20 @@ class TransmissionCreate(APIView):
         try:
             Callback = new_transmission_handler(data)
 
+            if not Callback:
+                return Response("Not allowed to post this talkgroup", status=status.HTTP_401_UNAUTHORIZED)
+
             Callback["UUID"] = uuid.uuid4()
 
             recorderX:SystemRecorder =  SystemRecorder.objects.get(UUID=Callback["recorder"])
             Callback["system"] = str(recorderX.system.UUID)
             
-            TX = TransmissionUploadSerializer(data=Callback, partial=True)  
+            TX = TransmissionSerializer(data=Callback, partial=True)  
 
             if TX.is_valid():
                 TX.save()
-            print(TX.data)
-            print(TX.errors)
-            #return Response(TX.data)
             return Response({"success":True})
         except Exception as e:
-            raise(e)
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
             
 

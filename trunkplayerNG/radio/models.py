@@ -191,7 +191,6 @@ class Transmission(models.Model):
     frequencys = models.ManyToManyField(TransmissionFreq)
     frequency = models.FloatField(default=0.0)
     length = models.FloatField(default=0.0)
-    json = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"[{self.talkgroup}][{self.startTime}] {self.UUID}"

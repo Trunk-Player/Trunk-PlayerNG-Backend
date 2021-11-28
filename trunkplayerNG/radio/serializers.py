@@ -68,51 +68,11 @@ class TransmissionUnitSerializer(serializers.ModelSerializer):
 
 
 
-class TransmissionUploadSerializer(serializers.ModelSerializer):
-    # units = TransmissionUnitSerializer(many=True)
-    # talkgroup = serializers.SlugRelatedField(
-    #     read_only=False,
-    #     queryset=TalkGroup.objects.all(),
-    #     slug_field='decimalID'
-    # )
-    class Meta:
-        model = Transmission
-        fields = ['UUID', 'system', 'recorder', 'startTime', 'endTime', 'audioFile', 'talkgroup', 'encrypted', 'units', 'frequencys','frequency', 'length']
-       
-
-    # def create(self, validated_data):
-    #     Talkgroup = validated_data.pop('talkgroup')
-    #     system = validated_data["system"]
-
-    #     Talkgroup_data = {'talkgroup': Talkgroup, 'system': system}
-    #     TGs =  TalkGroupSerializer(data=Talkgroup_data, partial=True)
-    #     TGs.is_valid()
-    #     TGs.save()
-        
-    #     #TG, created = TalkGroup.objects.create(decimalID=int(Talkgroup), system=system)
-
-    #     units = validated_data.pop('units')
-    #     UX = []
-    #     for unitX in units:
-    #         unitS = TransmissionUnitSerializer(data=unitX, partial=True)
-    #         unitS.is_valid(raise_exception=True)
-    #         unitS.save()
-    #         UX.append(unitS)
-           
-    #         # UnitID = unitX.pop("unit")
-    #         # unit = Unit.objects.create(decimalID=int(UnitID))
-    #         #UTX, created = TransmissionUnit.objects.create(unit=unit, **unitX)
-    #         #UX.append(UTX)
-
-        
-
-    #    return Transmission.objects.create(units=UX, talkgroup=TGs, **validated_data)
-
 class TransmissionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Transmission
-        fields = ['UUID', 'system', 'recorder', 'startTime', 'endTime', 'audioFile', 'talkgroup', 'encrypted', 'units', 'frequency', 'length']
+        fields = ['UUID', 'system', 'recorder', 'startTime', 'endTime', 'audioFile', 'talkgroup', 'encrypted', 'units', 'frequency', 'frequencys', 'length']
 
 class IncidentSerializer(serializers.ModelSerializer):
     transmission = TransmissionSerializer(many=True)

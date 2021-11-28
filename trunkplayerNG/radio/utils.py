@@ -1,7 +1,7 @@
 from datetime import datetime
 import decimal
 import uuid
-from radio.models import System, TalkGroup, TransmissionFreq, Unit, TransmissionUnit
+from radio.models import System, SystemRecorder, TalkGroup, TransmissionFreq, Unit, TransmissionUnit
 
 class TransmissionSrc:
     def __init__(self, payload):
@@ -117,3 +117,31 @@ class TransmissionDetails:
             payload["frequencys"].append(Freq._create())
 
         return payload
+
+    def validate_upload(self, recorderUUID):
+        system:System = System.objects.get(UUID=self.system)
+        recorder:SystemRecorder = SystemRecorder.objects.get(UUID=recorderUUID)
+
+        if len(recorder.talkgroupsAllowed) > 0 and len(recorder.talkgroupsDenyed) == 0:
+            talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
+            if talkgroup in recorder.talkgroupsAllowed.objects.all():
+                return True
+            else:
+                return False
+        elif len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) > 0:
+            talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
+            if talkgroup in recorder.talkgroupsDenyed.objects.all():
+                return False
+            else:
+                return True
+        elif len(recorder.talkgroupsAllowed) > 0 and len(recorder.talkgroupsDenyed) > 0:
+            talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
+            if talkgroup in recorder.talkgroupsDenyed.objects.all():
+                return False
+            else:
+                if talkgroup in recorder.talkgroupsAllowed.objects.all():
+                    return True
+                else:
+                    return False
+        elif len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) == 0:
+            return True
