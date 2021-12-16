@@ -1,6 +1,7 @@
 import base64
 from django.shortcuts import render
 from rest_framework.views import APIView
+from rest_framework import permissions
 from django.http import Http404
 from rest_framework.response import Response
 from radio.models import *
@@ -15,16 +16,22 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from radio.transmission import new_transmission_handler
-from .utils import TransmissionDetails
+from radio.utils import TransmissionDetails
+from radio.permission import IsSAOrReadOnly, IsSAOrUser, IsSiteAdmin
 
 
 class UserProfileList(APIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
+    permission_classes = [IsSAOrUser]
 
     @swagger_auto_schema(tags=["UserProfile"])
     def get(self, request, format=None):
-        userProfile = UserProfile.objects.all()
+        user = request.user.userProfile
+        if user.siteAdmin:
+            userProfile = UserProfile.objects.all()
+        else:
+            userProfile = UserProfile.objects.filter(UUID=user.UUID)
         serializer = UserProfileSerializer(userProfile, many=True)
         return Response(serializer.data)
 
@@ -32,6 +39,8 @@ class UserProfileList(APIView):
 class UserProfileView(APIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
+    permission_classes = [IsSAOrReadOnly]
+
 
     def get_object(self, UUID):
         try:
@@ -41,7 +50,11 @@ class UserProfileView(APIView):
 
     @swagger_auto_schema(tags=["UserProfile"])
     def get(self, request, UUID, format=None):
-        userProfile = self.get_object(UUID)
+        user = request.user.userProfile
+        if user.siteAdmin or user.UUID == UUID:
+            userProfile = self.get_object(UUID)
+        else:
+            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=401)
         serializer = UserProfileSerializer(userProfile)
         return Response(serializer.data)
 
@@ -68,7 +81,11 @@ class UserProfileView(APIView):
         ),
     )
     def put(self, request, UUID, format=None):
-        userProfile = self.get_object(UUID)
+        user = request.user.userProfile
+        if user.siteAdmin or user.UUID == UUID:
+            userProfile = self.get_object(UUID)
+        else:
+            return  Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=401)
         serializer = UserProfileSerializer(userProfile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -77,7 +94,11 @@ class UserProfileView(APIView):
 
     @swagger_auto_schema(tags=["UserProfile"])
     def delete(self, request, UUID, format=None):
-        userProfile = self.get_object(UUID)
+        user = request.user.userProfile
+        if user.siteAdmin or user.UUID == UUID:
+            userProfile = self.get_object(UUID)
+        else:
+            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=401)
         userProfile.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -85,6 +106,7 @@ class UserProfileView(APIView):
 class SystemACLList(APIView):
     queryset = SystemACL.objects.all()
     serializer_class = SystemACLSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(tags=["SystemACL"])
     def get(self, request, format=None):
@@ -96,6 +118,7 @@ class SystemACLList(APIView):
 class SystemACLCreate(APIView):
     queryset = SystemACL.objects.all()
     serializer_class = SystemACLSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(
         tags=["SystemACL"],
@@ -129,6 +152,7 @@ class SystemACLCreate(APIView):
 class SystemACLView(APIView):
     queryset = SystemACL.objects.all()
     serializer_class = SystemACLSerializer
+    permission_classes = [IsSiteAdmin]
 
     def get_object(self, UUID):
         try:
@@ -177,10 +201,23 @@ class SystemACLView(APIView):
 class SystemList(APIView):
     queryset = System.objects.all()
     serializer_class = SystemSerializer
+    permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["System"])
     def get(self, request, format=None):
-        Systems = System.objects.all()
+        user:UserProfile = request.user.userProfile
+        if user.siteAdmin:
+            Systems = System.objects.all()
+        else:
+            userACLs = []
+            ACLs = SystemACL.objects.all()
+            for ACL in ACLs:
+                ACL:SystemACL
+                if ACL.users.filter(UUID=user.UUID):
+                    userACLs.append(ACL)
+                elif ACL.public:
+                    userACLs.append(ACL)
+            Systems = System.objects.filter(systemACL__in=userACLs)
         serializer = SystemSerializer(Systems, many=True)
         return Response(serializer.data)
 

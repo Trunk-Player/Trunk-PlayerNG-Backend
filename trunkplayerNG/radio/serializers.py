@@ -2,6 +2,7 @@ from os import system
 from typing import SupportsRound
 from rest_framework import serializers
 from radio.models import *
+from rest_framework import permissions
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -44,6 +45,7 @@ class SystemRecorderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemRecorder
         fields = ['UUID', 'system', 'name', 'siteID', 'enabled', 'user', 'talkgroupsAllowed', 'talkgroupsDenyed', 'forwarderWebhookUUID']
+
 
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
