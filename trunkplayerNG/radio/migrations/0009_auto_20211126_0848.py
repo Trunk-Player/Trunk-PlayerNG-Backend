@@ -9,60 +9,74 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0008_auto_20211102_2238'),
+        ("radio", "0008_auto_20211102_2238"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='TransmissionFreq',
+            name="TransmissionFreq",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('time', models.DateTimeField()),
-                ('freq', models.IntegerField(db_index=True, default=0)),
-                ('pos', models.IntegerField(default=0)),
-                ('len', models.IntegerField(default=0)),
-                ('error_count', models.IntegerField(default=0)),
-                ('spike_count', models.IntegerField(default=0)),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("time", models.DateTimeField()),
+                ("freq", models.IntegerField(db_index=True, default=0)),
+                ("pos", models.IntegerField(default=0)),
+                ("len", models.IntegerField(default=0)),
+                ("error_count", models.IntegerField(default=0)),
+                ("spike_count", models.IntegerField(default=0)),
             ],
         ),
         migrations.AddField(
-            model_name='transmission',
-            name='emergency',
+            model_name="transmission",
+            name="emergency",
             field=models.BooleanField(db_index=True, default=False),
         ),
         migrations.AddField(
-            model_name='transmission',
-            name='json',
+            model_name="transmission",
+            name="json",
             field=models.JSONField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2021, 11, 26, 8, 48, 3, 695560)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2021, 11, 26, 8, 48, 3, 695560)
+            ),
         ),
         migrations.AlterField(
-            model_name='talkgroup',
-            name='agency',
-            field=models.ManyToManyField(blank=True, null=True, to='radio.Agency'),
+            model_name="talkgroup",
+            name="agency",
+            field=models.ManyToManyField(blank=True, null=True, to="radio.Agency"),
         ),
         migrations.AlterField(
-            model_name='transmission',
-            name='audioFile',
-            field=models.FileField(storage=trunkplayerNG.storage_backends.PrivateMediaStorage(), upload_to=''),
+            model_name="transmission",
+            name="audioFile",
+            field=models.FileField(
+                storage=trunkplayerNG.storage_backends.PrivateMediaStorage(),
+                upload_to="",
+            ),
         ),
         migrations.AlterField(
-            model_name='transmission',
-            name='encrypted',
+            model_name="transmission",
+            name="encrypted",
             field=models.BooleanField(db_index=True, default=False),
         ),
         migrations.AlterField(
-            model_name='transmission',
-            name='startTime',
+            model_name="transmission",
+            name="startTime",
             field=models.DateTimeField(),
         ),
         migrations.AddField(
-            model_name='transmission',
-            name='frequencys',
-            field=models.ManyToManyField(to='radio.TransmissionFreq'),
+            model_name="transmission",
+            name="frequencys",
+            field=models.ManyToManyField(to="radio.TransmissionFreq"),
         ),
     ]

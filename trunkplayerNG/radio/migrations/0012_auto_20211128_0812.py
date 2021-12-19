@@ -7,33 +7,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0011_auto_20211127_1054'),
+        ("radio", "0011_auto_20211127_1054"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2021, 11, 28, 8, 12, 14, 592706)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2021, 11, 28, 8, 12, 14, 592706)
+            ),
         ),
         migrations.AlterField(
-            model_name='talkgroup',
-            name='alphaTag',
+            model_name="talkgroup",
+            name="alphaTag",
             field=models.CharField(blank=True, max_length=30),
         ),
         migrations.AlterField(
-            model_name='talkgroup',
-            name='encrypted',
+            model_name="talkgroup",
+            name="encrypted",
             field=models.BooleanField(blank=True, default=True),
         ),
         migrations.AlterField(
-            model_name='transmissionunit',
-            name='signal_system',
-            field=models.CharField(blank=True, default='', max_length=50),
+            model_name="transmissionunit",
+            name="signal_system",
+            field=models.CharField(blank=True, default="", max_length=50),
         ),
         migrations.AlterField(
-            model_name='transmissionunit',
-            name='tag',
-            field=models.CharField(blank=True, default='', max_length=255),
+            model_name="transmissionunit",
+            name="tag",
+            field=models.CharField(blank=True, default="", max_length=255),
         ),
     ]

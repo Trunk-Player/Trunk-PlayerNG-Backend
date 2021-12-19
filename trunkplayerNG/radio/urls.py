@@ -144,12 +144,8 @@ urlpatterns = [
         "radio/scanlist/<uuid:UUID>", views.ScanListView.as_view(), name="scanlist_view"
     ),
     path("radio/scanner/list", views.ScannerList.as_view(), name="scanner_list"),
-    path(
-        "radio/scanner/create", views.ScannerCreate.as_view(), name="scanner_create"
-    ),
-    path(
-        "radio/scanner/<uuid:UUID>", views.ScannerView.as_view(), name="scanner_view"
-    ),
+    path("radio/scanner/create", views.ScannerCreate.as_view(), name="scanner_create"),
+    path("radio/scanner/<uuid:UUID>", views.ScannerView.as_view(), name="scanner_view"),
     path(
         "radio/globalannouncement/list",
         views.GlobalAnnouncementList.as_view(),

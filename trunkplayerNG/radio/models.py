@@ -100,7 +100,7 @@ class TalkGroup(models.Model):
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     decimalID = models.IntegerField(db_index=True)
-    alphaTag = models.CharField(max_length=30,blank=True)
+    alphaTag = models.CharField(max_length=30, blank=True)
     description = models.CharField(max_length=100, blank=True, null=True)
     encrypted = models.BooleanField(default=True, blank=True)
     agency = models.ManyToManyField(Agency, blank=True, null=True)
@@ -153,7 +153,7 @@ class TransmissionUnit(models.Model):
     pos = models.IntegerField(default=0)
     emergency = models.BooleanField(default=0)
     signal_system = models.CharField(default="", blank=True, max_length=50)
-    tag = models.CharField(default="", blank=True,  max_length=255)
+    tag = models.CharField(default="", blank=True, max_length=255)
     length = models.FloatField(default=0.0)
 
     def __str__(self):
@@ -236,6 +236,7 @@ class ScanList(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class Scanner(models.Model):
     UUID = models.UUIDField(

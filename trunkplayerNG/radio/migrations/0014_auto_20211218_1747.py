@@ -9,28 +9,48 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0013_auto_20211128_0849'),
+        ("radio", "0013_auto_20211128_0849"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='transmission',
-            name='json',
+            model_name="transmission",
+            name="json",
         ),
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2021, 12, 18, 17, 47, 23, 905551)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2021, 12, 18, 17, 47, 23, 905551)
+            ),
         ),
         migrations.CreateModel(
-            name='Scanner',
+            name="Scanner",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('description', models.CharField(blank=True, max_length=100, null=True)),
-                ('public', models.BooleanField(default=True)),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.userprofile')),
-                ('scanlists', models.ManyToManyField(to='radio.ScanList')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                (
+                    "description",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("public", models.BooleanField(default=True)),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="radio.userprofile",
+                    ),
+                ),
+                ("scanlists", models.ManyToManyField(to="radio.ScanList")),
             ],
         ),
     ]

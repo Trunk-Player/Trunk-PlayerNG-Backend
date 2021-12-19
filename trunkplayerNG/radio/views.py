@@ -1,8 +1,10 @@
 import base64
+from os import stat
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import permissions
 from django.http import Http404
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from radio.models import *
 from radio.serializers import *
@@ -41,7 +43,6 @@ class UserProfileView(APIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsSAOrReadOnly]
 
-
     def get_object(self, UUID):
         try:
             return UserProfile.objects.get(UUID=UUID)
@@ -54,7 +55,7 @@ class UserProfileView(APIView):
         if user.siteAdmin or user.UUID == UUID:
             userProfile = self.get_object(UUID)
         else:
-            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=401)
+            return Response(status=401)
         serializer = UserProfileSerializer(userProfile)
         return Response(serializer.data)
 
@@ -85,7 +86,7 @@ class UserProfileView(APIView):
         if user.siteAdmin or user.UUID == UUID:
             userProfile = self.get_object(UUID)
         else:
-            return  Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=401)
+            return Response(status=401)
         serializer = UserProfileSerializer(userProfile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -98,7 +99,7 @@ class UserProfileView(APIView):
         if user.siteAdmin or user.UUID == UUID:
             userProfile = self.get_object(UUID)
         else:
-            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=401)
+            return Response(status=401)
         userProfile.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -205,14 +206,14 @@ class SystemList(APIView):
 
     @swagger_auto_schema(tags=["System"])
     def get(self, request, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         if user.siteAdmin:
             Systems = System.objects.all()
         else:
             userACLs = []
             ACLs = SystemACL.objects.all()
             for ACL in ACLs:
-                ACL:SystemACL
+                ACL: SystemACL
                 if ACL.users.filter(UUID=user.UUID):
                     userACLs.append(ACL)
                 elif ACL.public:
@@ -272,27 +273,27 @@ class SystemView(APIView):
 
     @swagger_auto_schema(tags=["System"])
     def get(self, request, UUID, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         userACLs = []
         ACLs = SystemACL.objects.all()
         for ACL in ACLs:
-            ACL:SystemACL
+            ACL: SystemACL
             if ACL.users.filter(UUID=user.UUID):
                 userACLs.append(ACL)
             elif ACL.public:
                 userACLs.append(ACL)
-        
-        system:System = self.get_object(UUID)
+
+        system: System = self.get_object(UUID)
 
         if user.siteAdmin:
-            serializer = SystemSerializer(system)   
+            serializer = SystemSerializer(system)
             return Response(serializer.data)
 
         if system.systemACL.UUID in userACLs:
-            serializer = SystemSerializer(system)   
+            serializer = SystemSerializer(system)
             return Response(serializer.data)
         else:
-            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"},  status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     @swagger_auto_schema(
         tags=["System"],
@@ -307,27 +308,27 @@ class SystemView(APIView):
         ),
     )
     def put(self, request, UUID, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         data = JSONParser().parse(request)
         System = self.get_object(UUID)
         serializer = SystemSerializer(System, data=data, partial=True)
-        if user.siteAdmin:           
+        if user.siteAdmin:
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
         else:
-            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["System"])
     def delete(self, request, UUID, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         System = self.get_object(UUID)
-        if user.siteAdmin:        
+        if user.siteAdmin:
             System.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
 class SystemForwarderList(APIView):
@@ -503,6 +504,9 @@ class CityView(APIView):
         ),
     )
     def put(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            raise PermissionDenied
         data = JSONParser().parse(request)
         City = self.get_object(UUID)
         serializer = CitySerializer(City, data=data, partial=True)
@@ -513,6 +517,9 @@ class CityView(APIView):
 
     @swagger_auto_schema(tags=["City"])
     def delete(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            raise PermissionDenied
         City = self.get_object(UUID)
         City.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -601,6 +608,9 @@ class AgencyView(APIView):
         ),
     )
     def put(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            raise PermissionDenied
         data = JSONParser().parse(request)
         Agency = self.get_object(UUID)
         serializer = AgencySerializer(Agency, data=data, partial=True)
@@ -611,6 +621,9 @@ class AgencyView(APIView):
 
     @swagger_auto_schema(tags=["Agency"])
     def delete(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            raise PermissionDenied
         Agency = self.get_object(UUID)
         Agency.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -623,7 +636,7 @@ class TalkGroupList(APIView):
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def get(self, request, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         if user.siteAdmin:
             TalkGroups = TalkGroup.objects.all()
             serializer = TalkGroupSerializer(TalkGroups, many=True)
@@ -683,7 +696,6 @@ class TalkGroupView(APIView):
     serializer_class = TalkGroupSerializer
     permission_classes = [IsSAOrReadOnly]
 
-
     def get_object(self, UUID):
         try:
             return TalkGroup.objects.get(UUID=UUID)
@@ -692,16 +704,16 @@ class TalkGroupView(APIView):
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def get(self, request, UUID, format=None):
-        user:UserProfile = request.user.userProfile
-        talkGroup:TalkGroup = self.get_object(UUID)
+        user: UserProfile = request.user.userProfile
+        talkGroup: TalkGroup = self.get_object(UUID)
         if user.siteAdmin:
             serializer = TalkGroupSerializer(talkGroup)
             return Response(serializer.data)
         else:
             systemUUIDs = getUserAllowedSystems(user.UUID)
             if not TalkGroup.system.UUID in systemUUIDs:
-                return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=status.HTTP_401_UNAUTHORIZED) 
-       
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
         serializer = TalkGroupSerializer(talkGroup)
         return Response(serializer.data)
 
@@ -1066,21 +1078,26 @@ class TransmissionCreate(APIView):
             Callback = new_transmission_handler(data)
 
             if not Callback:
-                return Response("Not allowed to post this talkgroup", status=status.HTTP_401_UNAUTHORIZED)
+                return Response(
+                    "Not allowed to post this talkgroup",
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
 
             Callback["UUID"] = uuid.uuid4()
 
-            recorderX:SystemRecorder =  SystemRecorder.objects.get(UUID=Callback["recorder"])
+            recorderX: SystemRecorder = SystemRecorder.objects.get(
+                UUID=Callback["recorder"]
+            )
             Callback["system"] = str(recorderX.system.UUID)
-            
-            TX = TransmissionSerializer(data=Callback, partial=True)  
+
+            TX = TransmissionSerializer(data=Callback, partial=True)
 
             if TX.is_valid():
                 TX.save()
-            return Response({"success":True})
+            return Response({"success": True})
         except Exception as e:
             return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
-            
+
 
 class TransmissionView(APIView):
     queryset = Transmission.objects.all()

@@ -1,7 +1,17 @@
 from datetime import datetime
 import decimal
 import uuid
-from radio.models import System, SystemACL, SystemRecorder, TalkGroup, TransmissionFreq, Unit, TransmissionUnit, UserProfile
+from radio.models import (
+    System,
+    SystemACL,
+    SystemRecorder,
+    TalkGroup,
+    TransmissionFreq,
+    Unit,
+    TransmissionUnit,
+    UserProfile,
+)
+
 
 class TransmissionSrc:
     def __init__(self, payload):
@@ -10,7 +20,7 @@ class TransmissionSrc:
         self.emergency = payload.get("emergency") in ("true", "1", "t")
         self.signal_system = payload.get("signal_system")
         self.tag = payload.get("tag")
-        self.time = datetime.fromtimestamp(payload.get('time')).isoformat()
+        self.time = datetime.fromtimestamp(payload.get("time")).isoformat()
 
     def _to_json(self):
         payload = {
@@ -24,16 +34,18 @@ class TransmissionSrc:
         return payload
 
     def _create(self, system):
-        unit, created = Unit.objects.get_or_create(system=system, decimalID=int(self.src))
+        unit, created = Unit.objects.get_or_create(
+            system=system, decimalID=int(self.src)
+        )
         unit.save()
         TXS = TransmissionUnit(
-            UUID = uuid.uuid4(),
+            UUID=uuid.uuid4(),
             unit=unit,
             time=self.time,
             pos=self.pos,
             emergency=self.emergency,
             signal_system=self.signal_system,
-            tag=self.tag
+            tag=self.tag,
         )
         TXS.save()
         return str(TXS.UUID)
@@ -46,7 +58,7 @@ class TransmissionFrequency:
         self.len = payload.get("len")
         self.error_count = payload.get("error_count")
         self.spike_count = payload.get("spike_count")
-        self.time = datetime.fromtimestamp(payload.get('time'))
+        self.time = datetime.fromtimestamp(payload.get("time"))
 
     def _to_json(self):
         payload = {
@@ -57,10 +69,19 @@ class TransmissionFrequency:
             "error_count": self.error_count,
             "spike_count": self.spike_count,
         }
-        
+
         return payload
+
     def _create(self):
-        TF = TransmissionFreq(UUID=uuid.uuid4(), time=self.time, freq=self.freq, pos=self.pos, len=self.len, error_count=self.error_count, spike_count=self.spike_count)
+        TF = TransmissionFreq(
+            UUID=uuid.uuid4(),
+            time=self.time,
+            freq=self.freq,
+            pos=self.pos,
+            len=self.len,
+            error_count=self.error_count,
+            spike_count=self.spike_count,
+        )
         TF.save()
         return str(TF.UUID)
 
@@ -75,8 +96,8 @@ class TransmissionDetails:
         self.play_length = payload.get("play_length")
         self.source = payload.get("source")
 
-        self.start_time = datetime.fromtimestamp(payload.get('start_time')).isoformat()
-        self.stop_time = datetime.fromtimestamp(payload.get('stop_time')).isoformat()
+        self.start_time = datetime.fromtimestamp(payload.get("start_time")).isoformat()
+        self.stop_time = datetime.fromtimestamp(payload.get("stop_time")).isoformat()
 
         self.emergency = payload.get("emergency") in ("true", "1", "t")
         self.encrypted = payload.get("encrypted") in ("true", "1", "t")
@@ -92,8 +113,10 @@ class TransmissionDetails:
                 self.srcList.append(TransmissionSrc(src))
 
     def _to_json(self):
-        system:System = System.objects.get(UUID=self.system)
-        Talkgroup, created = TalkGroup.objects.get_or_create(decimalID=self.talkgroup, system=system)
+        system: System = System.objects.get(UUID=self.system)
+        Talkgroup, created = TalkGroup.objects.get_or_create(
+            decimalID=self.talkgroup, system=system
+        )
         Talkgroup.save()
 
         payload = {
@@ -113,14 +136,14 @@ class TransmissionDetails:
             payload["units"].append(unit._create(system))
 
         for Freq in self.freqList:
-            Freq:TransmissionFrequency
+            Freq: TransmissionFrequency
             payload["frequencys"].append(Freq._create())
 
         return payload
 
     def validate_upload(self, recorderUUID):
-        system:System = System.objects.get(UUID=self.system)
-        recorder:SystemRecorder = SystemRecorder.objects.get(UUID=recorderUUID)
+        system: System = System.objects.get(UUID=self.system)
+        recorder: SystemRecorder = SystemRecorder.objects.get(UUID=recorderUUID)
 
         if len(recorder.talkgroupsAllowed) > 0 and len(recorder.talkgroupsDenyed) == 0:
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
@@ -128,7 +151,9 @@ class TransmissionDetails:
                 return True
             else:
                 return False
-        elif len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) > 0:
+        elif (
+            len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) > 0
+        ):
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
             if talkgroup in recorder.talkgroupsDenyed.objects.all():
                 return False
@@ -143,14 +168,17 @@ class TransmissionDetails:
                     return True
                 else:
                     return False
-        elif len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) == 0:
+        elif (
+            len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) == 0
+        ):
             return True
+
 
 def getUserAllowedSystems(UserUUID):
     userACLs = []
     ACLs = SystemACL.objects.all()
     for ACL in ACLs:
-        ACL:SystemACL
+        ACL: SystemACL
         if ACL.users.filter(UUID=UserUUID):
             userACLs.append(ACL)
         elif ACL.public:
