@@ -16,8 +16,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from radio.transmission import new_transmission_handler
-from radio.utils import TransmissionDetails
-from radio.permission import IsSAOrReadOnly, IsSAOrUser, IsSiteAdmin
+from radio.utils import TransmissionDetails, getUserAllowedSystems
+from radio.permission import IsSAOrReadOnly, IsSAOrFeedUser, IsSAOrUser, IsSiteAdmin
 
 
 class UserProfileList(APIView):
@@ -292,7 +292,7 @@ class SystemView(APIView):
             serializer = SystemSerializer(system)   
             return Response(serializer.data)
         else:
-            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=401)
+            return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"},  status=status.HTTP_401_UNAUTHORIZED)
 
     @swagger_auto_schema(
         tags=["System"],
@@ -333,6 +333,7 @@ class SystemView(APIView):
 class SystemForwarderList(APIView):
     queryset = SystemForwarder.objects.all()
     serializer_class = SystemForwarderSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(tags=["SystemForwarder"])
     def get(self, request, format=None):
@@ -344,6 +345,7 @@ class SystemForwarderList(APIView):
 class SystemForwarderCreate(APIView):
     queryset = SystemForwarder.objects.all()
     serializer_class = SystemForwarderSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(
         tags=["SystemForwarder"],
@@ -378,6 +380,7 @@ class SystemForwarderCreate(APIView):
 class SystemForwarderView(APIView):
     queryset = SystemForwarder.objects.all()
     serializer_class = SystemForwarderSerializer
+    permission_classes = [IsSiteAdmin]
 
     def get_object(self, UUID):
         try:
@@ -426,6 +429,7 @@ class SystemForwarderView(APIView):
 class CityList(APIView):
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["City"])
     def get(self, request, format=None):
@@ -437,6 +441,7 @@ class CityList(APIView):
 class CityCreate(APIView):
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(
         tags=["City"],
@@ -469,6 +474,7 @@ class CityCreate(APIView):
 class CityView(APIView):
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    permission_classes = [IsSAOrReadOnly]
 
     def get_object(self, UUID):
         try:
@@ -515,6 +521,7 @@ class CityView(APIView):
 class AgencyList(APIView):
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
+    permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["Agency"])
     def get(self, request, format=None):
@@ -526,6 +533,7 @@ class AgencyList(APIView):
 class AgencyCreate(APIView):
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(
         tags=["Agency"],
@@ -561,6 +569,7 @@ class AgencyCreate(APIView):
 class AgencyView(APIView):
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
+    permission_classes = [IsSAOrReadOnly]
 
     def get_object(self, UUID):
         try:
@@ -610,11 +619,18 @@ class AgencyView(APIView):
 class TalkGroupList(APIView):
     queryset = TalkGroup.objects.all()
     serializer_class = TalkGroupSerializer
+    permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def get(self, request, format=None):
-        TalkGroups = TalkGroup.objects.all()
-        serializer = TalkGroupSerializer(TalkGroups, many=True)
+        user:UserProfile = request.user.userProfile
+        if user.siteAdmin:
+            TalkGroups = TalkGroup.objects.all()
+            serializer = TalkGroupSerializer(TalkGroups, many=True)
+        else:
+            systemUUIDs = getUserAllowedSystems(user.UUID)
+            TalkGroups = TalkGroup.objects.all(system__in=systemUUIDs)
+            serializer = TalkGroupSerializer(TalkGroups, many=True)
         return Response(serializer.data)
 
 
@@ -665,6 +681,8 @@ class TalkGroupCreate(APIView):
 class TalkGroupView(APIView):
     queryset = TalkGroup.objects.all()
     serializer_class = TalkGroupSerializer
+    permission_classes = [IsSAOrReadOnly]
+
 
     def get_object(self, UUID):
         try:
@@ -674,8 +692,17 @@ class TalkGroupView(APIView):
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def get(self, request, UUID, format=None):
-        TalkGroup = self.get_object(UUID)
-        serializer = TalkGroupSerializer(TalkGroup)
+        user:UserProfile = request.user.userProfile
+        talkGroup:TalkGroup = self.get_object(UUID)
+        if user.siteAdmin:
+            serializer = TalkGroupSerializer(talkGroup)
+            return Response(serializer.data)
+        else:
+            systemUUIDs = getUserAllowedSystems(user.UUID)
+            if not TalkGroup.system.UUID in systemUUIDs:
+                return Response(data={"error": "YOU DONT HAVE PERMISSION TO VIEW THIS OBJECT"}, status=status.HTTP_401_UNAUTHORIZED) 
+       
+        serializer = TalkGroupSerializer(talkGroup)
         return Response(serializer.data)
 
     @swagger_auto_schema(

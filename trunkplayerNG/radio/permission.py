@@ -42,8 +42,8 @@ class IsSAOrUser(permissions.BasePermission):
 
         if request.user.userProfile.siteAdmin or request.user.userProfile.UUID == obj.UUID:
             return True
-        else: 
-            return False
+
+        return False
 
 class IsSiteAdmin(permissions.BasePermission):
     """
@@ -58,3 +58,26 @@ class IsSiteAdmin(permissions.BasePermission):
         if request.user.is_anonymous:
             return False
         return request.user.userProfile.siteAdmin
+
+class IsSAOrFeedUser(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return False
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+
+        # Write permissions are only allowed to the owner of the snippet.
+        if request.user.is_anonymous:
+            return False
+
+        if request.user.userProfile.feedAllowed:
+            return True
+ 
+        return False

@@ -1,7 +1,7 @@
 from datetime import datetime
 import decimal
 import uuid
-from radio.models import System, SystemRecorder, TalkGroup, TransmissionFreq, Unit, TransmissionUnit
+from radio.models import System, SystemACL, SystemRecorder, TalkGroup, TransmissionFreq, Unit, TransmissionUnit, UserProfile
 
 class TransmissionSrc:
     def __init__(self, payload):
@@ -145,3 +145,16 @@ class TransmissionDetails:
                     return False
         elif len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) == 0:
             return True
+
+def getUserAllowedSystems(UserUUID):
+    userACLs = []
+    ACLs = SystemACL.objects.all()
+    for ACL in ACLs:
+        ACL:SystemACL
+        if ACL.users.filter(UUID=UserUUID):
+            userACLs.append(ACL)
+        elif ACL.public:
+            userACLs.append(ACL)
+    Systems = System.objects.filter(systemACL__in=userACLs)
+    systemUUIDs = [system.UUID for system in Systems]
+    return systemUUIDs
