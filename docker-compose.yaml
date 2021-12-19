@@ -66,6 +66,8 @@ services:
       MYSQL_DATABASE: tp
       MYSQL_USER: TrunkPlayer
       MYSQL_PASSWORD: s3CuRiTy
+    volumes:
+      - /var/lib/mysql
 
   rabbitmq:
     image: 'rabbitmq:management'

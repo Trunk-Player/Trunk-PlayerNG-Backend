@@ -1,4 +1,4 @@
-#!/home/max/dev/trunkplayerNG/venv/bin/python3
+#!/opt/tp-ng/venv/bin/python3
 # When the django-admin.py deprecation ends, remove this script.
 import warnings
 
