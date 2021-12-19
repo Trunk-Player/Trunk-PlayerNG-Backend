@@ -100,6 +100,14 @@ class ScanListSerializer(serializers.ModelSerializer):
         model = ScanList
         fields = ['UUID', 'owner', 'name', 'description', 'public', 'talkgroups']
 
+class ScannerSerializer(serializers.ModelSerializer):
+    #talkgroups = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='TalkGroupView')
+
+    class Meta:
+        model = Scanner
+        fields = ['UUID', 'owner', 'name', 'description', 'public', 'scanlists']
+
+
 class GlobalScanListSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalScanList

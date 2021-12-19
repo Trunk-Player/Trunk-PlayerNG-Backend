@@ -1460,6 +1460,114 @@ class ScanListView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class ScannerList(APIView):
+    queryset = Scanner.objects.all()
+    serializer_class = ScannerSerializer
+
+    @swagger_auto_schema(tags=["Scanner"])
+    def get(self, request, format=None):
+        scanner = Scanner.objects.all()
+        serializer = ScannerSerializer(scanner, many=True)
+        return Response(serializer.data)
+
+
+class ScannerCreate(APIView):
+    queryset = Scanner.objects.all()
+    serializer_class = ScannerSerializer
+
+    @swagger_auto_schema(
+        tags=["Scanner"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["name", "public", "scanlists"],
+            properties={
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
+                "description": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Description"
+                ),
+                "public": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN,
+                    description="Wether it is shared or user-only",
+                ),
+                "scanlists": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Scanlist UUIDs",
+                ),
+            },
+        ),
+    )
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] = uuid.uuid4()
+
+        # data["user"] = request.user.UserProfile.UUID
+
+        serializer = ScannerSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ScannerView(APIView):
+    queryset = Scanner.objects.all()
+    serializer_class = ScannerSerializer
+
+    def get_object(self, UUID):
+        try:
+            return Scanner.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=["Scanner"])
+    def get(self, request, UUID, format=None):
+        Scanner = self.get_object(UUID)
+        serializer = ScannerSerializer(Scanner)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        tags=["Scanner"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
+                "owner": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Owner User UUID"
+                ),
+                "description": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Description"
+                ),
+                "public": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Wether it is shared or user-only",
+                ),
+                "scanlists": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Scanlist UUIDs",
+                ),
+            },
+        ),
+    )
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)
+        Scanner = self.get_object(UUID)
+        serializer = ScannerSerializer(Scanner, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=["Scanner"])
+    def delete(self, request, UUID, format=None):
+        Scanner = self.get_object(UUID)
+        Scanner.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class GlobalScanListList(APIView):
     queryset = GlobalScanList.objects.all()
     serializer_class = GlobalScanListSerializer

@@ -237,6 +237,19 @@ class ScanList(models.Model):
     def __str__(self):
         return self.name
 
+class Scanner(models.Model):
+    UUID = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+    )
+    owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    name = models.CharField(max_length=30)
+    description = models.CharField(max_length=100, blank=True, null=True)
+    public = models.BooleanField(default=True)
+    scanlists = models.ManyToManyField(ScanList)
+
+    def __str__(self):
+        return self.name
+
 
 class GlobalScanList(models.Model):
     UUID = models.UUIDField(
