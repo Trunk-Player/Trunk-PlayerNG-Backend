@@ -1,4 +1,5 @@
 import base64
+from functools import partial
 from os import stat
 from django.shortcuts import render
 from rest_framework.views import APIView
@@ -18,7 +19,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from radio.transmission import new_transmission_handler
-from radio.utils import TransmissionDetails, getUserAllowedSystems
+from radio.utils import TransmissionDetails, getUserAllowedSystems, getUserAllowedTalkgroups
 from radio.permission import IsSAOrReadOnly, IsSAOrFeedUser, IsSAOrUser, IsSiteAdmin
 
 
@@ -234,10 +235,11 @@ class SystemCreate(APIView):
             type=openapi.TYPE_OBJECT,
             required=["name", "systemACL"],
             properties={
-                "name": openapi.Schema(type=openapi.TYPE_STRING, description="string"),
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="System Name"),
                 "systemACL": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System ACL UUID"
                 ),
+                "enableTalkGroupACLs": openapi.Schema(type=openapi.TYPE_BOOLEAN, description="Enable Talkgroup ACLs on system"),
             },
         ),
     )
@@ -304,6 +306,7 @@ class SystemView(APIView):
                 "systemACL": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System ACL UUID"
                 ),
+                "enableTalkGroupACLs": openapi.Schema(type=openapi.TYPE_BOOLEAN, description="Enable Talkgroup ACLs on system"),
             },
         ),
     )
@@ -527,13 +530,13 @@ class CityView(APIView):
 
 class AgencyList(APIView):
     queryset = Agency.objects.all()
-    serializer_class = AgencySerializer
+    serializer_class = AgencyViewListSerializer
     permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["Agency"])
     def get(self, request, format=None):
         Agencys = Agency.objects.all()
-        serializer = AgencySerializer(Agencys, many=True)
+        serializer = AgencyViewListSerializer(Agencys, many=True)
         return Response(serializer.data)
 
 
@@ -587,7 +590,7 @@ class AgencyView(APIView):
     @swagger_auto_schema(tags=["Agency"])
     def get(self, request, UUID, format=None):
         Agency = self.get_object(UUID)
-        serializer = AgencySerializer(Agency)
+        serializer = AgencyViewListSerializer(Agency)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -631,7 +634,7 @@ class AgencyView(APIView):
 
 class TalkGroupList(APIView):
     queryset = TalkGroup.objects.all()
-    serializer_class = TalkGroupSerializer
+    serializer_class = TalkGroupViewListSerializer
     permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["TalkGroup"])
@@ -639,17 +642,22 @@ class TalkGroupList(APIView):
         user: UserProfile = request.user.userProfile
         if user.siteAdmin:
             TalkGroups = TalkGroup.objects.all()
-            serializer = TalkGroupSerializer(TalkGroups, many=True)
+            serializer = TalkGroupViewListSerializer(TalkGroups, many=True)
         else:
-            systemUUIDs = getUserAllowedSystems(user.UUID)
-            TalkGroups = TalkGroup.objects.all(system__in=systemUUIDs)
-            serializer = TalkGroupSerializer(TalkGroups, many=True)
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+
+            AllowedTalkgroups = []
+            for system in systems:
+                AllowedTalkgroups.extend(getUserAllowedTalkgroups(system, user.UUID))
+                    
+            serializer = TalkGroupViewListSerializer(AllowedTalkgroups, many=True)
         return Response(serializer.data)
 
 
 class TalkGroupCreate(APIView):
     queryset = TalkGroup.objects.all()
     serializer_class = TalkGroupSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(
         tags=["TalkGroup"],
@@ -673,7 +681,9 @@ class TalkGroupCreate(APIView):
                     type=openapi.TYPE_BOOLEAN, description="encrypted"
                 ),
                 "agency": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Agency UUID"
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Agency UUIDs",
                 ),
             },
         ),
@@ -707,14 +717,19 @@ class TalkGroupView(APIView):
         user: UserProfile = request.user.userProfile
         talkGroup: TalkGroup = self.get_object(UUID)
         if user.siteAdmin:
-            serializer = TalkGroupSerializer(talkGroup)
+            serializer = TalkGroupViewListSerializer(talkGroup)
             return Response(serializer.data)
         else:
-            systemUUIDs = getUserAllowedSystems(user.UUID)
-            if not TalkGroup.system.UUID in systemUUIDs:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+
+            AllowedTalkgroups = []
+            for system in systems:
+                AllowedTalkgroups.extend(getUserAllowedTalkgroups(system, user.UUID))
+                    
+            if not talkGroup in AllowedTalkgroups:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TalkGroupSerializer(talkGroup)
+        serializer = TalkGroupViewListSerializer(talkGroup)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -744,17 +759,141 @@ class TalkGroupView(APIView):
     def put(self, request, UUID, format=None):
         data = JSONParser().parse(request)
         TalkGroup = self.get_object(UUID)
+        
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
         serializer = TalkGroupSerializer(TalkGroup, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=["TalkGroup"])
+    def delete(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
+        TalkGroup = self.get_object(UUID)
+        TalkGroup.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class TalkGroupACLList(APIView):
+    queryset = TalkGroupACL.objects.all()
+    serializer_class = TalkGroupACLSerializer
+    permission_classes = [IsSiteAdmin]
+
+    @swagger_auto_schema(tags=["TalkGroupACL"])
+    def get(self, request, format=None):
+        TalkGroupACLs = TalkGroupACL.objects.all()
+        serializer = TalkGroupACLSerializer(TalkGroupACLs, many=True)
+        return Response(serializer.data)
+
+
+class TalkGroupACLCreate(APIView):
+    queryset = TalkGroupACL.objects.all()
+    serializer_class = TalkGroupACLSerializer
+    permission_classes = [IsSiteAdmin]
+
+    @swagger_auto_schema(
+        tags=["TalkGroupACL"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["name", "users", "defaultNewUsers", "defaultNewTalkgroups"],
+            properties={
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
+                "users": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Talkgroup Allowed UUIDs",
+                ),
+                "defaultNewUsers": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Add New Users to ACL"
+                ),
+                "defaultNewTalkgroups": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Add New Talkgroups to ACL"
+                ),
+                "allowedTalkgroups": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Talkgroup Allowed UUIDs",
+                ),
+            },
+        ),
+    )
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] = uuid.uuid4()
+
+        serializer = TalkGroupACLSerializer(data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(tags=["TalkGroup"])
+
+class TalkGroupACLView(APIView):
+    queryset = TalkGroupACL.objects.all()
+    serializer_class = TalkGroupACLSerializer
+    permission_classes = [IsSiteAdmin] 
+
+    def get_object(self, UUID):
+        try:
+            return TalkGroupACL.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=["TalkGroupACL"])
+    def get(self, request, UUID, format=None):
+        TalkGroupACL = self.get_object(UUID)
+        serializer = TalkGroupACLSerializer(TalkGroupACL)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        tags=["TalkGroupACL"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
+                "users": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Talkgroup Allowed UUIDs",
+                ),
+                "defaultNewUsers": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Add New Users to ACL"
+                ),
+                "defaultNewTalkgroups": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Add New Talkgroups to ACL"
+                ),
+                "allowedTalkgroups": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Talkgroup Allowed UUIDs",
+                ),
+            },
+        ),
+    )
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)
+        TalkGroupACL = self.get_object(UUID)
+        serializer = TalkGroupACLSerializer(TalkGroupACL, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=["TalkGroupACL"])
     def delete(self, request, UUID, format=None):
-        TalkGroup = self.get_object(UUID)
-        TalkGroup.delete()
+        TalkGroupACL = self.get_object(UUID)
+        TalkGroupACL.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 class SystemRecorderList(APIView):
@@ -1255,117 +1394,6 @@ class IncidentView(APIView):
     def delete(self, request, UUID, format=None):
         Incident = self.get_object(UUID)
         Incident.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class TalkGroupACLList(APIView):
-    queryset = TalkGroupACL.objects.all()
-    serializer_class = TalkGroupACLSerializer
-
-    @swagger_auto_schema(tags=["TalkGroupACL"])
-    def get(self, request, format=None):
-        TalkGroupACLs = TalkGroupACL.objects.all()
-        serializer = TalkGroupACLSerializer(TalkGroupACLs, many=True)
-        return Response(serializer.data)
-
-
-class TalkGroupACLCreate(APIView):
-    queryset = TalkGroupACL.objects.all()
-    serializer_class = TalkGroupACLSerializer
-
-    @swagger_auto_schema(
-        tags=["TalkGroupACL"],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=["name", "users", "defaultNewUsers", "defaultNewTalkgroups"],
-            properties={
-                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
-                "users": openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="Talkgroup Allowed UUIDs",
-                ),
-                "defaultNewUsers": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Add New Users to ACL"
-                ),
-                "defaultNewTalkgroups": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Add New Talkgroups to ACL"
-                ),
-                "allowedTalkgroups": openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="Talkgroup Allowed UUIDs",
-                ),
-            },
-        ),
-    )
-    def post(self, request, format=None):
-        data = JSONParser().parse(request)
-
-        if not "UUID" in data:
-            data["UUID"] = uuid.uuid4()
-
-        serializer = TalkGroupACLSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class TalkGroupACLView(APIView):
-    queryset = TalkGroupACL.objects.all()
-    serializer_class = TalkGroupACLSerializer
-
-    def get_object(self, UUID):
-        try:
-            return TalkGroupACL.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
-
-    @swagger_auto_schema(tags=["TalkGroupACL"])
-    def get(self, request, UUID, format=None):
-        TalkGroupACL = self.get_object(UUID)
-        serializer = TalkGroupACLSerializer(TalkGroupACL)
-        return Response(serializer.data)
-
-    @swagger_auto_schema(
-        tags=["TalkGroupACL"],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
-                "users": openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="Talkgroup Allowed UUIDs",
-                ),
-                "defaultNewUsers": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Add New Users to ACL"
-                ),
-                "defaultNewTalkgroups": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Add New Talkgroups to ACL"
-                ),
-                "allowedTalkgroups": openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="Talkgroup Allowed UUIDs",
-                ),
-            },
-        ),
-    )
-    def put(self, request, UUID, format=None):
-        data = JSONParser().parse(request)
-        TalkGroupACL = self.get_object(UUID)
-        serializer = TalkGroupACLSerializer(TalkGroupACL, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @swagger_auto_schema(tags=["TalkGroupACL"])
-    def delete(self, request, UUID, format=None):
-        TalkGroupACL = self.get_object(UUID)
-        TalkGroupACL.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

@@ -6,6 +6,7 @@ from radio.models import (
     SystemACL,
     SystemRecorder,
     TalkGroup,
+    TalkGroupACL,
     TransmissionFreq,
     Unit,
     TransmissionUnit,
@@ -174,7 +175,7 @@ class TransmissionDetails:
             return True
 
 
-def getUserAllowedSystems(UserUUID):
+def getUserAllowedSystems(UserUUID:str):
     userACLs = []
     ACLs = SystemACL.objects.all()
     for ACL in ACLs:
@@ -185,4 +186,24 @@ def getUserAllowedSystems(UserUUID):
             userACLs.append(ACL)
     Systems = System.objects.filter(systemACL__in=userACLs)
     systemUUIDs = [system.UUID for system in Systems]
-    return systemUUIDs
+    return systemUUIDs, Systems
+
+def getUserAllowedTalkgroups(System:System, UserUUID:str):
+    userACLsTGIDs = []
+    
+    SystemTalkGroups = TalkGroup.objects.filter(system=System)
+    if not System.enableTalkGroupACLs:
+        return SystemTalkGroups
+
+    ACLs = TalkGroupACL.objects.all()
+    for ACL in ACLs:
+        ACL: TalkGroupACL
+        if ACL.users.filter(UUID=UserUUID):
+            for TGID in ACL.allowedTalkgroups.all():
+                userACLsTGIDs.append(TGID.UUID)
+
+
+    AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=userACLsTGIDs)
+
+
+    return AllowedTalkgropups

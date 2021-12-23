@@ -1,6 +1,7 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 
+from allauth.account.models import EmailAddress
 
 class CustomUserManager(BaseUserManager):
     """
@@ -18,6 +19,10 @@ class CustomUserManager(BaseUserManager):
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save()
+
+
+        EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
+
         return user
 
     def create_superuser(self, email, password, **extra_fields):
