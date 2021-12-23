@@ -41,7 +41,30 @@ class AgencySerializer(serializers.ModelSerializer):
         fields = ["UUID", "name", "description", "city"]
 
 
+class AgencyViewListSerializer(serializers.ModelSerializer):
+    city= CitySerializer()
+
+    class Meta:
+        model = Agency
+        fields = ["UUID", "name", "description", "city"]
+
 class TalkGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TalkGroup
+        fields = [
+            "UUID",
+            "system",
+            "decimalID",
+            "alphaTag",
+            "description",
+            "encrypted",
+            "agency",
+        ]
+
+
+class TalkGroupViewListSerializer(serializers.ModelSerializer):
+    agency = AgencyViewListSerializer(read_only=True, many=True)
+
     class Meta:
         model = TalkGroup
         fields = [

@@ -19,7 +19,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from radio.transmission import new_transmission_handler
-from radio.utils import TransmissionDetails, getUserAllowedSystems
+from radio.utils import TransmissionDetails, getUserAllowedSystems, getUserAllowedTalkgroups
 from radio.permission import IsSAOrReadOnly, IsSAOrFeedUser, IsSAOrUser, IsSiteAdmin
 
 
@@ -530,13 +530,13 @@ class CityView(APIView):
 
 class AgencyList(APIView):
     queryset = Agency.objects.all()
-    serializer_class = AgencySerializer
+    serializer_class = AgencyViewListSerializer
     permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["Agency"])
     def get(self, request, format=None):
         Agencys = Agency.objects.all()
-        serializer = AgencySerializer(Agencys, many=True)
+        serializer = AgencyViewListSerializer(Agencys, many=True)
         return Response(serializer.data)
 
 
@@ -590,7 +590,7 @@ class AgencyView(APIView):
     @swagger_auto_schema(tags=["Agency"])
     def get(self, request, UUID, format=None):
         Agency = self.get_object(UUID)
-        serializer = AgencySerializer(Agency)
+        serializer = AgencyViewListSerializer(Agency)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -634,7 +634,7 @@ class AgencyView(APIView):
 
 class TalkGroupList(APIView):
     queryset = TalkGroup.objects.all()
-    serializer_class = TalkGroupSerializer
+    serializer_class = TalkGroupViewListSerializer
     permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["TalkGroup"])
@@ -642,17 +642,22 @@ class TalkGroupList(APIView):
         user: UserProfile = request.user.userProfile
         if user.siteAdmin:
             TalkGroups = TalkGroup.objects.all()
-            serializer = TalkGroupSerializer(TalkGroups, many=True)
+            serializer = TalkGroupViewListSerializer(TalkGroups, many=True)
         else:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
-            TalkGroups = TalkGroup.objects.filter(system__UUID__in=systemUUIDs)
-            serializer = TalkGroupSerializer(TalkGroups, many=True)
+
+            AllowedTalkgroups = []
+            for system in systems:
+                AllowedTalkgroups.extend(getUserAllowedTalkgroups(system, user.UUID))
+                    
+            serializer = TalkGroupViewListSerializer(AllowedTalkgroups, many=True)
         return Response(serializer.data)
 
 
 class TalkGroupCreate(APIView):
     queryset = TalkGroup.objects.all()
     serializer_class = TalkGroupSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(
         tags=["TalkGroup"],
@@ -712,14 +717,19 @@ class TalkGroupView(APIView):
         user: UserProfile = request.user.userProfile
         talkGroup: TalkGroup = self.get_object(UUID)
         if user.siteAdmin:
-            serializer = TalkGroupSerializer(talkGroup)
+            serializer = TalkGroupViewListSerializer(talkGroup)
             return Response(serializer.data)
         else:
-            systemUUIDs = getUserAllowedSystems(user.UUID)
-            if not TalkGroup.system.UUID in systemUUIDs:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+
+            AllowedTalkgroups = []
+            for system in systems:
+                AllowedTalkgroups.extend(getUserAllowedTalkgroups(system, user.UUID))
+                    
+            if not talkGroup in AllowedTalkgroups:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TalkGroupSerializer(talkGroup)
+        serializer = TalkGroupViewListSerializer(talkGroup)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -749,14 +759,24 @@ class TalkGroupView(APIView):
     def put(self, request, UUID, format=None):
         data = JSONParser().parse(request)
         TalkGroup = self.get_object(UUID)
+        
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
         serializer = TalkGroupSerializer(TalkGroup, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def delete(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
         TalkGroup = self.get_object(UUID)
         TalkGroup.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
