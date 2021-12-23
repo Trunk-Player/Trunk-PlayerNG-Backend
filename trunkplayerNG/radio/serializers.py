@@ -20,7 +20,7 @@ class SystemACLSerializer(serializers.ModelSerializer):
 class SystemSerializer(serializers.ModelSerializer):
     class Meta:
         model = System
-        fields = ["UUID", "name", "systemACL"]
+        fields = ["UUID", "name", "systemACL", "enableTalkGroupACLs"]
 
 
 class SystemForwarderSerializer(serializers.ModelSerializer):

@@ -50,6 +50,7 @@ class System(models.Model):
     )
     name = models.CharField(max_length=100, db_index=True, unique=True)
     systemACL = models.ForeignKey(SystemACL, on_delete=models.CASCADE)
+    enableTalkGroupACLs = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

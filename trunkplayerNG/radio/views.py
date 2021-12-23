@@ -1,4 +1,5 @@
 import base64
+from functools import partial
 from os import stat
 from django.shortcuts import render
 from rest_framework.views import APIView
@@ -234,10 +235,11 @@ class SystemCreate(APIView):
             type=openapi.TYPE_OBJECT,
             required=["name", "systemACL"],
             properties={
-                "name": openapi.Schema(type=openapi.TYPE_STRING, description="string"),
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="System Name"),
                 "systemACL": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System ACL UUID"
                 ),
+                "enableTalkGroupACLs": openapi.Schema(type=openapi.TYPE_BOOLEAN, description="Enable Talkgroup ACLs on system"),
             },
         ),
     )
@@ -304,6 +306,7 @@ class SystemView(APIView):
                 "systemACL": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System ACL UUID"
                 ),
+                "enableTalkGroupACLs": openapi.Schema(type=openapi.TYPE_BOOLEAN, description="Enable Talkgroup ACLs on system"),
             },
         ),
     )
@@ -641,7 +644,7 @@ class TalkGroupList(APIView):
             TalkGroups = TalkGroup.objects.all()
             serializer = TalkGroupSerializer(TalkGroups, many=True)
         else:
-            systemUUIDs = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             TalkGroups = TalkGroup.objects.filter(system__UUID__in=systemUUIDs)
             serializer = TalkGroupSerializer(TalkGroups, many=True)
         return Response(serializer.data)
@@ -807,7 +810,7 @@ class TalkGroupACLCreate(APIView):
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
 
-        serializer = TalkGroupACLSerializer(data=data)
+        serializer = TalkGroupACLSerializer(data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
