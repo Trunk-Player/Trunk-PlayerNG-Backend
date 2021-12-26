@@ -1146,7 +1146,11 @@ class TransmissionUnitList(APIView):
         if not user.siteAdmin:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if TransmissionX.system in systems:
-                pass
+                SystemX:System = TransmissionX.system
+                if SystemX.enableTalkGroupACLs:
+                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    if not TransmissionX.talkgroup in talkgroupsAllowed:
+                        return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1195,7 +1199,11 @@ class TransmissionUnitView(APIView):
         if not user.siteAdmin:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if TransmissionX.system in systems:
-                pass
+                SystemX:System = TransmissionX.system
+                if SystemX.enableTalkGroupACLs:
+                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    if not TransmissionX.talkgroup in talkgroupsAllowed:
+                        return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1239,7 +1247,11 @@ class TransmissionFreqList(APIView):
         if not user.siteAdmin:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if TransmissionX.system in systems:
-                pass
+                SystemX:System = TransmissionX.system
+                if SystemX.enableTalkGroupACLs:
+                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    if not TransmissionX.talkgroup in talkgroupsAllowed:
+                        return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1270,8 +1282,12 @@ class TransmissionFreqView(APIView):
         if not user.siteAdmin:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if TransmissionX.system in systems:
-                pass
-            else:
+                SystemX:System = TransmissionX.system
+                if SystemX.enableTalkGroupACLs:
+                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    if not TransmissionX.talkgroup in talkgroupsAllowed:
+                        return Response(status=status.HTTP_401_UNAUTHORIZED)
+            else:                
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = TransmissionFreqSerializer(TransmissionFreqX)
@@ -1292,9 +1308,17 @@ class TransmissionList(APIView):
         else:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             Transmissions = Transmission.objects.filter(system__in=systems)
-            
-        
-        serializer = TransmissionSerializer(Transmissions, many=True)
+            AllowedTransmissions = []
+            for TransmissionX in Transmissions:
+                SystemX:System = TransmissionX.system
+                if SystemX.enableTalkGroupACLs:
+                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    if  TransmissionX.talkgroup in talkgroupsAllowed:
+                        AllowedTransmissions.append(TransmissionX)
+                else:
+                    AllowedTransmissions.append(TransmissionX)
+
+        serializer = TransmissionSerializer(AllowedTransmissions, many=True)
         return Response(serializer.data)
 
 
@@ -1372,6 +1396,12 @@ class TransmissionView(APIView):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if not TransmissionX.system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
+            SystemX:System = TransmissionX.system
+            if SystemX.enableTalkGroupACLs:
+                talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                if not TransmissionX.talkgroup in talkgroupsAllowed:
+                    return Response(status=status.HTTP_401_UNAUTHORIZED)
+            
 
         serializer = TransmissionSerializer(TransmissionX)
         return Response(serializer.data)
