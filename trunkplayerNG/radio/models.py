@@ -286,11 +286,9 @@ class GlobalEmailTemplate(models.Model):
 
 
 class SystemReciveRate(models.Model):
-    UUID = (
-        models.UUIDField(
-            primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-        ),
-    )
+    UUID = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+    ),
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     time = models.DateTimeField(default=datetime.now())
     rate = models.FloatField()
@@ -313,23 +311,9 @@ class Call(models.Model):
     frequency = models.FloatField()
     phase2 = models.CharField(max_length=30)
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
-    recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
+    recorder =  models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.time.strftime("%c")} - {str(self.rate)}'
 
 
-class SystemRecorderMetrics(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
-    systemRecorder = models.ForeignKey(System, on_delete=models.CASCADE)
-    rates = models.ManyToManyField(SystemReciveRate)
-    calls = models.ManyToManyField(Call)
-
-    def __str__(self):
-        return f'{self.time.strftime("%c")} - {str(self.rate)}'
-
-    def statusServerURL(self):
-        pass
-        # return
