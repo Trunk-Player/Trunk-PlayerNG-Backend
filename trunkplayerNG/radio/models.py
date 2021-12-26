@@ -233,7 +233,8 @@ class ScanList(models.Model):
     owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)
-    public = models.BooleanField(default=True)
+    public = models.BooleanField(default=False)
+    communityShared = models.BooleanField(default=True)
     talkgroups = models.ManyToManyField(TalkGroup)
 
     def __str__(self):
@@ -249,18 +250,6 @@ class Scanner(models.Model):
     description = models.CharField(max_length=100, blank=True, null=True)
     public = models.BooleanField(default=True)
     scanlists = models.ManyToManyField(ScanList)
-
-    def __str__(self):
-        return self.name
-
-
-class GlobalScanList(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
-    scanList = models.ForeignKey(ScanList, on_delete=models.CASCADE)
-    name = models.CharField(max_length=30)
-    enabled = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -297,9 +286,12 @@ class GlobalEmailTemplate(models.Model):
 
 
 class SystemReciveRate(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+    UUID = (
+        models.UUIDField(
+            primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+        ),
     )
+    recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     time = models.DateTimeField(default=datetime.now())
     rate = models.FloatField()
 
@@ -321,6 +313,7 @@ class Call(models.Model):
     frequency = models.FloatField()
     phase2 = models.CharField(max_length=30)
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
+    recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.time.strftime("%c")} - {str(self.rate)}'
