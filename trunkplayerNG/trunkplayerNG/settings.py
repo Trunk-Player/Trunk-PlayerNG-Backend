@@ -56,7 +56,7 @@ CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 INSTALLED_APPS = [
     "radio",
     "users",
-    "corsheaders", 
+    "corsheaders",
     "django_celery_beat",
     "django_celery_results",
     "rest_framework_simplejwt",

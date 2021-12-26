@@ -37,10 +37,7 @@ def createUserProfile(sender, instance: CustomUser, **kwargs):
         siteAdmin = True
 
     UP = UserProfile(
-        UUID=uuid.uuid4(),
-        siteAdmin=siteAdmin,
-        description="",
-        siteTheme=""
+        UUID=uuid.uuid4(), siteAdmin=siteAdmin, description="", siteTheme=""
     )
 
     UP.save()

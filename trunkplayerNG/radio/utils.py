@@ -144,7 +144,9 @@ class TransmissionDetails:
 
     def validate_upload(self, recorderUUID):
         system: System = System.objects.get(UUID=self.system)
-        recorder: SystemRecorder = SystemRecorder.objects.get(forwarderWebhookUUID=recorderUUID)
+        recorder: SystemRecorder = SystemRecorder.objects.get(
+            forwarderWebhookUUID=recorderUUID
+        )
 
         if len(recorder.talkgroupsAllowed) > 0 and len(recorder.talkgroupsDenyed) == 0:
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
@@ -175,7 +177,7 @@ class TransmissionDetails:
             return True
 
 
-def getUserAllowedSystems(UserUUID:str):
+def getUserAllowedSystems(UserUUID: str):
     userACLs = []
     ACLs = SystemACL.objects.all()
     for ACL in ACLs:
@@ -188,9 +190,10 @@ def getUserAllowedSystems(UserUUID:str):
     systemUUIDs = [system.UUID for system in Systems]
     return systemUUIDs, Systems
 
-def getUserAllowedTalkgroups(System:System, UserUUID:str):
+
+def getUserAllowedTalkgroups(System: System, UserUUID: str):
     userACLsTGIDs = []
-    
+
     SystemTalkGroups = TalkGroup.objects.filter(system=System)
     if not System.enableTalkGroupACLs:
         return SystemTalkGroups
@@ -202,8 +205,6 @@ def getUserAllowedTalkgroups(System:System, UserUUID:str):
             for TGID in ACL.allowedTalkgroups.all():
                 userACLsTGIDs.append(TGID.UUID)
 
-
     AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=userACLsTGIDs)
-
 
     return AllowedTalkgropups

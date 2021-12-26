@@ -42,10 +42,7 @@ class IsSAOrUser(permissions.BasePermission):
         if request.user.is_anonymous:
             return False
 
-        if (
-            request.user.userProfile.siteAdmin
-            or request.user.UUID == obj.UUID
-        ):
+        if request.user.userProfile.siteAdmin or request.user.UUID == obj.UUID:
             return True
 
         return False

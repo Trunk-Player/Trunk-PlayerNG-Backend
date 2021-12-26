@@ -18,7 +18,7 @@ class UserList(APIView):
 
     @swagger_auto_schema(tags=["User"])
     def get(self, request, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         if user.siteAdmin:
             userProfile = CustomUser.objects.all()
         else:
@@ -40,7 +40,7 @@ class UserView(APIView):
 
     @swagger_auto_schema(tags=["User"])
     def get(self, request, pk, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         if user.siteAdmin or request.user.pk == pk:
             userProfile = self.get_object(pk)
         else:
@@ -62,7 +62,7 @@ class UserView(APIView):
                 "siteAdmin": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Is user authorized to make changes",
-                )                
+                ),
             },
         ),
     )
@@ -87,4 +87,3 @@ class UserView(APIView):
             return Response(status=401)
         userProfile.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-

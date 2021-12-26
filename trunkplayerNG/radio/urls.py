@@ -131,22 +131,17 @@ urlpatterns = [
         views.TalkGroupACLView.as_view(),
         name="talkGroupacl_view",
     ),
+    path("radio/scanlist/all/list", views.ScanListList.as_view(), name="scanlist_list"),
     path(
-        "radio/globalscanlist/list",
-        views.GlobalScanListList.as_view(),
-        name="globalscanlist_list",
+        "radio/scanlist/list",
+        views.ScanListPersonalList.as_view(),
+        name="scanlist_personal_list",
     ),
     path(
-        "radio/globalscanlist/create",
-        views.GlobalScanListCreate.as_view(),
-        name="globalscanlist_create",
+        "radio/scanlist/user/<uuid:USER_UUID>/list",
+        views.ScanListUserList.as_view(),
+        name="scanlist_user_list",
     ),
-    path(
-        "radio/globalscanlist/<uuid:UUID>",
-        views.GlobalScanListView.as_view(),
-        name="globalscanlist_view",
-    ),
-    path("radio/scanlist/list", views.ScanListList.as_view(), name="scanlist_list"),
     path(
         "radio/scanlist/create", views.ScanListCreate.as_view(), name="scanlist_create"
     ),
@@ -154,13 +149,17 @@ urlpatterns = [
         "radio/scanlist/<uuid:UUID>", views.ScanListView.as_view(), name="scanlist_view"
     ),
     path(
-        "radio/scanlist/<uuid:UUID>/transmissions", views.ScanListTransmissionList.as_view(), name="scanlist_transmissions"
+        "radio/scanlist/<uuid:UUID>/transmissions",
+        views.ScanListTransmissionList.as_view(),
+        name="scanlist_transmissions",
     ),
     path("radio/scanner/list", views.ScannerList.as_view(), name="scanner_list"),
     path("radio/scanner/create", views.ScannerCreate.as_view(), name="scanner_create"),
     path("radio/scanner/<uuid:UUID>", views.ScannerView.as_view(), name="scanner_view"),
     path(
-        "radio/scanner/<uuid:UUID>/transmissions", views.ScannerTransmissionList.as_view(), name="scanner_transmissions"
+        "radio/scanner/<uuid:UUID>/transmissions",
+        views.ScannerTransmissionList.as_view(),
+        name="scanner_transmissions",
     ),
     path(
         "radio/globalannouncement/list",
@@ -209,19 +208,8 @@ urlpatterns = [
     ),
     path("radio/call/list", views.CallList.as_view(), name="call_list"),
     path("radio/call/create", views.CallCreate.as_view(), name="call_create"),
-    path(
-        "radio/call/<uuid:UUID>/update", views.CallUpdate.as_view(), name="call_update"
-    ),
+    # path(
+    #     "radio/call/<uuid:UUID>/update", views.CallUpdate.as_view(), name="call_update"
+    # ),
     path("radio/call/<uuid:UUID>", views.CallView.as_view(), name="call_view"),
-    path(
-        "radio/systemrecordermetrics/list",
-        views.SystemRecorderMetricsList.as_view(),
-        name="systemrecordermetrics_list",
-    ),
-    # path('radio/systemrecordermetrics/create', views.SystemReciveRateCreate.as_view(), name='systemrecordermetrics_create'),
-    path(
-        "radio/systemrecordermetrics/<uuid:UUID>",
-        views.SystemRecorderMetricsView.as_view(),
-        name="systemrecordermetrics_view",
-    ),
 ]

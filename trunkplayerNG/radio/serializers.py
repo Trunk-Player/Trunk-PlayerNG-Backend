@@ -42,11 +42,12 @@ class AgencySerializer(serializers.ModelSerializer):
 
 
 class AgencyViewListSerializer(serializers.ModelSerializer):
-    city= CitySerializer()
+    city = CitySerializer()
 
     class Meta:
         model = Agency
         fields = ["UUID", "name", "description", "city"]
+
 
 class TalkGroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -126,18 +127,9 @@ class TransmissionUnitSerializer(serializers.ModelSerializer):
 
 
 class TransmissionFreqSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = TransmissionFreq
-        fields = [
-            "UUID",
-            "time",
-            "freq",
-            "pos",
-            "len",
-            "error_count",
-            "spike_count"
-        ]
+        fields = ["UUID", "time", "freq", "pos", "len", "error_count", "spike_count"]
 
 
 class TransmissionSerializer(serializers.ModelSerializer):
@@ -191,7 +183,15 @@ class ScanListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ScanList
-        fields = ["UUID", "owner", "name", "description", "public", "talkgroups"]
+        fields = [
+            "UUID",
+            "owner",
+            "name",
+            "description",
+            "public",
+            "communityShared",
+            "talkgroups",
+        ]
 
 
 class ScannerSerializer(serializers.ModelSerializer):
@@ -200,12 +200,6 @@ class ScannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Scanner
         fields = ["UUID", "owner", "name", "description", "public", "scanlists"]
-
-
-class GlobalScanListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GlobalScanList
-        fields = ["UUID", "scanList", "name", "enabled"]
 
 
 class GlobalAnnouncementSerializer(serializers.ModelSerializer):
@@ -223,7 +217,19 @@ class GlobalEmailTemplateSerializer(serializers.ModelSerializer):
 class SystemReciveRateSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemReciveRate
-        fields = ["UUID", "time", "rate"]
+        fields = ["UUID", "time", "rate", "recorder"]
+
+
+class SystemReciveRateCreateSerializer(serializers.ModelSerializer):
+    recorder = serializers.SlugRelatedField(
+        read_only=False,
+        queryset=SystemRecorder.objects.all(),
+        slug_field="forwarderWebhookUUID",
+    )
+
+    class Meta:
+        model = SystemReciveRate
+        fields = ["UUID", "time", "rate", "recorder"]
 
 
 class CallSerializer(serializers.ModelSerializer):
@@ -253,6 +259,11 @@ class CallUpdateCreateSerializer(serializers.ModelSerializer):
     units = serializers.SlugRelatedField(
         many=True, read_only=False, queryset=Unit.objects.all(), slug_field="decimalID"
     )
+    recorder = serializers.SlugRelatedField(
+        read_only=False,
+        queryset=SystemRecorder.objects.all(),
+        slug_field="forwarderWebhookUUID",
+    )
 
     class Meta:
         model = Call
@@ -268,10 +279,5 @@ class CallUpdateCreateSerializer(serializers.ModelSerializer):
             "frequency",
             "phase2",
             "talkgroup",
+            "recorder",
         ]
-
-
-class SystemRecorderMetricsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SystemRecorderMetrics
-        fields = ["UUID", "systemRecorder", "rates", "calls"]

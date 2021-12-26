@@ -51,6 +51,27 @@ class IsSAOrUser(permissions.BasePermission):
         return False
 
 
+class IsUser(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return False
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+
+        # Write permissions are only allowed to the owner of the snippet.
+        if request.user.is_anonymous:
+            return False
+
+        return True
+
+
 class IsSiteAdmin(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.

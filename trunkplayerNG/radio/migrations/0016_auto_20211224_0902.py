@@ -7,17 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0015_auto_20211222_1731'),
+        ("radio", "0015_auto_20211222_1731"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='userprofile',
-            name='feedAllowed',
+            model_name="userprofile",
+            name="feedAllowed",
         ),
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2021, 12, 24, 9, 2, 31, 135494)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2021, 12, 24, 9, 2, 31, 135494)
+            ),
         ),
     ]
