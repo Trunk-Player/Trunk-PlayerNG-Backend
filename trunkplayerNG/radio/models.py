@@ -202,6 +202,7 @@ class Incident(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
+    active =  models.BooleanField(default=True)
     time = models.DateTimeField(default=datetime.now)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     transmission = models.ManyToManyField(Transmission, blank=True)
@@ -250,6 +251,7 @@ class Scanner(models.Model):
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)
     public = models.BooleanField(default=True)
+    communityShared = models.BooleanField(default=True)
     scanlists = models.ManyToManyField(ScanList)
 
     def __str__(self):

@@ -187,6 +187,7 @@ class IncidentCreateSerializer(serializers.ModelSerializer):
         model = Incident
         fields = [
             "UUID",
+            "active"
             "time",
             "system",
             "transmission",
@@ -230,7 +231,7 @@ class ScannerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Scanner
-        fields = ["UUID", "owner", "name", "description", "public", "scanlists"]
+        fields = ["UUID", "owner", "name", "description", "public", "communityShared", "scanlists"]
 
 
 class GlobalAnnouncementSerializer(serializers.ModelSerializer):

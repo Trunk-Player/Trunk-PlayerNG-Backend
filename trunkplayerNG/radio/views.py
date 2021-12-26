@@ -1485,6 +1485,9 @@ class IncidentCreate(APIView):
             type=openapi.TYPE_OBJECT,
             required=["system", "name", "transmission"],
             properties={
+                "active": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Is the Event Active"
+                ),
                 "system": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System UUID"
                 ),
@@ -1535,6 +1538,9 @@ class IncidentUpdate(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
+                "active": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Is the Event Active"
+                ),
                 "name": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Description"
                 ),
@@ -1816,10 +1822,17 @@ class ScanListTransmissionList(APIView):
 class ScannerList(APIView):
     queryset = Scanner.objects.all()
     serializer_class = ScannerSerializer
-
+    permission_classes = [IsSAOrReadOnly]
+    
     @swagger_auto_schema(tags=["Scanner"])
     def get(self, request, format=None):
-        scanner = Scanner.objects.all()
+        user: UserProfile = request.user.userProfile
+        if user.siteAdmin:
+            scanner = Scanner.objects.all()
+        else:
+            scanner = Scanner.objects.filter(
+                Q(owner=user) | Q(communityShared=True) | Q(public=True)
+            )
         serializer = ScannerSerializer(scanner, many=True)
         return Response(serializer.data)
 
@@ -1827,6 +1840,7 @@ class ScannerList(APIView):
 class ScannerCreate(APIView):
     queryset = Scanner.objects.all()
     serializer_class = ScannerSerializer
+    permission_classes = [IsUser]
 
     @swagger_auto_schema(
         tags=["Scanner"],
@@ -1838,7 +1852,7 @@ class ScannerCreate(APIView):
                 "description": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Description"
                 ),
-                "public": openapi.Schema(
+                "communityShared": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Wether it is shared or user-only",
                 ),
@@ -1852,11 +1866,19 @@ class ScannerCreate(APIView):
     )
     def post(self, request, format=None):
         data = JSONParser().parse(request)
+        user: UserProfile = request.user.userProfile
+
 
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
 
-        # data["user"] = request.user.UserProfile.UUID
+        data["owner"] = user.UUID
+
+        if not user.siteAdmin:
+            data["public"] = False
+
+        if not "public" in data:
+            data["public"] = False
 
         serializer = ScannerSerializer(data=data)
         if serializer.is_valid():
@@ -1868,6 +1890,7 @@ class ScannerCreate(APIView):
 class ScannerView(APIView):
     queryset = Scanner.objects.all()
     serializer_class = ScannerSerializer
+    permission_classes = [IsUser]
 
     def get_object(self, UUID):
         try:
@@ -1877,7 +1900,12 @@ class ScannerView(APIView):
 
     @swagger_auto_schema(tags=["Scanner"])
     def get(self, request, UUID, format=None):
-        Scanner = self.get_object(UUID)
+        ScannerX:Scanner = self.get_object(UUID)
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            if not ScannerX.owner == user:
+                if not ScannerX.public and not ScannerX.communityShared:
+                    return Response(status=status.HTTP_401_UNAUTHORIZED)
         serializer = ScannerSerializer(Scanner)
         return Response(serializer.data)
 
@@ -1907,8 +1935,14 @@ class ScannerView(APIView):
     )
     def put(self, request, UUID, format=None):
         data = JSONParser().parse(request)
-        Scanner = self.get_object(UUID)
-        serializer = ScannerSerializer(Scanner, data=data, partial=True)
+        ScannerX:Scanner = self.get_object(UUID)
+    
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:
+            if not ScannerX.owner == user:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = ScannerSerializer(ScannerX, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -1916,8 +1950,14 @@ class ScannerView(APIView):
 
     @swagger_auto_schema(tags=["Scanner"])
     def delete(self, request, UUID, format=None):
-        Scanner = self.get_object(UUID)
-        Scanner.delete()
+        ScannerX:Scanner = self.get_object(UUID)
+        user: UserProfile = request.user.userProfile
+
+        if not user.siteAdmin:
+            if not ScannerX.owner == user:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
+        ScannerX.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
