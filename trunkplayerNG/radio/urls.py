@@ -70,19 +70,29 @@ urlpatterns = [
     path("radio/unit/create", views.UnitCreate.as_view(), name="unit_create"),
     path("radio/unit/<uuid:UUID>", views.UnitView.as_view(), name="unit_view"),
     path(
-        "radio/transmissionunit/list",
-        views.TransmissionUnitList.as_view(),
-        name="transmissionunit_list",
+        "radio/transmission/unit/<uuid:UUID>",
+        views.TransmissionUnitView.as_view(),
+        name="transmissionunit_view",
     ),
     path(
-        "radio/transmissionunit/<uuid:UUID>",
-        views.TransmissionUnitView.as_view(),
+        "radio/transmissio/freq/<uuid:UUID>",
+        views.TransmissionFreqView.as_view(),
         name="transmissionunit_view",
     ),
     path(
         "radio/transmission/list",
         views.TransmissionList.as_view(),
         name="transmission_list",
+    ),
+    path(
+        "radio/transmission/<uuid:UUID>/units",
+        views.TransmissionUnitList.as_view(),
+        name="transmissionunit_list",
+    ),
+    path(
+        "radio/transmission/<uuid:UUID>/freqs",
+        views.TransmissionFreqList.as_view(),
+        name="transmissionunit_list",
     ),
     path(
         "radio/transmission/create",

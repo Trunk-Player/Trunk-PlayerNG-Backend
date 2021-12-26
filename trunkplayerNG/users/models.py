@@ -32,18 +32,15 @@ def createUserProfile(sender, instance: CustomUser, **kwargs):
         return True
 
     siteAdmin = False
-    feedAllowed = False
 
     if instance.is_superuser and instance.is_active:
         siteAdmin = True
-        feedAllowed = True
 
     UP = UserProfile(
         UUID=uuid.uuid4(),
         siteAdmin=siteAdmin,
         description="",
-        siteTheme="",
-        feedAllowed=feedAllowed,
+        siteTheme=""
     )
 
     UP.save()

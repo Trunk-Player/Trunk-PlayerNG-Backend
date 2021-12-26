@@ -62,11 +62,7 @@ class UserView(APIView):
                 "siteAdmin": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Is user authorized to make changes",
-                ),
-                "feedAllowed": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN,
-                    description="Is user authorized to Feed System",
-                ),
+                )                
             },
         ),
     )

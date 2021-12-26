@@ -9,7 +9,7 @@ def new_transmission_handler(data):
     jsonx = data["json"]
     audio = data["audioFile"]
 
-    recorder: SystemRecorder = SystemRecorder.objects.get(UUID=recorderUUID)
+    recorder: SystemRecorder = SystemRecorder.objects.get(forwarderWebhookUUID=recorderUUID)
     system: System = recorder.system
     jsonx["system"] = str(system.UUID)
 
@@ -25,3 +25,4 @@ def new_transmission_handler(data):
     Payload["audioFile"] = ContentFile(audio_bytes, name=f'{data["name"]}.m4a')
 
     return Payload
+

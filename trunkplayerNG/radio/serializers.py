@@ -8,7 +8,7 @@ from rest_framework import permissions
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ["UUID", "siteAdmin", "description", "siteTheme", "feedAllowed"]
+        fields = ["UUID", "siteAdmin", "description", "siteTheme"]
 
 
 class SystemACLSerializer(serializers.ModelSerializer):
@@ -123,6 +123,21 @@ class TransmissionUnitSerializer(serializers.ModelSerializer):
         UTX, created = Unit.objects.get_or_create(decimalID=int(unit))
 
         return Transmission.objects.create(unit=UTX, **validated_data)
+
+
+class TransmissionFreqSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TransmissionFreq
+        fields = [
+            "UUID",
+            "time",
+            "freq",
+            "pos",
+            "len",
+            "error_count",
+            "spike_count"
+        ]
 
 
 class TransmissionSerializer(serializers.ModelSerializer):

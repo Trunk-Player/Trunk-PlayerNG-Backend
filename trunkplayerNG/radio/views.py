@@ -20,7 +20,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 from radio.transmission import new_transmission_handler
 from radio.utils import TransmissionDetails, getUserAllowedSystems, getUserAllowedTalkgroups
-from radio.permission import IsSAOrReadOnly, IsSAOrFeedUser, IsSAOrUser, IsSiteAdmin
+from radio.permission import Feeder, IsSAOrReadOnly, IsSAOrFeedUser, IsSAOrUser, IsSiteAdmin
 
 
 class UserProfileList(APIView):
@@ -74,11 +74,7 @@ class UserProfileView(APIView):
                 "siteAdmin": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Is user authorized to make changes",
-                ),
-                "feedAllowed": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN,
-                    description="Is user authorized to Feed System",
-                ),
+                )                
             },
         ),
     )
@@ -899,6 +895,7 @@ class TalkGroupACLView(APIView):
 class SystemRecorderList(APIView):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(tags=["SystemRecorder"])
     def get(self, request, format=None):
@@ -910,6 +907,7 @@ class SystemRecorderList(APIView):
 class SystemRecorderCreate(APIView):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(
         tags=["SystemRecorder"],
@@ -951,7 +949,7 @@ class SystemRecorderCreate(APIView):
 
         data["forwarderWebhookUUID"] = uuid.uuid4()
 
-        serializer = SystemRecorderSerializer(data=data)
+        serializer = SystemRecorderSerializer(data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -961,6 +959,7 @@ class SystemRecorderCreate(APIView):
 class SystemRecorderView(APIView):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
+    permission_classes = [IsSiteAdmin]
 
     def get_object(self, UUID):
         try:
@@ -1020,10 +1019,17 @@ class SystemRecorderView(APIView):
 class UnitList(APIView):
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
+    permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["Unit"])
     def get(self, request, format=None):
-        Units = Unit.objects.all()
+        user: UserProfile = request.user.userProfile
+        if user.siteAdmin:
+            Units = Unit.objects.all()
+        else:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            Units = Unit.objects.filter(system__in=systemUUIDs)
+            
         serializer = UnitSerializer(Units, many=True)
         return Response(serializer.data)
 
@@ -1031,6 +1037,7 @@ class UnitList(APIView):
 class UnitCreate(APIView):
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
+    permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(
         tags=["Unit"],
@@ -1066,6 +1073,7 @@ class UnitCreate(APIView):
 class UnitView(APIView):
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
+    permission_classes = [IsSAOrReadOnly]
 
     def get_object(self, UUID):
         try:
@@ -1075,9 +1083,18 @@ class UnitView(APIView):
 
     @swagger_auto_schema(tags=["Unit"])
     def get(self, request, UUID, format=None):
-        Unit = self.get_object(UUID)
-        serializer = UnitSerializer(Unit)
+        user: UserProfile = request.user.userProfile
+        unit:Unit = self.get_object(UUID)
+        if user.siteAdmin:
+            serializer = UnitSerializer(unit)
+        else:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            if not unit.system in systems:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
+        serializer = UnitSerializer(unit)
         return Response(serializer.data)
+            
 
     @swagger_auto_schema(
         tags=["Unit"],
@@ -1091,6 +1108,10 @@ class UnitView(APIView):
         ),
     )
     def put(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:       
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
         data = JSONParser().parse(request)
         Unit = self.get_object(UUID)
         serializer = UnitSerializer(Unit, data=data, partial=True)
@@ -1101,6 +1122,10 @@ class UnitView(APIView):
 
     @swagger_auto_schema(tags=["Unit"])
     def delete(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if not user.siteAdmin:       
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
         Unit = self.get_object(UUID)
         Unit.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1109,11 +1134,24 @@ class UnitView(APIView):
 class TransmissionUnitList(APIView):
     queryset = TransmissionUnit.objects.all()
     serializer_class = TransmissionUnitSerializer
+    permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["TransmissionUnit"])
-    def get(self, request, format=None):
-        TransmissionUnits = TransmissionUnit.objects.all()
-        serializer = TransmissionUnitSerializer(TransmissionUnits, many=True)
+    def get(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+
+        TransmissionX:Transmission = Transmission.objects.get(UUID=UUID)
+        Units = TransmissionX.units.all()
+
+        if not user.siteAdmin:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            if TransmissionX.system in systems:
+                pass
+            else:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        
+        serializer = TransmissionUnitSerializer(Units, many=True)       
         return Response(serializer.data)
 
 
@@ -1138,6 +1176,8 @@ class TransmissionUnitList(APIView):
 class TransmissionUnitView(APIView):
     queryset = TransmissionUnit.objects.all()
     serializer_class = TransmissionUnitSerializer
+    permission_classes = [IsSAOrReadOnly]
+
 
     def get_object(self, UUID):
         try:
@@ -1147,8 +1187,19 @@ class TransmissionUnitView(APIView):
 
     @swagger_auto_schema(tags=["TransmissionUnit"])
     def get(self, request, UUID, format=None):
-        TransmissionUnit = self.get_object(UUID)
-        serializer = TransmissionUnitSerializer(TransmissionUnit)
+        user: UserProfile = request.user.userProfile
+        TransmissionUnitX:TransmissionUnit = self.get_object(UUID)
+        
+        TransmissionX:Transmission = Transmission.objects.filter(units__in=TransmissionUnitX)
+
+        if not user.siteAdmin:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            if TransmissionX.system in systems:
+                pass
+            else:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = TransmissionUnitSerializer(TransmissionX)
         return Response(serializer.data)
 
     # @swagger_auto_schema(tags=['TransmissionUnit'], request_body=openapi.Schema(
@@ -1173,13 +1224,76 @@ class TransmissionUnitView(APIView):
     #     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class TransmissionFreqList(APIView):
+    queryset = TransmissionFreq.objects.all()
+    serializer_class = TransmissionFreqSerializer
+    permission_classes = [IsSAOrReadOnly]
+
+    @swagger_auto_schema(tags=["TransmissionFreq"])
+    def get(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+
+        TransmissionX:Transmission = Transmission.objects.get(UUID=UUID)
+        Freqs = TransmissionX.frequencys.all()
+
+        if not user.siteAdmin:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            if TransmissionX.system in systems:
+                pass
+            else:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        
+        serializer = TransmissionFreqSerializer(Freqs, many=True)       
+        return Response(serializer.data)
+
+
+class TransmissionFreqView(APIView):
+    queryset = TransmissionFreq.objects.all()
+    serializer_class = TransmissionFreqSerializer
+    permission_classes = [IsSAOrReadOnly]
+
+
+    def get_object(self, UUID):
+        try:
+            return TransmissionFreq.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=["TransmissionFreq"])
+    def get(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        TransmissionFreqX:TransmissionFreq = self.get_object(UUID)
+        
+        TransmissionX:Transmission = Transmission.objects.filter(frequencys__in=TransmissionFreqX)
+
+        if not user.siteAdmin:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            if TransmissionX.system in systems:
+                pass
+            else:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = TransmissionFreqSerializer(TransmissionFreqX)
+        return Response(serializer.data)
+
+
 class TransmissionList(APIView):
     queryset = Transmission.objects.all()
     serializer_class = TransmissionSerializer
+    permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["Transmission"])
     def get(self, request, format=None):
-        Transmissions = Transmission.objects.all()
+        user: UserProfile = request.user.userProfile
+      
+        if user.siteAdmin:
+            Transmissions = Transmission.objects.all()
+        else:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            Transmissions = Transmission.objects.filter(system__in=systems)
+            
+        
         serializer = TransmissionSerializer(Transmissions, many=True)
         return Response(serializer.data)
 
@@ -1187,6 +1301,7 @@ class TransmissionList(APIView):
 class TransmissionCreate(APIView):
     queryset = Transmission.objects.all()
     serializer_class = TransmissionSerializer
+    permission_classes = [Feeder]
 
     @swagger_auto_schema(
         tags=["Transmission"],
@@ -1196,7 +1311,7 @@ class TransmissionCreate(APIView):
             properties={
                 #'system': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
                 "recorder": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Recorder UUID"
+                    type=openapi.TYPE_STRING, description="Recorder Key"
                 ),
                 "json": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Trunk-Recorder JSON"
@@ -1225,7 +1340,7 @@ class TransmissionCreate(APIView):
             Callback["UUID"] = uuid.uuid4()
 
             recorderX: SystemRecorder = SystemRecorder.objects.get(
-                UUID=Callback["recorder"]
+                UUID=Callback["forwarderWebhookUUID"]
             )
             Callback["system"] = str(recorderX.system.UUID)
 
@@ -1250,8 +1365,15 @@ class TransmissionView(APIView):
 
     @swagger_auto_schema(tags=["Transmission"])
     def get(self, request, UUID, format=None):
-        Transmission = self.get_object(UUID)
-        serializer = TransmissionSerializer(Transmission)
+        TransmissionX:Transmission = self.get_object(UUID)
+        user: UserProfile = request.user.userProfile
+      
+        if not user.siteAdmin:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            if not TransmissionX.system in systems:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = TransmissionSerializer(TransmissionX)
         return Response(serializer.data)
 
     # @swagger_auto_schema(tags=['Transmission'], request_body=openapi.Schema(
@@ -1271,6 +1393,10 @@ class TransmissionView(APIView):
 
     @swagger_auto_schema(tags=["Transmission"])
     def delete(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+      
+        if not user.siteAdmin:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         Transmission = self.get_object(UUID)
         Transmission.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

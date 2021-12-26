@@ -144,7 +144,7 @@ class TransmissionDetails:
 
     def validate_upload(self, recorderUUID):
         system: System = System.objects.get(UUID=self.system)
-        recorder: SystemRecorder = SystemRecorder.objects.get(UUID=recorderUUID)
+        recorder: SystemRecorder = SystemRecorder.objects.get(forwarderWebhookUUID=recorderUUID)
 
         if len(recorder.talkgroupsAllowed) > 0 and len(recorder.talkgroupsDenyed) == 0:
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)

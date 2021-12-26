@@ -13,7 +13,8 @@ class UserProfile(models.Model):
     siteAdmin = models.BooleanField(default=False)
     description = models.TextField(blank=True, null=True)
     siteTheme = models.TextField(blank=True, null=True)
-    feedAllowed = models.BooleanField(default=False)
+    # feedAllowed = models.BooleanField(default=False)
+    # feedAllowedSystems = models.ManyToManyField()
 
     def __str__(self):
         return f"{self.UUID}"
@@ -127,7 +128,7 @@ class SystemRecorder(models.Model):
     talkgroupsDenyed = models.ManyToManyField(
         TalkGroup, blank=True, related_name="SRTGDeny"
     )
-    forwarderWebhookUUID = models.UUIDField(default=uuid.uuid4)
+    forwarderWebhookUUID = models.UUIDField(default=uuid.uuid4, db_index=True)
 
     def __str__(self):
         return self.name

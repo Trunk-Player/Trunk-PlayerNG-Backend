@@ -66,7 +66,7 @@ class IsSiteAdmin(permissions.BasePermission):
         return request.user.userProfile.siteAdmin
 
 
-class IsSAOrFeedUser(permissions.BasePermission):
+class Feeder(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
     """
@@ -81,10 +81,5 @@ class IsSAOrFeedUser(permissions.BasePermission):
         # so we'll always allow GET, HEAD or OPTIONS requests.
 
         # Write permissions are only allowed to the owner of the snippet.
-        if request.user.is_anonymous:
-            return False
 
-        if request.user.userProfile.feedAllowed:
-            return True
-
-        return False
+        return True

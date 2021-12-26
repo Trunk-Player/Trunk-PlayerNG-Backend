@@ -56,6 +56,7 @@ CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 INSTALLED_APPS = [
     "radio",
     "users",
+    "corsheaders", 
     "django_celery_beat",
     "django_celery_results",
     "rest_framework_simplejwt",
@@ -78,6 +79,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -283,3 +285,10 @@ CELERY_QUEUES = (
 CELERY_ROUTES = {
     "trunkplayerNG.radio.tasks.*": {"queue": "new_transmissions"},
 }
+
+# CORS_ALLOWED_ORIGINS = [
+#     'https://panik.io',
+#     'https://localhost:3000',
+# ]
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = False
