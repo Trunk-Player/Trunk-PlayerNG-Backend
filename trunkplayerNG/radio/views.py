@@ -1147,6 +1147,9 @@ class TransmissionUnitList(APIView):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if TransmissionX.system in systems:
                 SystemX:System = TransmissionX.system
+
+                if not SystemX in systems: return Response(status=status.HTTP_401_UNAUTHORIZED)
+
                 if SystemX.enableTalkGroupACLs:
                     talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
                     if not TransmissionX.talkgroup in talkgroupsAllowed:
@@ -1157,24 +1160,6 @@ class TransmissionUnitList(APIView):
         
         serializer = TransmissionUnitSerializer(Units, many=True)       
         return Response(serializer.data)
-
-
-# class TransmissionUnitCreate(APIView):
-#     queryset = TransmissionUnit.objects.all()
-#     serializer_class = TransmissionUnitSerializer
-
-#     @swagger_auto_schema(tags=['TransmissionUnit'])
-#     def post(self, request, format=None):
-#         data = JSONParser().parse(request)
-
-#         if not "UUID" in data:
-#             data["UUID"] =  uuid.uuid4()
-
-#         serializer = TransmissionUnitSerializer(data=data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TransmissionUnitView(APIView):
@@ -1200,6 +1185,7 @@ class TransmissionUnitView(APIView):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if TransmissionX.system in systems:
                 SystemX:System = TransmissionX.system
+                if not SystemX in systems: return Response(status=status.HTTP_401_UNAUTHORIZED)
                 if SystemX.enableTalkGroupACLs:
                     talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
                     if not TransmissionX.talkgroup in talkgroupsAllowed:
@@ -1248,6 +1234,7 @@ class TransmissionFreqList(APIView):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if TransmissionX.system in systems:
                 SystemX:System = TransmissionX.system
+                if not SystemX in systems: return Response(status=status.HTTP_401_UNAUTHORIZED)
                 if SystemX.enableTalkGroupACLs:
                     talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
                     if not TransmissionX.talkgroup in talkgroupsAllowed:
@@ -1283,6 +1270,7 @@ class TransmissionFreqView(APIView):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             if TransmissionX.system in systems:
                 SystemX:System = TransmissionX.system
+                if not SystemX in systems: return Response(status=status.HTTP_401_UNAUTHORIZED)
                 if SystemX.enableTalkGroupACLs:
                     talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
                     if not TransmissionX.talkgroup in talkgroupsAllowed:
@@ -1311,6 +1299,8 @@ class TransmissionList(APIView):
             AllowedTransmissions = []
             for TransmissionX in Transmissions:
                 SystemX:System = TransmissionX.system
+                if not SystemX in systems:
+                    continue
                 if SystemX.enableTalkGroupACLs:
                     talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
                     if  TransmissionX.talkgroup in talkgroupsAllowed:
@@ -1405,21 +1395,6 @@ class TransmissionView(APIView):
 
         serializer = TransmissionSerializer(TransmissionX)
         return Response(serializer.data)
-
-    # @swagger_auto_schema(tags=['Transmission'], request_body=openapi.Schema(
-    #     type=openapi.TYPE_OBJECT,
-    #     properties={
-    #         'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
-    #     }
-    # ))
-    # def put(self, request, UUID, format=None):
-    #     data = JSONParser().parse(request)
-    #     Transmission = self.get_object(UUID)
-    #     serializer = TransmissionSerializer(Transmission, data=data, partial=True)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["Transmission"])
     def delete(self, request, UUID, format=None):
@@ -1661,6 +1636,45 @@ class ScanListView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class ScanListTransmissionList(APIView):
+    queryset = Transmission.objects.all()
+    serializer_class = TransmissionSerializer
+    permission_classes = [IsSAOrReadOnly]
+
+    def get_object(self, UUID):
+        try:
+            return ScanList.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=["Transmission"])
+    def get(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        ScanListX:ScanList = self.get_object(UUID)
+
+        Talkgroups = ScanListX.talkgroups.all()
+        Transmissions = Transmission.objects.filter(talkgroup__in=Talkgroups)
+        AllowedTransmissions = []
+
+        if not user.siteAdmin:
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            for TransmissionX in Transmissions:                    
+                SystemX:System = TransmissionX.system
+                if not SystemX in systems:
+                    continue
+
+                if SystemX.enableTalkGroupACLs:
+                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    if  TransmissionX.talkgroup in talkgroupsAllowed:
+                        AllowedTransmissions.append(TransmissionX)
+                else:
+                    AllowedTransmissions.append(TransmissionX)
+        else:
+            AllowedTransmissions =  Transmissions
+
+        serializer = TransmissionSerializer(AllowedTransmissions, many=True)
+        return Response(serializer.data)
+
 class ScannerList(APIView):
     queryset = Scanner.objects.all()
     serializer_class = ScannerSerializer
@@ -1767,6 +1781,56 @@ class ScannerView(APIView):
         Scanner = self.get_object(UUID)
         Scanner.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ScannerTransmissionList(APIView):
+    queryset = Transmission.objects.all()
+    serializer_class = TransmissionSerializer
+    permission_classes = [IsSAOrReadOnly]
+
+    def get_object(self, UUID):
+        try:
+            return Scanner.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=["Transmission"])
+    def get(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        ScannerX:Scanner = self.get_object(UUID)
+        systemUUIDs, systems = getUserAllowedSystems(user.UUID)  
+
+        AllowedTransmissions = []
+        ScanListTalkgroups = []
+        Transmissions = []
+
+        for ScanListX in ScannerX.scanlists:
+            ScanListX:ScanList
+            ScanListTalkgroups.append(ScanListX.talkgroups.all())
+        
+        for TransmissionX in Transmission.objects.filter(talkgroup__in=ScanListTalkgroups):
+            Transmissions.append(TransmissionX)
+
+        if not user.siteAdmin: 
+            for TransmissionX in Transmissions:
+                TransmissionX:Transmission
+                if not user.siteAdmin:                             
+                    SystemX:System = TransmissionX.system
+                    
+                    if not SystemX in systems:
+                        continue
+                    
+                    if SystemX.enableTalkGroupACLs:
+                        talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                        if  TransmissionX.talkgroup in talkgroupsAllowed:
+                            AllowedTransmissions.append(TransmissionX)
+                    else:
+                        AllowedTransmissions.append(TransmissionX)
+        else:
+            AllowedTransmissions = Transmissions
+
+        serializer = TransmissionSerializer(AllowedTransmissions, many=True)
+        return Response(serializer.data)
 
 
 class GlobalScanListList(APIView):
