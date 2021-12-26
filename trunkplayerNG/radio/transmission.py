@@ -24,6 +24,6 @@ def new_transmission_handler(data):
         return False
 
     Payload["recorder"] = recorderUUID
-    Payload["audioFile"] = ContentFile(audio_bytes, name=f'{data["name"]}.m4a')
+    Payload["audioFile"] = ContentFile(audio_bytes, name=f'{data["name"]}')
 
     return Payload

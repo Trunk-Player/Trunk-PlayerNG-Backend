@@ -151,9 +151,32 @@ class TransmissionSerializer(serializers.ModelSerializer):
         ]
 
 
-class IncidentSerializer(serializers.ModelSerializer):
-    transmission = TransmissionSerializer(many=True)
+class TransmissionUploadSerializer(serializers.ModelSerializer):
+    recorder = serializers.SlugRelatedField(
+        read_only=False,
+        queryset=SystemRecorder.objects.all(),
+        slug_field="forwarderWebhookUUID",
+    )
 
+    class Meta:
+        model = Transmission
+        fields = [
+            "UUID",
+            "system",
+            "recorder",
+            "startTime",
+            "endTime",
+            "audioFile",
+            "talkgroup",
+            "encrypted",
+            "units",
+            "frequency",
+            "frequencys",
+            "length",
+        ]
+
+
+class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident
         fields = ["UUID", "system", "transmission", "name", "description", "agency"]
@@ -162,7 +185,15 @@ class IncidentSerializer(serializers.ModelSerializer):
 class IncidentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident
-        fields = ["UUID", "system", "transmission", "name", "description", "agency"]
+        fields = [
+            "UUID",
+            "time",
+            "system",
+            "transmission",
+            "name",
+            "description",
+            "agency",
+        ]
 
 
 class TalkGroupACLSerializer(serializers.ModelSerializer):

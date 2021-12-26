@@ -2,7 +2,7 @@ from django.db import models
 import uuid
 from django.db.models.base import ModelBase
 from django.db.models.enums import Choices
-from datetime import datetime
+from datetime import date, datetime
 from trunkplayerNG.storage_backends import PrivateMediaStorage
 
 
@@ -104,8 +104,8 @@ class TalkGroup(models.Model):
     decimalID = models.IntegerField(db_index=True)
     alphaTag = models.CharField(max_length=30, blank=True)
     description = models.CharField(max_length=100, blank=True, null=True)
-    encrypted = models.BooleanField(default=True, blank=True)
-    agency = models.ManyToManyField(Agency, blank=True, null=True)
+    encrypted = models.BooleanField(default=False, blank=True)
+    agency = models.ManyToManyField(Agency, blank=True)
 
     def __str__(self):
         return self.alphaTag
@@ -202,6 +202,7 @@ class Incident(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
+    time = models.DateTimeField(default=datetime.now)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     transmission = models.ManyToManyField(Transmission, blank=True)
     name = models.CharField(max_length=30)
@@ -286,9 +287,11 @@ class GlobalEmailTemplate(models.Model):
 
 
 class SystemReciveRate(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    ),
+    UUID = (
+        models.UUIDField(
+            primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+        ),
+    )
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     time = models.DateTimeField(default=datetime.now())
     rate = models.FloatField()
@@ -311,9 +314,7 @@ class Call(models.Model):
     frequency = models.FloatField()
     phase2 = models.CharField(max_length=30)
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
-    recorder =  models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
+    recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.time.strftime("%c")} - {str(self.rate)}'
-
-

@@ -41,5 +41,4 @@ django-celery
 django-celery-results
 django-celery-beat
 django-storages
-Django-rest-auth 
 django-cors-headers

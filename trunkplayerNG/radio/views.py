@@ -3,6 +3,7 @@ from functools import partial
 from os import stat
 from django import http
 from django.shortcuts import render
+from rest_framework import response
 from rest_framework.views import APIView
 from rest_framework import permissions
 from django.http import Http404
@@ -28,11 +29,13 @@ from radio.utils import (
 )
 from radio.permission import (
     Feeder,
+    FeederFree,
     IsSAOrReadOnly,
     IsSAOrUser,
     IsSiteAdmin,
     IsUser,
 )
+from trunkplayerNG.storage_backends import StaticStorage
 
 
 class UserProfileList(APIView):
@@ -798,6 +801,39 @@ class TalkGroupView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class TalkGroupTransmissionList(APIView):
+    queryset = Transmission.objects.all()
+    serializer_class = TransmissionSerializer
+    permission_classes = [IsSAOrReadOnly]
+
+    def get_object(self, UUID):
+        try:
+            return TalkGroup.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=["Transmission"])
+    def get(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        TalkGroupX: TalkGroup = self.get_object(UUID)
+
+        Transmissions = Transmission.objects.filter(talkgroup=TalkGroupX)
+
+        if not user.siteAdmin:
+            SystemX: System = TalkGroupX.system
+            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+
+            if not SystemX in systems:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+            if not TalkGroupX in talkgroupsAllowed:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = TransmissionSerializer(Transmissions, many=True)
+        return Response(serializer.data)
+
+
 class TalkGroupACLList(APIView):
     queryset = TalkGroupACL.objects.all()
     serializer_class = TalkGroupACLSerializer
@@ -1283,24 +1319,6 @@ class TransmissionFreqView(APIView):
     def get(self, request, UUID, format=None):
         user: UserProfile = request.user.userProfile
         TransmissionFreqX: TransmissionFreq = self.get_object(UUID)
-
-        TransmissionX: Transmission = Transmission.objects.filter(
-            frequencys__in=TransmissionFreqX
-        )
-
-        if not user.siteAdmin:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
-            if TransmissionX.system in systems:
-                SystemX: System = TransmissionX.system
-                if not SystemX in systems:
-                    return Response(status=status.HTTP_401_UNAUTHORIZED)
-                if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
-                    if not TransmissionX.talkgroup in talkgroupsAllowed:
-                        return Response(status=status.HTTP_401_UNAUTHORIZED)
-            else:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
-
         serializer = TransmissionFreqSerializer(TransmissionFreqX)
         return Response(serializer.data)
 
@@ -1315,7 +1333,7 @@ class TransmissionList(APIView):
         user: UserProfile = request.user.userProfile
 
         if user.siteAdmin:
-            Transmissions = Transmission.objects.all()
+            AllowedTransmissions = Transmission.objects.all()
         else:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             Transmissions = Transmission.objects.filter(system__in=systems)
@@ -1338,7 +1356,7 @@ class TransmissionList(APIView):
 class TransmissionCreate(APIView):
     queryset = Transmission.objects.all()
     serializer_class = TransmissionSerializer
-    permission_classes = [Feeder]
+    permission_classes = [FeederFree]
 
     @swagger_auto_schema(
         tags=["Transmission"],
@@ -1365,29 +1383,37 @@ class TransmissionCreate(APIView):
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
-        try:
-            Callback = new_transmission_handler(data)
-
-            if not Callback:
-                return Response(
-                    "Not allowed to post this talkgroup",
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-
-            Callback["UUID"] = uuid.uuid4()
-
-            recorderX: SystemRecorder = SystemRecorder.objects.get(
-                UUID=Callback["forwarderWebhookUUID"]
+        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+            return Response(
+                "Not allowed to post this talkgroup",
+                status=status.HTTP_401_UNAUTHORIZED,
             )
-            Callback["system"] = str(recorderX.system.UUID)
 
-            TX = TransmissionSerializer(data=Callback, partial=True)
+        # try:
+        Callback = new_transmission_handler(data)
 
-            if TX.is_valid():
-                TX.save()
+        if not Callback:
+            return Response(
+                "Not allowed to post this talkgroup",
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        Callback["UUID"] = uuid.uuid4()
+
+        recorderX: SystemRecorder = SystemRecorder.objects.get(
+            forwarderWebhookUUID=Callback["recorder"]
+        )
+        Callback["system"] = str(recorderX.system.UUID)
+
+        TX = TransmissionUploadSerializer(data=Callback, partial=True)
+
+        if TX.is_valid(raise_exception=True):
+            TX.save()
             return Response({"success": True})
-        except Exception as e:
-            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+        else:
+            Response(TX.errors)
+        # except Exception as e:
+        #    return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
 class TransmissionView(APIView):
@@ -1476,6 +1502,7 @@ class IncidentCreate(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Agency UUIDs",
                 ),
+                "time": openapi.Schema(type=openapi.TYPE_STRING, description="Time"),
             },
         ),
     )
@@ -2171,7 +2198,7 @@ class SystemReciveRateList(APIView):
 class SystemReciveRateCreate(APIView):
     queryset = SystemReciveRate.objects.all()
     serializer_class = SystemReciveRateCreateSerializer
-    permission_classes = [Feeder]
+    permission_classes = [FeederFree]
 
     @swagger_auto_schema(
         tags=["SystemReciveRate"],
@@ -2191,6 +2218,9 @@ class SystemReciveRateCreate(APIView):
     )
     def post(self, request, format=None):
         data = JSONParser().parse(request)
+
+        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
@@ -2255,7 +2285,7 @@ class CallList(APIView):
 class CallCreate(APIView):
     queryset = Call.objects.all()
     serializer_class = CallUpdateCreateSerializer
-    permission_classes = [Feeder]
+    permission_classes = [FeederFree]
 
     @swagger_auto_schema(
         tags=["Call"],
@@ -2315,13 +2345,13 @@ class CallCreate(APIView):
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
+        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
 
         serializer = CallUpdateCreateSerializer(data=data)
-
-        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         if serializer.is_valid():
             serializer.save()

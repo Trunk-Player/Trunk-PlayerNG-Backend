@@ -52,6 +52,11 @@ urlpatterns = [
         name="talkgroup_view",
     ),
     path(
+        "radio/talkgroup/<uuid:UUID>/transmissions",
+        views.TalkGroupTransmissionList.as_view(),
+        name="talkgroup_transmissions",
+    ),
+    path(
         "radio/systemrecorder/list",
         views.SystemRecorderList.as_view(),
         name="systemrecorder_list",
@@ -75,7 +80,7 @@ urlpatterns = [
         name="transmissionunit_view",
     ),
     path(
-        "radio/transmissio/freq/<uuid:UUID>",
+        "radio/transmission/freq/<uuid:UUID>",
         views.TransmissionFreqView.as_view(),
         name="transmissionunit_view",
     ),
