@@ -2,7 +2,7 @@ from django.db import models
 import uuid
 from django.db.models.base import ModelBase
 from django.db.models.enums import Choices
-from datetime import datetime
+from datetime import date, datetime
 from trunkplayerNG.storage_backends import PrivateMediaStorage
 
 
@@ -13,7 +13,8 @@ class UserProfile(models.Model):
     siteAdmin = models.BooleanField(default=False)
     description = models.TextField(blank=True, null=True)
     siteTheme = models.TextField(blank=True, null=True)
-    feedAllowed = models.BooleanField(default=False)
+    # feedAllowed = models.BooleanField(default=False)
+    # feedAllowedSystems = models.ManyToManyField()
 
     def __str__(self):
         return f"{self.UUID}"
@@ -103,8 +104,8 @@ class TalkGroup(models.Model):
     decimalID = models.IntegerField(db_index=True)
     alphaTag = models.CharField(max_length=30, blank=True)
     description = models.CharField(max_length=100, blank=True, null=True)
-    encrypted = models.BooleanField(default=True, blank=True)
-    agency = models.ManyToManyField(Agency, blank=True, null=True)
+    encrypted = models.BooleanField(default=False, blank=True)
+    agency = models.ManyToManyField(Agency, blank=True)
 
     def __str__(self):
         return self.alphaTag
@@ -127,7 +128,7 @@ class SystemRecorder(models.Model):
     talkgroupsDenyed = models.ManyToManyField(
         TalkGroup, blank=True, related_name="SRTGDeny"
     )
-    forwarderWebhookUUID = models.UUIDField(default=uuid.uuid4)
+    forwarderWebhookUUID = models.UUIDField(default=uuid.uuid4, db_index=True)
 
     def __str__(self):
         return self.name
@@ -201,6 +202,8 @@ class Incident(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
+    active =  models.BooleanField(default=True)
+    time = models.DateTimeField(default=datetime.now)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     transmission = models.ManyToManyField(Transmission, blank=True)
     name = models.CharField(max_length=30)
@@ -232,7 +235,8 @@ class ScanList(models.Model):
     owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)
-    public = models.BooleanField(default=True)
+    public = models.BooleanField(default=False)
+    communityShared = models.BooleanField(default=True)
     talkgroups = models.ManyToManyField(TalkGroup)
 
     def __str__(self):
@@ -247,19 +251,8 @@ class Scanner(models.Model):
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)
     public = models.BooleanField(default=True)
+    communityShared = models.BooleanField(default=True)
     scanlists = models.ManyToManyField(ScanList)
-
-    def __str__(self):
-        return self.name
-
-
-class GlobalScanList(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
-    scanList = models.ForeignKey(ScanList, on_delete=models.CASCADE)
-    name = models.CharField(max_length=30)
-    enabled = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -296,9 +289,12 @@ class GlobalEmailTemplate(models.Model):
 
 
 class SystemReciveRate(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+    UUID = (
+        models.UUIDField(
+            primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+        ),
     )
+    recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     time = models.DateTimeField(default=datetime.now())
     rate = models.FloatField()
 
@@ -320,22 +316,7 @@ class Call(models.Model):
     frequency = models.FloatField()
     phase2 = models.CharField(max_length=30)
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
+    recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.time.strftime("%c")} - {str(self.rate)}'
-
-
-class SystemRecorderMetrics(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
-    systemRecorder = models.ForeignKey(System, on_delete=models.CASCADE)
-    rates = models.ManyToManyField(SystemReciveRate)
-    calls = models.ManyToManyField(Call)
-
-    def __str__(self):
-        return f'{self.time.strftime("%c")} - {str(self.rate)}'
-
-    def statusServerURL(self):
-        pass
-        # return

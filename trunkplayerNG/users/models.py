@@ -6,7 +6,7 @@ from django.dispatch import receiver
 
 import uuid
 
-from radio.models import UserProfile
+from radio.models import UserProfile, TalkGroupACL
 from users.managers import CustomUserManager
 
 
@@ -32,20 +32,20 @@ def createUserProfile(sender, instance: CustomUser, **kwargs):
         return True
 
     siteAdmin = False
-    feedAllowed = False
 
     if instance.is_superuser and instance.is_active:
         siteAdmin = True
-        feedAllowed = True
 
     UP = UserProfile(
-        UUID=uuid.uuid4(),
-        siteAdmin=siteAdmin,
-        description="",
-        siteTheme="",
-        feedAllowed=feedAllowed,
+        UUID=uuid.uuid4(), siteAdmin=siteAdmin, description="", siteTheme=""
     )
 
     UP.save()
+
+    for acl in TalkGroupACL.objects.filter(defaultNewUsers=True):
+        acl: TalkGroupACL
+        acl.users.add(UP)
+        acl.save()
+
     instance.userProfile = UP
     instance.save()

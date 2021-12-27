@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from allauth.account.models import EmailAddress
 
+
 class CustomUserManager(BaseUserManager):
     """
     Custom user model manager where email is the unique identifiers
@@ -19,7 +20,6 @@ class CustomUserManager(BaseUserManager):
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save()
-
 
         EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
 

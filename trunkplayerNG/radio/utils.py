@@ -116,9 +116,15 @@ class TransmissionDetails:
     def _to_json(self):
         system: System = System.objects.get(UUID=self.system)
         Talkgroup, created = TalkGroup.objects.get_or_create(
-            decimalID=self.talkgroup, system=system
+            decimalID=self.talkgroup, system=system, alphaTag=self.talkgroup_tag
         )
         Talkgroup.save()
+
+        if created:
+            for acl in TalkGroupACL.objects.filter(defaultNewTalkgroups=True):
+                acl: TalkGroupACL
+                acl.allowedTalkgroups.add(Talkgroup)
+                acl.save()
 
         payload = {
             "startTime": self.start_time,
@@ -144,38 +150,48 @@ class TransmissionDetails:
 
     def validate_upload(self, recorderUUID):
         system: System = System.objects.get(UUID=self.system)
-        recorder: SystemRecorder = SystemRecorder.objects.get(UUID=recorderUUID)
+        recorder: SystemRecorder = SystemRecorder.objects.get(
+            forwarderWebhookUUID=recorderUUID
+        )
 
-        if len(recorder.talkgroupsAllowed) > 0 and len(recorder.talkgroupsDenyed) == 0:
+        if (
+            len(recorder.talkgroupsAllowed.all()) > 0
+            and len(recorder.talkgroupsDenyed.all()) == 0
+        ):
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroupsAllowed.objects.all():
+            if talkgroup in recorder.talkgroupsAllowed.all():
                 return True
             else:
                 return False
         elif (
-            len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) > 0
+            len(recorder.talkgroupsAllowed.all()) == 0
+            and len(recorder.talkgroupsDenyed.all()) > 0
         ):
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroupsDenyed.objects.all():
+            if talkgroup in recorder.talkgroupsDenyed.all():
                 return False
             else:
                 return True
-        elif len(recorder.talkgroupsAllowed) > 0 and len(recorder.talkgroupsDenyed) > 0:
+        elif (
+            len(recorder.talkgroupsAllowed.all()) > 0
+            and len(recorder.talkgroupsDenyed.all()) > 0
+        ):
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroupsDenyed.objects.all():
+            if talkgroup in recorder.talkgroupsDenyed.all():
                 return False
             else:
-                if talkgroup in recorder.talkgroupsAllowed.objects.all():
+                if talkgroup in recorder.talkgroupsAllowed.all():
                     return True
                 else:
                     return False
         elif (
-            len(recorder.talkgroupsAllowed) == 0 and len(recorder.talkgroupsDenyed) == 0
+            len(recorder.talkgroupsAllowed.all()) == 0
+            and len(recorder.talkgroupsDenyed.all()) == 0
         ):
             return True
 
 
-def getUserAllowedSystems(UserUUID:str):
+def getUserAllowedSystems(UserUUID: str):
     userACLs = []
     ACLs = SystemACL.objects.all()
     for ACL in ACLs:
@@ -188,9 +204,10 @@ def getUserAllowedSystems(UserUUID:str):
     systemUUIDs = [system.UUID for system in Systems]
     return systemUUIDs, Systems
 
-def getUserAllowedTalkgroups(System:System, UserUUID:str):
+
+def getUserAllowedTalkgroups(System: System, UserUUID: str):
     userACLsTGIDs = []
-    
+
     SystemTalkGroups = TalkGroup.objects.filter(system=System)
     if not System.enableTalkGroupACLs:
         return SystemTalkGroups
@@ -202,8 +219,6 @@ def getUserAllowedTalkgroups(System:System, UserUUID:str):
             for TGID in ACL.allowedTalkgroups.all():
                 userACLsTGIDs.append(TGID.UUID)
 
-
     AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=userACLsTGIDs)
-
 
     return AllowedTalkgropups

@@ -51,22 +51,7 @@ class IsSAOrUser(permissions.BasePermission):
         return False
 
 
-class IsSiteAdmin(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it.
-    """
-
-    def has_permission(self, request, view):
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
-
-        # Write permissions are only allowed to the owner of the snippet.
-        if request.user.is_anonymous:
-            return False
-        return request.user.userProfile.siteAdmin
-
-
-class IsSAOrFeedUser(permissions.BasePermission):
+class IsUser(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it.
     """
@@ -84,7 +69,55 @@ class IsSAOrFeedUser(permissions.BasePermission):
         if request.user.is_anonymous:
             return False
 
-        if request.user.userProfile.feedAllowed:
-            return True
+        return True
 
-        return False
+
+class IsSiteAdmin(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+
+    def has_permission(self, request, view):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+
+        # Write permissions are only allowed to the owner of the snippet.
+        if request.user.is_anonymous:
+            return False
+        return request.user.userProfile.siteAdmin
+
+
+class Feeder(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return False
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+
+        # Write permissions are only allowed to the owner of the snippet.
+
+        return True
+
+
+class FeederFree(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it.
+    """
+
+    def has_permission(self, request, view):
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+
+        # Write permissions are only allowed to the owner of the snippet.
+
+        return True
