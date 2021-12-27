@@ -7,12 +7,20 @@ ENV PYTHONUNBUFFERED 1
 # set work directory
 WORKDIR /code
 
+#RUN apt update && apt install -y uwsgi-plugin-python
+
 # install dependencies
 RUN pip install --upgrade pip 
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
 
 COPY ./trunkplayerNG/ /code/
+ADD uwsgi.conf /code/
+
+RUN mkdir /code/static
+RUN mkdir /code/staticfiles
+VOLUME /code/static
+
 
 EXPOSE 8000
 
