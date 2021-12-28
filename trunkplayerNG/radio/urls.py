@@ -12,13 +12,18 @@ urlpatterns = [
         name="systemacl_create",
     ),
     path(
-        "radio/SystemACL/<uuid:UUID>",
+        "radio/systemacl/<uuid:UUID>",
         views.SystemACLView.as_view(),
         name="systemacl_view",
     ),
     path("radio/system/list", views.SystemList.as_view(), name="system_list"),
     path("radio/system/create", views.SystemCreate.as_view(), name="system_create"),
     path("radio/system/<uuid:UUID>", views.SystemView.as_view(), name="system_view"),
+    path(
+        "radio/system/<uuid:UUID>/importrr",
+        views.SystemRRImportView.as_view(),
+        name="system_rr_import_view",
+    ),
     path(
         "radio/systemforwarder/list",
         views.SystemForwarderList.as_view(),

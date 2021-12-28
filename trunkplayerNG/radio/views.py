@@ -21,6 +21,9 @@ from uuid import UUID
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from .radioreference import RR
+
+
 from radio.transmission import new_transmission_handler
 from radio.utils import (
     TransmissionDetails,
@@ -351,6 +354,39 @@ class SystemView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class SystemRRImportView(APIView):
+    queryset = System.objects.all()
+    serializer_class = SystemSerializer
+    permission_classes = [IsSiteAdmin]
+
+    @swagger_auto_schema(
+        tags=["System"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["siteid", "username", "password"],
+            properties={
+                "siteid": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Radio Refrence Site ID"
+                ),
+                "username": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Radio Refrence Username"
+                ),
+                "password": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Radio Refrence password",
+                ),
+            },
+        ),
+    )
+    def post(self, request, UUID, format=None):
+        data = JSONParser().parse(request)
+
+        rr: RR = RR(data["siteid"], data["username"], data["password"])
+        rr.load_system(UUID)
+
+        return Response({"message": "System Import from Radio Refrence Qued"})
 
 
 class SystemForwarderList(APIView):
@@ -711,7 +747,12 @@ class TalkGroupCreate(APIView):
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
-            data["UUID"] = uuid.uuid4()
+            data["UUID"] = (
+                uuid.uuid5(
+                    uuid.NAMESPACE_DNS,
+                    f"{str(data['system'])}+{str(data['decimalID'])}",
+                ),
+            )
 
         serializer = TalkGroupSerializer(data=data)
         if serializer.is_valid():
@@ -1823,7 +1864,7 @@ class ScannerList(APIView):
     queryset = Scanner.objects.all()
     serializer_class = ScannerSerializer
     permission_classes = [IsSAOrReadOnly]
-    
+
     @swagger_auto_schema(tags=["Scanner"])
     def get(self, request, format=None):
         user: UserProfile = request.user.userProfile
@@ -1868,7 +1909,6 @@ class ScannerCreate(APIView):
         data = JSONParser().parse(request)
         user: UserProfile = request.user.userProfile
 
-
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
 
@@ -1900,7 +1940,7 @@ class ScannerView(APIView):
 
     @swagger_auto_schema(tags=["Scanner"])
     def get(self, request, UUID, format=None):
-        ScannerX:Scanner = self.get_object(UUID)
+        ScannerX: Scanner = self.get_object(UUID)
         user: UserProfile = request.user.userProfile
         if not user.siteAdmin:
             if not ScannerX.owner == user:
@@ -1935,8 +1975,8 @@ class ScannerView(APIView):
     )
     def put(self, request, UUID, format=None):
         data = JSONParser().parse(request)
-        ScannerX:Scanner = self.get_object(UUID)
-    
+        ScannerX: Scanner = self.get_object(UUID)
+
         user: UserProfile = request.user.userProfile
         if not user.siteAdmin:
             if not ScannerX.owner == user:
@@ -1950,13 +1990,13 @@ class ScannerView(APIView):
 
     @swagger_auto_schema(tags=["Scanner"])
     def delete(self, request, UUID, format=None):
-        ScannerX:Scanner = self.get_object(UUID)
+        ScannerX: Scanner = self.get_object(UUID)
         user: UserProfile = request.user.userProfile
 
         if not user.siteAdmin:
             if not ScannerX.owner == user:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-        
+
         ScannerX.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

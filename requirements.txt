@@ -44,3 +44,4 @@ django-storages
 Django-rest-auth
 django-cors-headers
 uwsgi
+zeep

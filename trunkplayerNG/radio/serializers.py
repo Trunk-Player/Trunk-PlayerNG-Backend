@@ -42,7 +42,7 @@ class AgencySerializer(serializers.ModelSerializer):
 
 
 class AgencyViewListSerializer(serializers.ModelSerializer):
-    city = CitySerializer()
+    city = CitySerializer(many=True)
 
     class Meta:
         model = Agency
@@ -187,8 +187,7 @@ class IncidentCreateSerializer(serializers.ModelSerializer):
         model = Incident
         fields = [
             "UUID",
-            "active"
-            "time",
+            "active" "time",
             "system",
             "transmission",
             "name",
@@ -231,7 +230,15 @@ class ScannerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Scanner
-        fields = ["UUID", "owner", "name", "description", "public", "communityShared", "scanlists"]
+        fields = [
+            "UUID",
+            "owner",
+            "name",
+            "description",
+            "public",
+            "communityShared",
+            "scanlists",
+        ]
 
 
 class GlobalAnnouncementSerializer(serializers.ModelSerializer):
