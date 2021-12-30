@@ -102,8 +102,8 @@ class TalkGroup(models.Model):
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     decimalID = models.IntegerField(db_index=True)
-    alphaTag = models.CharField(max_length=30, blank=True)
-    description = models.CharField(max_length=100, blank=True, null=True)
+    alphaTag = models.CharField(max_length=30, blank=True, default="")
+    description = models.CharField(max_length=250, blank=True, null=True)
     encrypted = models.BooleanField(default=False, blank=True)
     agency = models.ManyToManyField(Agency, blank=True)
 
@@ -159,7 +159,7 @@ class TransmissionUnit(models.Model):
     length = models.FloatField(default=0.0)
 
     def __str__(self):
-        return f"[{self.talkgroup}][{self.startTime}] {self.UUID}"
+        return f"{self.UUID}"
 
 
 class TransmissionFreq(models.Model):
@@ -174,7 +174,7 @@ class TransmissionFreq(models.Model):
     spike_count = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"[{self.talkgroup}][{self.startTime}] {self.UUID}"
+        return f"{self.UUID}"
 
 
 class Transmission(models.Model):
@@ -207,7 +207,7 @@ class Incident(models.Model):
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     transmission = models.ManyToManyField(Transmission, blank=True)
     name = models.CharField(max_length=30)
-    description = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     agency = models.ManyToManyField(Agency, blank=True)
 
     def __str__(self):
@@ -289,11 +289,10 @@ class GlobalEmailTemplate(models.Model):
 
 
 class SystemReciveRate(models.Model):
-    UUID = (
-        models.UUIDField(
+    UUID = models.UUIDField(
             primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-        ),
     )
+    
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     time = models.DateTimeField(default=datetime.now())
     rate = models.FloatField()

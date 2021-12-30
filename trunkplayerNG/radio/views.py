@@ -1450,7 +1450,7 @@ class TransmissionCreate(APIView):
 
         if TX.is_valid(raise_exception=True):
             TX.save()
-            return Response({"success": True})
+            return Response({"success": True, "UUID": Callback["UUID"]})
         else:
             Response(TX.errors)
         # except Exception as e:
@@ -1632,7 +1632,7 @@ class IncidentView(APIView):
             if not IncidentX.system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = IncidentSerializer(Incident)
+        serializer = IncidentSerializer(IncidentX)
         return Response(serializer.data)
 
     @swagger_auto_schema(tags=["Incident"])
@@ -2022,13 +2022,13 @@ class ScannerTransmissionList(APIView):
         ScanListTalkgroups = []
         Transmissions = []
 
-        for ScanListX in ScannerX.scanlists:
+        for ScanListX in ScannerX.scanlists.all():
             ScanListX: ScanList
-            ScanListTalkgroups.append(ScanListX.talkgroups.all())
+            ScanListTalkgroups.extend(ScanListX.talkgroups.all())
 
-        for TransmissionX in Transmission.objects.filter(
-            talkgroup__in=ScanListTalkgroups
-        ):
+        TransmissionList = Transmission.objects.filter(talkgroup__in=ScanListTalkgroups)
+
+        for TransmissionX in TransmissionList:
             Transmissions.append(TransmissionX)
 
         if not user.siteAdmin:
@@ -2302,16 +2302,15 @@ class SystemReciveRateCreate(APIView):
         if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        if not "UUID" in data:
-            data["UUID"] = uuid.uuid4()
-
-        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        data["UUID"] = uuid.uuid4()
 
         serializer = SystemReciveRateCreateSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            dataX = serializer.data
+            print(dataX)
+            dataX["UUID"] = str(dataX["UUID"])
+            return Response(dataX)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -2442,6 +2441,7 @@ class CallCreate(APIView):
 class CallView(APIView):
     queryset = Call.objects.all()
     serializer_class = CallSerializer
+    permission_classes = [IsSiteAdmin]
 
     def get_object(self, UUID):
         try:

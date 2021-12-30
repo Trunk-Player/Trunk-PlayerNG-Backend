@@ -93,7 +93,7 @@ class TransmissionDetails:
         self.freq = payload.get("freq")
         self.call_length = payload.get("call_length")
         self.talkgroup = payload.get("talkgroup")
-        self.talkgroup_tag = payload.get("talkgroup_tag")
+        self.talkgroup_tag = payload.get("talkgroup_tag", str(self.talkgroup))
         self.play_length = payload.get("play_length")
         self.source = payload.get("source")
 

@@ -179,7 +179,7 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident
-        fields = ["UUID", "system", "transmission", "name", "description", "agency"]
+        fields = ["UUID", "system", "transmission", "name", "description", "agency", "time"]
 
 
 class IncidentCreateSerializer(serializers.ModelSerializer):
@@ -187,7 +187,8 @@ class IncidentCreateSerializer(serializers.ModelSerializer):
         model = Incident
         fields = [
             "UUID",
-            "active" "time",
+            "active",
+             "time",
             "system",
             "transmission",
             "name",
@@ -292,9 +293,9 @@ class CallSerializer(serializers.ModelSerializer):
 
 
 class CallUpdateCreateSerializer(serializers.ModelSerializer):
-    talkgroup = serializers.SlugRelatedField(
-        read_only=False, queryset=TalkGroup.objects.all(), slug_field="decimalID"
-    )
+    # talkgroup = serializers.SlugRelatedField(
+    #     read_only=False, queryset=TalkGroup.objects.all(), slug_field="decimalID"
+    # )
     units = serializers.SlugRelatedField(
         many=True, read_only=False, queryset=Unit.objects.all(), slug_field="decimalID"
     )
