@@ -410,13 +410,24 @@ class SystemForwarderCreate(APIView):
         tags=["SystemForwarder"],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=["name", "enabled"],
+            required=["name", "enabled", "recorderKey", "remoteURL", "forwardedSystems"],
             properties={
                 "name": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Forwarder Name"
                 ),
                 "enabled": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="enabled"
+                ),
+                "recorderKey": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Forwarder Key"
+                ),
+                "remoteURL": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Remote URL of the TP-NG to forward to"
+                ),
+                "forwardedSystems": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="System UUIDs",
                 ),
             },
         ),
@@ -427,9 +438,7 @@ class SystemForwarderCreate(APIView):
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
 
-        data["feedKey"] = uuid.uuid4()
-
-        serializer = SystemSerializer(data=data)
+        serializer = SystemForwarderSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

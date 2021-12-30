@@ -26,7 +26,7 @@ class SystemSerializer(serializers.ModelSerializer):
 class SystemForwarderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemForwarder
-        fields = ["UUID", "name", "enabled", "feedKey", "webhook"]
+        fields = ["UUID", "name", "enabled", "recorderKey", "remoteURL", "forwardedSystems"]
 
 
 class CitySerializer(serializers.ModelSerializer):

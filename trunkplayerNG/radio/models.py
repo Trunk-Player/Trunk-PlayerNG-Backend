@@ -61,9 +61,12 @@ class SystemForwarder(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
-    name = models.CharField(max_length=100, db_index=True, unique=True)
+    name = models.CharField(max_length=100, unique=True)
     enabled = models.BooleanField(default=False)
-    feedKey = models.UUIDField(default=uuid.uuid4, unique=True)
+    recorderKey = models.UUIDField()
+    remoteURL = models.CharField(max_length=250)
+
+    forwardedSystems = models.ManyToManyField(System)
 
     def __str__(self):
         return self.name
