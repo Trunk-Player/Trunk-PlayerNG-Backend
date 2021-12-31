@@ -198,7 +198,7 @@ class Transmission(models.Model):
     length = models.FloatField(default=0.0)
 
     def __str__(self):
-        return f"[{self.system.name}][{self.talkgroup}][{self.startTime}] {self.UUID}"
+        return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"
 
 
 class Incident(models.Model):
