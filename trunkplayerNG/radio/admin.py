@@ -4,10 +4,21 @@ from radio.models import *
 
 # Register your models here.
 
+
 class TransmissionAdmin(admin.ModelAdmin):
-    ordering = ('-startTime',)
-    list_display = ('UUID', 'system', 'recorder', 'startTime', 'talkgroup', 'length', 'encrypted', 'emergency')
-    list_filter = ('system', 'recorder', 'emergency')
+    ordering = ("-startTime",)
+    list_display = (
+        "UUID",
+        "system",
+        "recorder",
+        "startTime",
+        "talkgroup",
+        "length",
+        "encrypted",
+        "emergency",
+    )
+    list_filter = ("system", "recorder", "emergency")
+
 
 admin.site.register(UserProfile)
 admin.site.register(SystemACL)

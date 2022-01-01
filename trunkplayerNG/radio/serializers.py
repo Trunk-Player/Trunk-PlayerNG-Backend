@@ -26,7 +26,15 @@ class SystemSerializer(serializers.ModelSerializer):
 class SystemForwarderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemForwarder
-        fields = ["UUID", "name", "enabled", "recorderKey", "remoteURL", "forwardIncidents", "forwardedSystems"]
+        fields = [
+            "UUID",
+            "name",
+            "enabled",
+            "recorderKey",
+            "remoteURL",
+            "forwardIncidents",
+            "forwardedSystems",
+        ]
 
 
 class CitySerializer(serializers.ModelSerializer):
@@ -148,7 +156,7 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "frequency",
             "frequencys",
             "length",
-            "locked"
+            "locked",
         ]
 
 
@@ -174,14 +182,22 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "frequency",
             "frequencys",
             "length",
-            "locked"
+            "locked",
         ]
 
 
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident
-        fields = ["UUID", "system", "transmission", "name", "description", "agency", "time"]
+        fields = [
+            "UUID",
+            "system",
+            "transmission",
+            "name",
+            "description",
+            "agency",
+            "time",
+        ]
 
 
 class IncidentCreateSerializer(serializers.ModelSerializer):
@@ -190,7 +206,7 @@ class IncidentCreateSerializer(serializers.ModelSerializer):
         fields = [
             "UUID",
             "active",
-             "time",
+            "time",
             "system",
             "transmission",
             "name",

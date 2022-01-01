@@ -10,262 +10,562 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Agency',
+            name="Agency",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('description', models.CharField(blank=True, max_length=100, null=True)),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                (
+                    "description",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='City',
+            name="City",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('description', models.CharField(blank=True, max_length=100, null=True)),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                (
+                    "description",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='GlobalAnnouncement',
+            name="GlobalAnnouncement",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('enabled', models.BooleanField(default=False)),
-                ('description', models.TextField()),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                ("enabled", models.BooleanField(default=False)),
+                ("description", models.TextField()),
             ],
         ),
         migrations.CreateModel(
-            name='GlobalEmailTemplate',
+            name="GlobalEmailTemplate",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('type', models.CharField(choices=[('welcome', 'welcome'), ('alert', 'alert')], max_length=30, unique=True)),
-                ('enabled', models.BooleanField(default=False)),
-                ('HTML', models.TextField()),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[("welcome", "welcome"), ("alert", "alert")],
+                        max_length=30,
+                        unique=True,
+                    ),
+                ),
+                ("enabled", models.BooleanField(default=False)),
+                ("HTML", models.TextField()),
             ],
         ),
         migrations.CreateModel(
-            name='ScanList',
+            name="ScanList",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('description', models.CharField(blank=True, max_length=100, null=True)),
-                ('public', models.BooleanField(default=False)),
-                ('communityShared', models.BooleanField(default=True)),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                (
+                    "description",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("public", models.BooleanField(default=False)),
+                ("communityShared", models.BooleanField(default=True)),
             ],
         ),
         migrations.CreateModel(
-            name='System',
+            name="System",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(db_index=True, max_length=100, unique=True)),
-                ('enableTalkGroupACLs', models.BooleanField(default=False)),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(db_index=True, max_length=100, unique=True)),
+                ("enableTalkGroupACLs", models.BooleanField(default=False)),
             ],
         ),
         migrations.CreateModel(
-            name='SystemRecorder',
+            name="SystemRecorder",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('siteID', models.CharField(blank=True, max_length=100, null=True)),
-                ('enabled', models.BooleanField(default=False)),
-                ('forwarderWebhookUUID', models.UUIDField(db_index=True, default=uuid.uuid4)),
-                ('system', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.system')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                ("siteID", models.CharField(blank=True, max_length=100, null=True)),
+                ("enabled", models.BooleanField(default=False)),
+                (
+                    "forwarderWebhookUUID",
+                    models.UUIDField(db_index=True, default=uuid.uuid4),
+                ),
+                (
+                    "system",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="radio.system"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='TalkGroup',
+            name="TalkGroup",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('decimalID', models.IntegerField(db_index=True)),
-                ('alphaTag', models.CharField(blank=True, default='', max_length=30)),
-                ('description', models.CharField(blank=True, max_length=250, null=True)),
-                ('encrypted', models.BooleanField(blank=True, default=False)),
-                ('agency', models.ManyToManyField(blank=True, to='radio.Agency')),
-                ('system', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.system')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("decimalID", models.IntegerField(db_index=True)),
+                ("alphaTag", models.CharField(blank=True, default="", max_length=30)),
+                (
+                    "description",
+                    models.CharField(blank=True, max_length=250, null=True),
+                ),
+                ("encrypted", models.BooleanField(blank=True, default=False)),
+                ("agency", models.ManyToManyField(blank=True, to="radio.Agency")),
+                (
+                    "system",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="radio.system"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='TransmissionFreq',
+            name="TransmissionFreq",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('time', models.DateTimeField()),
-                ('freq', models.IntegerField(db_index=True, default=0)),
-                ('pos', models.IntegerField(default=0)),
-                ('len', models.IntegerField(default=0)),
-                ('error_count', models.IntegerField(default=0)),
-                ('spike_count', models.IntegerField(default=0)),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("time", models.DateTimeField()),
+                ("freq", models.IntegerField(db_index=True, default=0)),
+                ("pos", models.IntegerField(default=0)),
+                ("len", models.IntegerField(default=0)),
+                ("error_count", models.IntegerField(default=0)),
+                ("spike_count", models.IntegerField(default=0)),
             ],
         ),
         migrations.CreateModel(
-            name='UserProfile',
+            name="UserProfile",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('siteAdmin', models.BooleanField(default=False)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('siteTheme', models.TextField(blank=True, null=True)),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("siteAdmin", models.BooleanField(default=False)),
+                ("description", models.TextField(blank=True, null=True)),
+                ("siteTheme", models.TextField(blank=True, null=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Unit',
+            name="Unit",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('decimalID', models.IntegerField(db_index=True)),
-                ('description', models.CharField(blank=True, max_length=100, null=True)),
-                ('system', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.system')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("decimalID", models.IntegerField(db_index=True)),
+                (
+                    "description",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                (
+                    "system",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="radio.system"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='TransmissionUnit',
+            name="TransmissionUnit",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('time', models.DateTimeField(db_index=True)),
-                ('pos', models.IntegerField(default=0)),
-                ('emergency', models.BooleanField(default=0)),
-                ('signal_system', models.CharField(blank=True, default='', max_length=50)),
-                ('tag', models.CharField(blank=True, default='', max_length=255)),
-                ('length', models.FloatField(default=0.0)),
-                ('unit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.unit')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("time", models.DateTimeField(db_index=True)),
+                ("pos", models.IntegerField(default=0)),
+                ("emergency", models.BooleanField(default=0)),
+                (
+                    "signal_system",
+                    models.CharField(blank=True, default="", max_length=50),
+                ),
+                ("tag", models.CharField(blank=True, default="", max_length=255)),
+                ("length", models.FloatField(default=0.0)),
+                (
+                    "unit",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="radio.unit"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Transmission',
+            name="Transmission",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('startTime', models.DateTimeField()),
-                ('endTime', models.DateTimeField(blank=True, null=True)),
-                ('audioFile', models.FileField(upload_to='')),
-                ('encrypted', models.BooleanField(db_index=True, default=False)),
-                ('emergency', models.BooleanField(db_index=True, default=False)),
-                ('frequency', models.FloatField(default=0.0)),
-                ('length', models.FloatField(default=0.0)),
-                ('frequencys', models.ManyToManyField(to='radio.TransmissionFreq')),
-                ('recorder', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.systemrecorder')),
-                ('system', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.system')),
-                ('talkgroup', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.talkgroup')),
-                ('units', models.ManyToManyField(to='radio.TransmissionUnit')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("startTime", models.DateTimeField()),
+                ("endTime", models.DateTimeField(blank=True, null=True)),
+                ("audioFile", models.FileField(upload_to="")),
+                ("encrypted", models.BooleanField(db_index=True, default=False)),
+                ("emergency", models.BooleanField(db_index=True, default=False)),
+                ("frequency", models.FloatField(default=0.0)),
+                ("length", models.FloatField(default=0.0)),
+                ("frequencys", models.ManyToManyField(to="radio.TransmissionFreq")),
+                (
+                    "recorder",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="radio.systemrecorder",
+                    ),
+                ),
+                (
+                    "system",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="radio.system"
+                    ),
+                ),
+                (
+                    "talkgroup",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="radio.talkgroup",
+                    ),
+                ),
+                ("units", models.ManyToManyField(to="radio.TransmissionUnit")),
             ],
         ),
         migrations.CreateModel(
-            name='TalkGroupACL',
+            name="TalkGroupACL",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('defaultNewUsers', models.BooleanField(default=True)),
-                ('defaultNewTalkgroups', models.BooleanField(default=True)),
-                ('allowedTalkgroups', models.ManyToManyField(to='radio.TalkGroup')),
-                ('users', models.ManyToManyField(to='radio.UserProfile')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                ("defaultNewUsers", models.BooleanField(default=True)),
+                ("defaultNewTalkgroups", models.BooleanField(default=True)),
+                ("allowedTalkgroups", models.ManyToManyField(to="radio.TalkGroup")),
+                ("users", models.ManyToManyField(to="radio.UserProfile")),
             ],
         ),
         migrations.AddField(
-            model_name='systemrecorder',
-            name='talkgroupsAllowed',
-            field=models.ManyToManyField(blank=True, related_name='SRTGAllow', to='radio.TalkGroup'),
+            model_name="systemrecorder",
+            name="talkgroupsAllowed",
+            field=models.ManyToManyField(
+                blank=True, related_name="SRTGAllow", to="radio.TalkGroup"
+            ),
         ),
         migrations.AddField(
-            model_name='systemrecorder',
-            name='talkgroupsDenyed',
-            field=models.ManyToManyField(blank=True, related_name='SRTGDeny', to='radio.TalkGroup'),
+            model_name="systemrecorder",
+            name="talkgroupsDenyed",
+            field=models.ManyToManyField(
+                blank=True, related_name="SRTGDeny", to="radio.TalkGroup"
+            ),
         ),
         migrations.AddField(
-            model_name='systemrecorder',
-            name='user',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='radio.userprofile'),
+            model_name="systemrecorder",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="radio.userprofile",
+            ),
         ),
         migrations.CreateModel(
-            name='SystemReciveRate',
+            name="SystemReciveRate",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('time', models.DateTimeField(default=datetime.datetime(2021, 12, 30, 15, 8, 43, 372487))),
-                ('rate', models.FloatField()),
-                ('recorder', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.systemrecorder')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "time",
+                    models.DateTimeField(
+                        default=datetime.datetime(2021, 12, 30, 15, 8, 43, 372487)
+                    ),
+                ),
+                ("rate", models.FloatField()),
+                (
+                    "recorder",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="radio.systemrecorder",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='SystemForwarder',
+            name="SystemForwarder",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('enabled', models.BooleanField(default=False)),
-                ('recorderKey', models.UUIDField()),
-                ('remoteURL', models.CharField(max_length=250)),
-                ('forwardedSystems', models.ManyToManyField(to='radio.System')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, unique=True)),
+                ("enabled", models.BooleanField(default=False)),
+                ("recorderKey", models.UUIDField()),
+                ("remoteURL", models.CharField(max_length=250)),
+                ("forwardedSystems", models.ManyToManyField(to="radio.System")),
             ],
         ),
         migrations.CreateModel(
-            name='SystemACL',
+            name="SystemACL",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(db_index=True, max_length=100, unique=True)),
-                ('public', models.BooleanField(default=False)),
-                ('users', models.ManyToManyField(to='radio.UserProfile')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(db_index=True, max_length=100, unique=True)),
+                ("public", models.BooleanField(default=False)),
+                ("users", models.ManyToManyField(to="radio.UserProfile")),
             ],
         ),
         migrations.AddField(
-            model_name='system',
-            name='systemACL',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.systemacl'),
+            model_name="system",
+            name="systemACL",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="radio.systemacl"
+            ),
         ),
         migrations.CreateModel(
-            name='Scanner',
+            name="Scanner",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=30)),
-                ('description', models.CharField(blank=True, max_length=100, null=True)),
-                ('public', models.BooleanField(default=True)),
-                ('communityShared', models.BooleanField(default=True)),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.userprofile')),
-                ('scanlists', models.ManyToManyField(to='radio.ScanList')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("name", models.CharField(max_length=30)),
+                (
+                    "description",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("public", models.BooleanField(default=True)),
+                ("communityShared", models.BooleanField(default=True)),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="radio.userprofile",
+                    ),
+                ),
+                ("scanlists", models.ManyToManyField(to="radio.ScanList")),
             ],
         ),
         migrations.AddField(
-            model_name='scanlist',
-            name='owner',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.userprofile'),
+            model_name="scanlist",
+            name="owner",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="radio.userprofile"
+            ),
         ),
         migrations.AddField(
-            model_name='scanlist',
-            name='talkgroups',
-            field=models.ManyToManyField(to='radio.TalkGroup'),
+            model_name="scanlist",
+            name="talkgroups",
+            field=models.ManyToManyField(to="radio.TalkGroup"),
         ),
         migrations.CreateModel(
-            name='Incident',
+            name="Incident",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('active', models.BooleanField(default=True)),
-                ('time', models.DateTimeField(default=datetime.datetime.now)),
-                ('name', models.CharField(max_length=30)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('agency', models.ManyToManyField(blank=True, to='radio.Agency')),
-                ('system', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.system')),
-                ('transmission', models.ManyToManyField(blank=True, to='radio.Transmission')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("active", models.BooleanField(default=True)),
+                ("time", models.DateTimeField(default=datetime.datetime.now)),
+                ("name", models.CharField(max_length=30)),
+                ("description", models.TextField(blank=True, null=True)),
+                ("agency", models.ManyToManyField(blank=True, to="radio.Agency")),
+                (
+                    "system",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="radio.system"
+                    ),
+                ),
+                (
+                    "transmission",
+                    models.ManyToManyField(blank=True, to="radio.Transmission"),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Call',
+            name="Call",
             fields=[
-                ('UUID', models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False, unique=True)),
-                ('trunkRecorderID', models.CharField(max_length=30, unique=True)),
-                ('startTime', models.DateTimeField(db_index=True)),
-                ('endTime', models.DateTimeField(blank=True, null=True)),
-                ('active', models.BooleanField(default=True)),
-                ('emergency', models.BooleanField(default=True)),
-                ('encrypted', models.BooleanField(default=True)),
-                ('frequency', models.FloatField()),
-                ('phase2', models.CharField(max_length=30)),
-                ('recorder', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.systemrecorder')),
-                ('talkgroup', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='radio.talkgroup')),
-                ('units', models.ManyToManyField(related_name='TG_UNITS', to='radio.Unit')),
+                (
+                    "UUID",
+                    models.UUIDField(
+                        db_index=True,
+                        default=uuid.uuid4,
+                        primary_key=True,
+                        serialize=False,
+                        unique=True,
+                    ),
+                ),
+                ("trunkRecorderID", models.CharField(max_length=30, unique=True)),
+                ("startTime", models.DateTimeField(db_index=True)),
+                ("endTime", models.DateTimeField(blank=True, null=True)),
+                ("active", models.BooleanField(default=True)),
+                ("emergency", models.BooleanField(default=True)),
+                ("encrypted", models.BooleanField(default=True)),
+                ("frequency", models.FloatField()),
+                ("phase2", models.CharField(max_length=30)),
+                (
+                    "recorder",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="radio.systemrecorder",
+                    ),
+                ),
+                (
+                    "talkgroup",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="radio.talkgroup",
+                    ),
+                ),
+                (
+                    "units",
+                    models.ManyToManyField(related_name="TG_UNITS", to="radio.Unit"),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='agency',
-            name='city',
-            field=models.ManyToManyField(blank=True, to='radio.City'),
+            model_name="agency",
+            name="city",
+            field=models.ManyToManyField(blank=True, to="radio.City"),
         ),
     ]

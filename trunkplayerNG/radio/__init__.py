@@ -1,2 +1,1 @@
-
-default_app_config = 'radio.apps.RadioConfig'
+default_app_config = "radio.apps.RadioConfig"

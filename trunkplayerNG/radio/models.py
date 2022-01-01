@@ -20,7 +20,8 @@ class UserProfile(models.Model):
 
     def __str__(self):
         from users.models import CustomUser
-        parent:CustomUser = CustomUser.objects.get(userProfile=self)
+
+        parent: CustomUser = CustomUser.objects.get(userProfile=self)
 
         return f"{parent.email}"
 
@@ -224,6 +225,7 @@ class Incident(models.Model):
     def __str__(self):
         return f"[{self.system.name}] {self.name}"
 
+
 @receiver(models.signals.post_save, sender=Incident)
 def execute_after_save(sender, instance, created, *args, **kwargs):
     from radio.tasks import forward_Incident
@@ -312,9 +314,9 @@ class GlobalEmailTemplate(models.Model):
 
 class SystemReciveRate(models.Model):
     UUID = models.UUIDField(
-            primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
-    
+
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     time = models.DateTimeField(default=datetime.now())
     rate = models.FloatField()

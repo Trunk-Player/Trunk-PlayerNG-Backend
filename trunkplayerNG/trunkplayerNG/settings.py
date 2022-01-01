@@ -268,7 +268,7 @@ ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/?verification=1"
 SITE_ID = 1
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-#CELERY_ALWAYS_EAGER = True
+# CELERY_ALWAYS_EAGER = True
 CELERY_TASK_RESULT_EXPIRES = 60  # 1 mins
 CELERYD_MAX_TASKS_PER_CHILD = 50
 CELERYD_PREFETCH_MULTIPLIER = 1
@@ -279,13 +279,9 @@ CELERY_QUEUES = (
     Queue(
         "transmission_forwarding",
         Exchange("transmission_forwarding"),
-        routing_key="transmission_forwarding"
+        routing_key="transmission_forwarding",
     ),
-    Queue(
-        "RR_IMPORT",
-        Exchange("RR_IMPORT"),
-        routing_key="RR_IMPORT"
-    ),
+    Queue("RR_IMPORT", Exchange("RR_IMPORT"), routing_key="RR_IMPORT"),
 )
 CELERY_TASK_ROUTES = {
     "radio.tasks.forward_Transmission": {"queue": "transmission_forwarding"},
@@ -293,10 +289,9 @@ CELERY_TASK_ROUTES = {
     "radio.tasks.forward_Incident": {"queue": "transmission_forwarding"},
     "radio.tasks.send_Incident": {"queue": "transmission_forwarding"},
     "radio.tasks.import_radio_refrence": {"queue": "RR_IMPORT"},
-
 }
-CELERY_TASK_DEFAULT_QUEUE = 'default'
-CELERY_TASK_DEFAULT_EXCHANGE = 'default'
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_DEFAULT_EXCHANGE = "default"
 
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
@@ -307,7 +302,7 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = str(os.getenv("TZ", "America/Los_Angeles"))
 DJANGO_CELERY_RESULTS_TASK_ID_MAX_LENGTH = 191
 CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-CELERY_IMPORTS = ('radio.tasks',)
+CELERY_IMPORTS = ("radio.tasks",)
 # Application definition
 
 
