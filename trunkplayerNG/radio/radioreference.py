@@ -1,8 +1,12 @@
 import uuid
 from os import system
+from sentry_sdk.api import capture_exception
 from zeep import Client
 from django.db import IntegrityError
 from radio.models import TalkGroup, System
+from django.conf import settings
+if settings.SEND_TELEMETRY:
+    from sentry_sdk import capture_exception
 
 class RR():
     def __init__(self, rrSystemId, User, Pass):
@@ -54,7 +58,9 @@ class RR():
                 
                 tgX.save()
                 TalkGroups.append(tgX)
-            except IntegrityError: 
+            except IntegrityError as e: 
+                if settings.SEND_TELEMETRY:
+                    capture_exception(e)
                 continue
         return TalkGroups
         

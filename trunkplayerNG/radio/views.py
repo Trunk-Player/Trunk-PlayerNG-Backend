@@ -11,6 +11,8 @@ from django.db.models import Q
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from trunkplayerNG.radio.tasks import import_radio_refrence
+
 from .radioreference import RR
 
 from radio.transmission import new_transmission_handler
@@ -417,8 +419,7 @@ class SystemRRImportView(APIView):
     def post(self, request, UUID, format=None):
         data = JSONParser().parse(request)
 
-        rr: RR = RR(data["siteid"], data["username"], data["password"])
-        rr.load_system(UUID)
+        import_radio_refrence.delay(UUID, data["siteid"], data["username"], data["password"])
 
         return Response({"message": "System Import from Radio Refrence Qued"})
 

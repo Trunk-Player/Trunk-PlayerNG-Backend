@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 import uuid
 from django.db import models
@@ -18,7 +19,10 @@ class UserProfile(models.Model):
     # feedAllowedSystems = models.ManyToManyField()
 
     def __str__(self):
-        return f"{self.UUID}"
+        from users.models import CustomUser
+        parent:CustomUser = CustomUser.objects.get(userProfile=self)
+
+        return f"{parent.email}"
 
 
 class SystemACL(models.Model):
@@ -224,6 +228,9 @@ class Incident(models.Model):
 def execute_after_save(sender, instance, created, *args, **kwargs):
     from radio.tasks import forward_Incident
     from radio.serializers import IncidentSerializer
+
+    # Used for Incident forwarding
+
     if created:
         IncidentData = IncidentSerializer(instance)
         forward_Incident.delay(IncidentData.data)

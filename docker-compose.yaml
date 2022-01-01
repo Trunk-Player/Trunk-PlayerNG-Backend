@@ -31,7 +31,7 @@ services:
     restart: always
     network_mode: "host"
     build: .
-    command: celery -A trunkplayerNG worker -l info 
+    command: celery -A trunkplayerNG worker -l info -Q default,transmission_forwarding,RR_IMPORT
     environment:
       DEBUG: "True"
       FORCE_SECURE: "False"

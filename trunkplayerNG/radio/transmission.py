@@ -1,14 +1,21 @@
 import base64, json, logging
 import requests
+from django.conf import settings
 
 from requests.api import request
 from .utils import TransmissionDetails
 from django.core.files.base import ContentFile
 from radio.models import System, SystemRecorder, SystemForwarder
 
+if settings.SEND_TELEMETRY:
+    from sentry_sdk import capture_exception
 
+logger = logging.getLogger(__name__)
 
 def new_transmission_handler(data):
+    """
+    Converts API call to DB format and stores file
+    """
     from radio.tasks import forward_Transmission
     recorderUUID = data["recorder"]
     jsonx = data["json"]
@@ -37,37 +44,33 @@ def new_transmission_handler(data):
     return Payload
 
 def handle_forwarding(data):
+    """
+    Handles Forwarding New Transmissions
+    """
+    from radio.tasks import send_transmission
     recorder: SystemRecorder = SystemRecorder.objects.get(
         forwarderWebhookUUID=data["recorder"]
     )
     
-
     for Forwarder in SystemForwarder.objects.filter(enabled=True):
         Forwarder:SystemForwarder
-        try:
-            if recorder.system in Forwarder.forwardedSystems.all():
-                data["recorder"] = str(Forwarder.recorderKey)
-                Response = requests.post(f"{Forwarder.remoteURL}/api/radio/transmission/create", data=data)
-                assert Response.ok
-                logging.debug(f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {Forwarder.name}")
-        except AssertionError: 
-            logging.error(f"[!] FAILED FORWARDING TX")
-        except requests.exceptions.SSLError:
-            logging.error(f"[!] FAILED FORWARDING TX")
+        if recorder.system in Forwarder.forwardedSystems.all():
+            send_transmission.delay(data, Forwarder.name, Forwarder.recorderKey, Forwarder.remoteURL)
+               
+def forwardTX(data, ForwarderName, recorderKey, ForwarderURL):
+    """
+    Sends a single new transmission via API Call
+    """
+    try:
+        data["recorder"] = str(recorderKey)
+        Response = requests.post(f"{ForwarderURL}/api/radio/transmission/create", json=data)
+        assert Response.ok
+        logger.info(f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {ForwarderName} - {Response.text}")
+        return f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {ForwarderName} - {Response.text}"
+    except Exception as e:
+        logger.error(f"[!] FAILED FORWARDING TX {data['name']} to {ForwarderName}")
+        if settings.SEND_TELEMETRY:
+            capture_exception(e)
+        raise(e)
+        
 
-def handle_incident_forwarding(data):     
-    SystemX = System.objects.get(UUID=data["system"])
-
-    for Forwarder in SystemForwarder.objects.filter(enabled=True):
-        Forwarder:SystemForwarder
-        try:
-            if SystemX in Forwarder.forwardedSystems.all():
-                data["recorder"] = str(Forwarder.recorderKey)
-                del data["system"]
-                Response = requests.post(f"{Forwarder.remoteURL}/api/radio/incident/forward", data=data)
-                assert Response.ok
-                logging.debug(f"[+] SUCCESSFULLY FORWARDED INCIDENT {data['name']} to {Forwarder.name}")
-        except AssertionError: 
-            logging.error(f"[!] FAILED FORWARDING TX")
-        except requests.exceptions.SSLError:
-            logging.error(f"[!] FAILED FORWARDING TX")

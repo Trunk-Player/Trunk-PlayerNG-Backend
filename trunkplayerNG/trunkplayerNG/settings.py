@@ -17,7 +17,8 @@ from kombu import Queue
 from kombu.entity import Exchange
 import logging
 
-if os.getenv("SEND_TELEMETRY", "False").lower() in ("true", "1", "t"):
+SEND_TELEMETRY = os.getenv("SEND_TELEMETRY", "False").lower() in ("true", "1", "t")
+if SEND_TELEMETRY:
     import sentry_sdk
 
     sentry_sdk.init(
@@ -45,9 +46,9 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
 if DEBUG:
-    logging.basicConfig(level=logging.DEBUG)
-else:
     logging.basicConfig(level=logging.INFO)
+else:
+    logging.basicConfig(level=logging.WARNING)
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", default="*").split(" ")
 
@@ -277,12 +278,22 @@ CELERY_QUEUES = (
     Queue("default", Exchange("default"), routing_key="default"),
     Queue(
         "transmission_forwarding",
-        Exchange("new_transmissions"),
-        routing_key="forward_Transmission",
+        Exchange("transmission_forwarding"),
+        routing_key="transmission_forwarding"
+    ),
+    Queue(
+        "RR_IMPORT",
+        Exchange("RR_IMPORT"),
+        routing_key="RR_IMPORT"
     ),
 )
-CELERY_ROUTES = {
-    "trunkplayerNG.radio.tasks.forward_Transmission": {"queue": "transmission_forwarding", 'routing_key': 'forward_Transmission'},
+CELERY_TASK_ROUTES = {
+    "radio.tasks.forward_Transmission": {"queue": "transmission_forwarding"},
+    "radio.tasks.send_transmission": {"queue": "transmission_forwarding"},
+    "radio.tasks.forward_Incident": {"queue": "transmission_forwarding"},
+    "radio.tasks.send_Incident": {"queue": "transmission_forwarding"},
+    "radio.tasks.import_radio_refrence": {"queue": "RR_IMPORT"},
+
 }
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_DEFAULT_EXCHANGE = 'default'
