@@ -26,7 +26,7 @@ class SystemSerializer(serializers.ModelSerializer):
 class SystemForwarderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemForwarder
-        fields = ["UUID", "name", "enabled", "recorderKey", "remoteURL", "forwardedSystems"]
+        fields = ["UUID", "name", "enabled", "recorderKey", "remoteURL", "forwardIncidents", "forwardedSystems"]
 
 
 class CitySerializer(serializers.ModelSerializer):
@@ -148,6 +148,7 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "frequency",
             "frequencys",
             "length",
+            "locked"
         ]
 
 
@@ -173,6 +174,7 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "frequency",
             "frequencys",
             "length",
+            "locked"
         ]
 
 

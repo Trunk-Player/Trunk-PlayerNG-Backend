@@ -15,16 +15,19 @@ from pathlib import Path
 from datetime import timedelta
 from kombu import Queue
 from kombu.entity import Exchange
+import logging
 
-import sentry_sdk
+if os.getenv("SEND_TELEMETRY", "False").lower() in ("true", "1", "t"):
+    import sentry_sdk
 
-sentry_sdk.init(
-    "https://39df0e1e9f694faa877dbcd4ec1ad07f@bigbrother.weathermelon.io//3",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production.
-    traces_sample_rate=1.0,
-)
+    sentry_sdk.init(
+        "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io//2",
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0,
+    )
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,17 +44,13 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
+if DEBUG:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", default="*").split(" ")
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/0")
-CELERY_RESULT_BACKEND = "django-db"
-CELERY_ACCEPT_CONTENT = ["application/json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = str(os.getenv("TZ", "America/Los_Angeles"))
-DJANGO_CELERY_RESULTS_TASK_ID_MAX_LENGTH = 191
-CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-# Application definition
 
 INSTALLED_APPS = [
     "radio",
@@ -207,7 +206,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 100,
+    "PAGE_SIZE": 10,
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -268,23 +267,38 @@ ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/?verification=1"
 SITE_ID = 1
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-CELERY_ALWAYS_EAGER = True
+#CELERY_ALWAYS_EAGER = True
 CELERY_TASK_RESULT_EXPIRES = 60  # 1 mins
-CELERYD_MAX_TASKS_PER_CHILD = 4
+CELERYD_MAX_TASKS_PER_CHILD = 50
 CELERYD_PREFETCH_MULTIPLIER = 1
 CELERY_CREATE_MISSING_QUEUES = True
 
 CELERY_QUEUES = (
     Queue("default", Exchange("default"), routing_key="default"),
     Queue(
-        "new_transmissions",
+        "transmission_forwarding",
         Exchange("new_transmissions"),
-        routing_key="trunkplayerNG.radio.tasks.#",
+        routing_key="forward_Transmission",
     ),
 )
 CELERY_ROUTES = {
-    "trunkplayerNG.radio.tasks.*": {"queue": "new_transmissions"},
+    "trunkplayerNG.radio.tasks.forward_Transmission": {"queue": "transmission_forwarding", 'routing_key': 'forward_Transmission'},
 }
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+CELERY_TASK_DEFAULT_EXCHANGE = 'default'
+
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = str(os.getenv("TZ", "America/Los_Angeles"))
+DJANGO_CELERY_RESULTS_TASK_ID_MAX_LENGTH = 191
+CELERYBEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_IMPORTS = ('radio.tasks',)
+# Application definition
+
 
 # CORS_ALLOWED_ORIGINS = [
 #     'https://panik.io',

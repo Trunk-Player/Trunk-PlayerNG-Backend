@@ -19,7 +19,10 @@ ADD uwsgi.conf /code/
 
 RUN mkdir /code/static
 RUN mkdir /code/staticfiles
+RUN mkdir /code/mediafiles
+
 VOLUME /code/static
+VOLUME /code/mediafiles
 
 
 EXPOSE 8000

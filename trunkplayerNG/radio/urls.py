@@ -119,6 +119,9 @@ urlpatterns = [
         "radio/incident/create", views.IncidentCreate.as_view(), name="incident_create"
     ),
     path(
+        "radio/incident/forward", views.IncidentCreate.as_view(), name="incident_forward"
+    ),
+    path(
         "radio/incident/<uuid:UUID>/update",
         views.IncidentUpdate.as_view(),
         name="incident_update",

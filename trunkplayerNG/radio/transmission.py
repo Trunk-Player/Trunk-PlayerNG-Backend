@@ -1,4 +1,4 @@
-import base64, json
+import base64, json, logging
 import requests
 
 from requests.api import request
@@ -7,7 +7,9 @@ from django.core.files.base import ContentFile
 from radio.models import System, SystemRecorder, SystemForwarder
 
 
+
 def new_transmission_handler(data):
+    from radio.tasks import forward_Transmission
     recorderUUID = data["recorder"]
     jsonx = data["json"]
     audio = data["audioFile"]
@@ -29,7 +31,8 @@ def new_transmission_handler(data):
     Payload["recorder"] = recorderUUID
     Payload["audioFile"] = ContentFile(audio_bytes, name=f'{data["name"]}')
 
-    handle_forwarding(data)
+    forward_Transmission.delay(data)
+
 
     return Payload
 
@@ -46,7 +49,25 @@ def handle_forwarding(data):
                 data["recorder"] = str(Forwarder.recorderKey)
                 Response = requests.post(f"{Forwarder.remoteURL}/api/radio/transmission/create", data=data)
                 assert Response.ok
+                logging.debug(f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {Forwarder.name}")
         except AssertionError: 
-            print(f"[!] FAILED FORWARDING TX")
+            logging.error(f"[!] FAILED FORWARDING TX")
         except requests.exceptions.SSLError:
-            print(f"[!] FAILED FORWARDING TX")
+            logging.error(f"[!] FAILED FORWARDING TX")
+
+def handle_incident_forwarding(data):     
+    SystemX = System.objects.get(UUID=data["system"])
+
+    for Forwarder in SystemForwarder.objects.filter(enabled=True):
+        Forwarder:SystemForwarder
+        try:
+            if SystemX in Forwarder.forwardedSystems.all():
+                data["recorder"] = str(Forwarder.recorderKey)
+                del data["system"]
+                Response = requests.post(f"{Forwarder.remoteURL}/api/radio/incident/forward", data=data)
+                assert Response.ok
+                logging.debug(f"[+] SUCCESSFULLY FORWARDED INCIDENT {data['name']} to {Forwarder.name}")
+        except AssertionError: 
+            logging.error(f"[!] FAILED FORWARDING TX")
+        except requests.exceptions.SSLError:
+            logging.error(f"[!] FAILED FORWARDING TX")

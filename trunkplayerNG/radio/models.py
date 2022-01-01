@@ -1,8 +1,9 @@
 from django.db import models
 import uuid
-from django.db.models.base import ModelBase
-from django.db.models.enums import Choices
-from datetime import date, datetime
+from django.db import models
+from django.dispatch import receiver
+from datetime import datetime
+
 from trunkplayerNG.storage_backends import PrivateMediaStorage
 
 
@@ -66,6 +67,7 @@ class SystemForwarder(models.Model):
     recorderKey = models.UUIDField()
     remoteURL = models.CharField(max_length=250)
 
+    forwardIncidents = models.BooleanField(default=False)
     forwardedSystems = models.ManyToManyField(System)
 
     def __str__(self):
@@ -197,6 +199,8 @@ class Transmission(models.Model):
     frequency = models.FloatField(default=0.0)
     length = models.FloatField(default=0.0)
 
+    locked = models.BooleanField(default=False, db_index=True)
+
     def __str__(self):
         return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"
 
@@ -215,6 +219,14 @@ class Incident(models.Model):
 
     def __str__(self):
         return f"[{self.system.name}] {self.name}"
+
+@receiver(models.signals.post_save, sender=Incident)
+def execute_after_save(sender, instance, created, *args, **kwargs):
+    from radio.tasks import forward_Incident
+    from radio.serializers import IncidentSerializer
+    if created:
+        IncidentData = IncidentSerializer(instance)
+        forward_Incident.delay(IncidentData.data)
 
 
 class TalkGroupACL(models.Model):

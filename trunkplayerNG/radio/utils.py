@@ -115,10 +115,16 @@ class TransmissionDetails:
 
     def _to_json(self):
         system: System = System.objects.get(UUID=self.system)
+        if self.talkgroup_tag == "-":
+            alphatag=self.talkgroup
+        else:
+            alphatag=self.talkgroup_tag
         Talkgroup, created = TalkGroup.objects.get_or_create(
-            decimalID=self.talkgroup, system=system, alphaTag=self.talkgroup_tag
+            decimalID=self.talkgroup, system=system, alphaTag=alphatag
         )
         Talkgroup.save()
+
+        
 
         if created:
             for acl in TalkGroupACL.objects.filter(defaultNewTalkgroups=True):

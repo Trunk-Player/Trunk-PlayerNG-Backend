@@ -1,28 +1,17 @@
-import base64
-from functools import partial
-from os import stat
-from django import http
-from django.shortcuts import render
-from rest_framework import response
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
-from rest_framework import permissions
 from django.http import Http404
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from radio.models import *
 from radio.serializers import *
-from rest_framework import generics
 from rest_framework.parsers import JSONParser
-from rest_framework.parsers import FileUploadParser
 from rest_framework import status
 from django.db.models import Q
-import json
-from uuid import UUID
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 from .radioreference import RR
-
 
 from radio.transmission import new_transmission_handler
 from radio.utils import (
@@ -30,6 +19,7 @@ from radio.utils import (
     getUserAllowedSystems,
     getUserAllowedTalkgroups,
 )
+
 from radio.permission import (
     Feeder,
     FeederFree,
@@ -38,13 +28,47 @@ from radio.permission import (
     IsSiteAdmin,
     IsUser,
 )
+
 from trunkplayerNG.storage_backends import StaticStorage
 
+class PaginationMixin(object):
 
-class UserProfileList(APIView):
+    @property
+    def paginator(self):
+        """
+        The paginator instance associated with the view, or `None`.
+        """
+        if not hasattr(self, '_paginator'):
+            if self.pagination_class is None:
+                self._paginator = None
+            else:
+                self._paginator = self.pagination_class()
+        return self._paginator
+
+    def paginate_queryset(self, queryset):
+        """
+        Return a single page of results, or `None` if pagination 
+        is disabled.
+        """
+        if self.paginator is None:
+            return None
+        return self.paginator.paginate_queryset(
+            queryset, self.request, view=self)
+
+    def get_paginated_response(self, data):
+        """
+        Return a paginated style `Response` object for the given 
+        output data.
+        """
+        assert self.paginator is not None
+        return self.paginator.get_paginated_response(data)
+
+
+class UserProfileList(APIView, PaginationMixin):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsSAOrUser]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["UserProfile"])
     def get(self, request, format=None):
@@ -53,8 +77,11 @@ class UserProfileList(APIView):
             userProfile = UserProfile.objects.all()
         else:
             userProfile = UserProfile.objects.filter(UUID=user.UUID)
-        serializer = UserProfileSerializer(userProfile, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(userProfile)
+        if page is not None:
+            serializer = UserProfileSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class UserProfileView(APIView):
@@ -119,16 +146,19 @@ class UserProfileView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SystemACLList(APIView):
+class SystemACLList(APIView, PaginationMixin):
     queryset = SystemACL.objects.all()
     serializer_class = SystemACLSerializer
     permission_classes = [IsSiteAdmin]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["SystemACL"])
     def get(self, request, format=None):
         SystemACLs = SystemACL.objects.all()
-        serializer = SystemACLSerializer(SystemACLs, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(SystemACLs)
+        if page is not None:
+            serializer = SystemACLSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class SystemACLCreate(APIView):
@@ -214,10 +244,11 @@ class SystemACLView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SystemList(APIView):
+class SystemList(APIView, PaginationMixin):
     queryset = System.objects.all()
     serializer_class = SystemSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["System"])
     def get(self, request, format=None):
@@ -234,8 +265,11 @@ class SystemList(APIView):
                 elif ACL.public:
                     userACLs.append(ACL)
             Systems = System.objects.filter(systemACL__in=userACLs)
-        serializer = SystemSerializer(Systems, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(Systems)
+        if page is not None:
+            serializer = SystemSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class SystemCreate(APIView):
@@ -389,16 +423,20 @@ class SystemRRImportView(APIView):
         return Response({"message": "System Import from Radio Refrence Qued"})
 
 
-class SystemForwarderList(APIView):
+class SystemForwarderList(APIView, PaginationMixin):
     queryset = SystemForwarder.objects.all()
     serializer_class = SystemForwarderSerializer
     permission_classes = [IsSiteAdmin]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
-    @swagger_auto_schema(tags=["SystemForwarder"])
+    @swagger_auto_schema(tags=["SystemForwarder"], )
     def get(self, request, format=None):
         SystemForwarders = SystemForwarder.objects.all()
-        serializer = SystemForwarderSerializer(SystemForwarders, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(SystemForwarders)
+        if page is not None:
+            serializer = SystemForwarderSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class SystemForwarderCreate(APIView):
@@ -423,6 +461,9 @@ class SystemForwarderCreate(APIView):
                 ),
                 "remoteURL": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Remote URL of the TP-NG to forward to"
+                ),
+                "forwardIncidents":openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Forward Incidents"
                 ),
                 "forwardedSystems": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
@@ -494,16 +535,19 @@ class SystemForwarderView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CityList(APIView):
+class CityList(APIView, PaginationMixin):
     queryset = City.objects.all()
     serializer_class = CitySerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["City"])
     def get(self, request, format=None):
         Citys = City.objects.all()
-        serializer = CitySerializer(Citys, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(Citys)
+        if page is not None:
+            serializer = CitySerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class CityCreate(APIView):
@@ -592,16 +636,19 @@ class CityView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class AgencyList(APIView):
+class AgencyList(APIView, PaginationMixin):
     queryset = Agency.objects.all()
     serializer_class = AgencyViewListSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["Agency"])
     def get(self, request, format=None):
         Agencys = Agency.objects.all()
-        serializer = AgencyViewListSerializer(Agencys, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(Agencys)
+        if page is not None:
+            serializer = AgencyViewListSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class AgencyCreate(APIView):
@@ -696,17 +743,17 @@ class AgencyView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TalkGroupList(APIView):
+class TalkGroupList(APIView, PaginationMixin):
     queryset = TalkGroup.objects.all()
     serializer_class = TalkGroupViewListSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def get(self, request, format=None):
         user: UserProfile = request.user.userProfile
         if user.siteAdmin:
-            TalkGroups = TalkGroup.objects.all()
-            serializer = TalkGroupViewListSerializer(TalkGroups, many=True)
+            AllowedTalkgroups = TalkGroup.objects.all()
         else:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
 
@@ -714,8 +761,10 @@ class TalkGroupList(APIView):
             for system in systems:
                 AllowedTalkgroups.extend(getUserAllowedTalkgroups(system, user.UUID))
 
-            serializer = TalkGroupViewListSerializer(AllowedTalkgroups, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(AllowedTalkgroups)
+        if page is not None:
+            serializer = TalkGroupViewListSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class TalkGroupCreate(APIView):
@@ -851,10 +900,11 @@ class TalkGroupView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TalkGroupTransmissionList(APIView):
+class TalkGroupTransmissionList(APIView, PaginationMixin):
     queryset = Transmission.objects.all()
     serializer_class = TransmissionSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     def get_object(self, UUID):
         try:
@@ -880,8 +930,10 @@ class TalkGroupTransmissionList(APIView):
             if not TalkGroupX in talkgroupsAllowed:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TransmissionSerializer(Transmissions, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(Transmissions)
+        if page is not None:
+            serializer = TransmissionSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class TalkGroupACLList(APIView):
@@ -998,16 +1050,20 @@ class TalkGroupACLView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SystemRecorderList(APIView):
+class SystemRecorderList(APIView, PaginationMixin):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
     permission_classes = [IsSiteAdmin]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["SystemRecorder"])
     def get(self, request, format=None):
         SystemRecorders = SystemRecorder.objects.all()
-        serializer = SystemRecorderSerializer(SystemRecorders, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(SystemRecorders)
+        if page is not None:
+            serializer = SystemRecorderSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class SystemRecorderCreate(APIView):
@@ -1122,10 +1178,11 @@ class SystemRecorderView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class UnitList(APIView):
+class UnitList(APIView, PaginationMixin):
     queryset = Unit.objects.all()
     serializer_class = UnitSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["Unit"])
     def get(self, request, format=None):
@@ -1136,8 +1193,10 @@ class UnitList(APIView):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             Units = Unit.objects.filter(system__in=systemUUIDs)
 
-        serializer = UnitSerializer(Units, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(Units)
+        if page is not None:
+            serializer = UnitSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class UnitCreate(APIView):
@@ -1373,10 +1432,11 @@ class TransmissionFreqView(APIView):
         return Response(serializer.data)
 
 
-class TransmissionList(APIView):
+class TransmissionList(APIView, PaginationMixin):
     queryset = Transmission.objects.all()
     serializer_class = TransmissionSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["Transmission"])
     def get(self, request, format=None):
@@ -1399,8 +1459,10 @@ class TransmissionList(APIView):
                 else:
                     AllowedTransmissions.append(TransmissionX)
 
-        serializer = TransmissionSerializer(AllowedTransmissions, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(AllowedTransmissions)
+        if page is not None:
+            serializer = TransmissionSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class TransmissionCreate(APIView):
@@ -1440,6 +1502,7 @@ class TransmissionCreate(APIView):
             )
 
         # try:
+        
         Callback = new_transmission_handler(data)
 
         if not Callback:
@@ -1505,10 +1568,11 @@ class TransmissionView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class IncidentList(APIView):
+class IncidentList(APIView, PaginationMixin):
     queryset = Incident.objects.all()
     serializer_class = IncidentSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["Incident"])
     def get(self, request, format=None):
@@ -1520,8 +1584,10 @@ class IncidentList(APIView):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             Incidents = Incident.objects.filter(system__in=systems)
 
-        serializer = IncidentSerializer(Incidents, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(Incidents)
+        if page is not None:
+            serializer = IncidentSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class IncidentCreate(APIView):
@@ -1570,6 +1636,66 @@ class IncidentCreate(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class IncidentForward(APIView):
+    queryset = Incident.objects.all()
+    serializer_class = IncidentCreateSerializer
+    permission_classes = [FeederFree]
+
+    @swagger_auto_schema(
+        tags=["Incident"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["recorder", "name", "transmission"],
+            properties={
+                "active": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Is the Event Active"
+                ),
+                "recorder": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Recorder Key"
+                ),
+                "transmission": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="TRANMISSIONS UUID",
+                ),
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
+                "description": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Description"
+                ),
+                "agency": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Agency UUIDs",
+                ),
+                "time": openapi.Schema(type=openapi.TYPE_STRING, description="Time"),
+            },
+        ),
+    )
+    def post(self, request, format=None):
+        data = JSONParser().parse(request)
+
+        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+            return Response(
+                "Not allowed to post this talkgroup",
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        SR:SystemRecorder = SystemRecorder.objects.get(forwarderWebhookUUID=data["recorder"])
+        data["system"] = SR.system.UUID
+
+        del data["recorder"]
+
+        if not "UUID" in data:
+            data["UUID"] = uuid.uuid4()
+
+        serializer = IncidentCreateSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class IncidentUpdate(APIView):
@@ -1655,10 +1781,11 @@ class IncidentView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ScanListList(APIView):
+class ScanListList(APIView, PaginationMixin):
     queryset = ScanList.objects.all()
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["ScanList"])
     def get(self, request, format=None):
@@ -1669,27 +1796,35 @@ class ScanListList(APIView):
             ScanLists = ScanList.objects.filter(
                 Q(owner=user) | Q(communityShared=True) | Q(public=True)
             )
-        serializer = ScanListSerializer(ScanLists, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(ScanLists)
+        if page is not None:
+            serializer = ScanListSerializer(page, many=True)
+            return Response(serializer.data)
 
 
-class ScanListPersonalList(APIView):
+class ScanListPersonalList(APIView, PaginationMixin):
     queryset = ScanList.objects.all()
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["ScanList"])
     def get(self, request, format=None):
         user: UserProfile = request.user.userProfile
         ScanLists = ScanList.objects.filter(owner=user)
-        serializer = ScanListSerializer(ScanLists, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(ScanLists)
+        if page is not None:
+            serializer = ScanListSerializer(page, many=True)
+            return Response(serializer.data)
 
 
-class ScanListUserList(APIView):
+class ScanListUserList(APIView, PaginationMixin):
     queryset = ScanList.objects.all()
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["ScanList"])
     def get(self, request, USER_UUID, format=None):
@@ -1701,8 +1836,11 @@ class ScanListUserList(APIView):
             ScanLists = ScanList.objects.filter(owner=userScan).filter(
                 Q(public=True) | Q(communityShared=True)
             )
-        serializer = ScanListSerializer(ScanLists, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(ScanLists)
+        if page is not None:
+            serializer = ScanListSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class ScanListCreate(APIView):
@@ -1829,10 +1967,11 @@ class ScanListView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ScanListTransmissionList(APIView):
+class ScanListTransmissionList(APIView, PaginationMixin):
     queryset = Transmission.objects.all()
     serializer_class = TransmissionSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     def get_object(self, UUID):
         try:
@@ -1865,14 +2004,17 @@ class ScanListTransmissionList(APIView):
         else:
             AllowedTransmissions = Transmissions
 
-        serializer = TransmissionSerializer(AllowedTransmissions, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(AllowedTransmissions)
+        if page is not None:
+            serializer = TransmissionSerializer(page, many=True)
+            return Response(serializer.data)
 
 
-class ScannerList(APIView):
+class ScannerList(APIView, PaginationMixin):
     queryset = Scanner.objects.all()
     serializer_class = ScannerSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["Scanner"])
     def get(self, request, format=None):
@@ -1883,8 +2025,11 @@ class ScannerList(APIView):
             scanner = Scanner.objects.filter(
                 Q(owner=user) | Q(communityShared=True) | Q(public=True)
             )
-        serializer = ScannerSerializer(scanner, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(scanner)
+        if page is not None:
+            serializer = ScannerSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class ScannerCreate(APIView):
@@ -2010,10 +2155,12 @@ class ScannerView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ScannerTransmissionList(APIView):
+class ScannerTransmissionList(APIView, PaginationMixin):
     queryset = Transmission.objects.all()
     serializer_class = TransmissionSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
+
 
     def get_object(self, UUID):
         try:
@@ -2058,14 +2205,17 @@ class ScannerTransmissionList(APIView):
         else:
             AllowedTransmissions = Transmissions
 
-        serializer = TransmissionSerializer(AllowedTransmissions, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(AllowedTransmissions)
+        if page is not None:
+            serializer = TransmissionSerializer(page, many=True)
+            return Response(serializer.data)
 
 
-class GlobalAnnouncementList(APIView):
+class GlobalAnnouncementList(APIView, PaginationMixin):
     queryset = GlobalAnnouncement.objects.all()
     serializer_class = GlobalAnnouncementSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["GlobalAnnouncement"])
     def get(self, request, format=None):
@@ -2075,8 +2225,10 @@ class GlobalAnnouncementList(APIView):
         else:
             GlobalAnnouncements = GlobalAnnouncement.objects.filter(enabled=True)
 
-        serializer = GlobalAnnouncementSerializer(GlobalAnnouncements, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(GlobalAnnouncements)
+        if page is not None:
+            serializer = GlobalAnnouncementSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class GlobalAnnouncementCreate(APIView):
@@ -2175,16 +2327,20 @@ class GlobalAnnouncementView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class GlobalEmailTemplateList(APIView):
+class GlobalEmailTemplateList(APIView, PaginationMixin):
     queryset = GlobalEmailTemplate.objects.all()
     serializer_class = GlobalEmailTemplateSerializer
     permission_classes = [IsSiteAdmin]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["GlobalEmailTemplate"])
     def get(self, request, format=None):
         GlobalEmailTemplates = GlobalEmailTemplate.objects.all()
-        serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplates, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(GlobalEmailTemplates)
+        if page is not None:
+            serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplates, many=True)
+            return Response(serializer.data)
 
 
 class GlobalEmailTemplateCreate(APIView):
@@ -2272,16 +2428,20 @@ class GlobalEmailTemplateView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SystemReciveRateList(APIView):
+class SystemReciveRateList(APIView, PaginationMixin):
     queryset = SystemReciveRate.objects.all()
     serializer_class = SystemReciveRateSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["SystemReciveRate"])
     def get(self, request, format=None):
         SystemReciveRates = SystemReciveRate.objects.all()
-        serializer = SystemReciveRateSerializer(SystemReciveRates, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(SystemReciveRates)
+        if page is not None:
+            serializer = SystemReciveRateSerializer(SystemReciveRates, many=True)
+            return Response(serializer.data)
 
 
 class SystemReciveRateCreate(APIView):
@@ -2350,10 +2510,11 @@ class SystemReciveRateView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CallList(APIView):
+class CallList(APIView, PaginationMixin):
     queryset = Call.objects.all()
     serializer_class = CallSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS 
 
     @swagger_auto_schema(tags=["Call"])
     def get(self, request, format=None):
@@ -2365,9 +2526,11 @@ class CallList(APIView):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             TalkGroups = TalkGroup.objects.filter(system__in=systems)
             Calls = Call.objects.filter(talkgroup__in=TalkGroups)
-
-        serializer = CallSerializer(Calls, many=True, read_only=True)
-        return Response(serializer.data)
+        
+        page = self.paginate_queryset(Calls)
+        if page is not None:
+            serializer = CallSerializer(page, many=True, read_only=True)
+            return Response(serializer.data)
 
 
 class CallCreate(APIView):

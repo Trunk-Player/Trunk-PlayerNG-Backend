@@ -3,13 +3,14 @@ version: '3.8'
 services:
   trunk-player:
     restart: always
-    #network_mode: "host"
+    network_mode: "host"
     build: .
     command: "bash -c 'python manage.py migrate && python manage.py collectstatic --no-input && uwsgi --ini /code/uwsgi.conf'"
-    ports:
-      - 3031:3031
+    # ports:
+    #   - 3031:3031
     environment:
       DEBUG: "True"
+      SEND_TELEMETRY: "True"
       FORCE_SECURE: "False"
       SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
       SQL_DATABASE: tp
@@ -17,51 +18,62 @@ services:
       SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
       SQL_HOST: localhost
       TZ: America/Chicago
-      CELERY_BROKER_URL: amqp://user:pass@rabbitmq/
+      CELERY_BROKER_URL: amqp://user:pass@localhost:5672/
     volumes:
       - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
       - /tmp/static:/code/static
+      - /tmp/media:/code/mediafiles
     depends_on:
      # - db
       - rabbitmq
 
-  # trunk-player-worker:
-  #   restart: always
-  #   network_mode: "host"
-  #   build: .
-  #   command: celery -A trunkplayerNG worker -l info
-  #   environment:
-  #     DEBUG: "True"
-  #     FORCE_SECURE: "False"
-  #     SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
-  #     SQL_DATABASE: tp
-  #     SQL_USER: TrunkPlayer
-  #     SQL_PASSWORD: s3CuRiTy
-  #     SQL_HOST: db
-  #     TZ: America/Chicago
-  #     CELERY_BROKER_URL: amqp://user:pass@rabbitmq/
-  #   depends_on:
-  #     - db
-  #     - rabbitmq
+  trunk-player-worker:
+    restart: always
+    network_mode: "host"
+    build: .
+    command: celery -A trunkplayerNG worker -l info 
+    environment:
+      DEBUG: "True"
+      FORCE_SECURE: "False"
+      SEND_TELEMETRY: "True"
+      SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
+      SQL_DATABASE: tp
+      SQL_USER: TrunkPlayer
+      SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
+      SQL_HOST: localhost
+      TZ: America/Chicago
+      CELERY_BROKER_URL: amqp://user:pass@localhost:5672/
+    volumes:
+      - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
+      - /tmp/static:/code/static
+      - /tmp/media:/code/mediafiles
+    depends_on:
+    #  - db
+      - rabbitmq
 
-  # trunk-player-beat:
-  #   restart: always
-  #   network_mode: "host"
-  #   build: .
-  #   command: celery -A trunkplayerNG beat -l info
-  #   environment:
-  #     DEBUG: "True"
-  #     FORCE_SECURE: "False"
-  #     SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
-  #     SQL_DATABASE: tp
-  #     SQL_USER: TrunkPlayer
-  #     SQL_PASSWORD: s3CuRiTy
-  #     SQL_HOST: db
-  #     TZ: America/Chicago
-  #     CELERY_BROKER_URL: amqp://user:pass@rabbitmq/
-  #   depends_on:
-  #     - db
-  #     - rabbitmq
+  trunk-player-beat:
+    restart: always
+    network_mode: "host"
+    build: .
+    command: celery -A trunkplayerNG beat -l info
+    environment:
+      DEBUG: "True"
+      FORCE_SECURE: "False"
+      SEND_TELEMETRY: "True"
+      SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
+      SQL_DATABASE: tp
+      SQL_USER: TrunkPlayer
+      SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
+      SQL_HOST: localhost
+      TZ: America/Chicago
+      CELERY_BROKER_URL: amqp://user:pass@localhost:5672/
+    volumes:
+      - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
+      - /tmp/static:/code/static
+      - /tmp/media:/code/mediafiles
+    depends_on:
+      #- db
+      - rabbitmq
 
   # db:
   #   image: mysql
@@ -78,7 +90,7 @@ services:
 
   rabbitmq:
     image: 'rabbitmq:management'
-    # network_mode: "host"
+    network_mode: "host"
     restart: always
     environment:
       RABBITMQ_DEFAULT_USER: user
