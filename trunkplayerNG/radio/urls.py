@@ -228,3 +228,7 @@ urlpatterns = [
     # ),
     path("radio/call/<uuid:UUID>", views.CallView.as_view(), name="call_view"),
 ]
+
+urlpatterns += [
+    path("radio/socket", views.socket, name="Socket")
+]

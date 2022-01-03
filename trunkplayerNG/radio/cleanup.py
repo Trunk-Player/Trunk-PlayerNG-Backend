@@ -26,5 +26,4 @@ def pruneTransmissions():
 
                 freqs = TX.frequencys.all()
                 freqs.delete()
-
             TXs.delete()

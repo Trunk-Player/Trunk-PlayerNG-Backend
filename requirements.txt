@@ -45,3 +45,5 @@ Django-rest-auth
 django-cors-headers
 uwsgi
 zeep
+gevent
+python-socketio

@@ -375,7 +375,6 @@ class SystemView(APIView):
                     type=openapi.TYPE_INTEGER, description="Days to keep Transmissions (Prune)"
                 ),
             },
-            },
         ),
     )
     def put(self, request, UUID, format=None):
