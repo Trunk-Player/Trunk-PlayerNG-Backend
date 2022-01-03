@@ -290,6 +290,13 @@ class SystemCreate(APIView):
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Talkgroup ACLs on system",
                 ),
+                "pruneTransmissions": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN,
+                    description="Enable Pruneing Transmissions on system",
+                ),
+                "pruneTransmissionsAfterDays": openapi.Schema(
+                    type=openapi.TYPE_INTEGER, description="Days to keep Transmissions (Prune)"
+                ),
             },
         ),
     )
@@ -360,6 +367,14 @@ class SystemView(APIView):
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Talkgroup ACLs on system",
                 ),
+                "pruneTransmissions": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN,
+                    description="Enable Pruneing Transmissions on system",
+                ),
+                "pruneTransmissionsAfterDays": openapi.Schema(
+                    type=openapi.TYPE_INTEGER, description="Days to keep Transmissions (Prune)"
+                ),
+            },
             },
         ),
     )

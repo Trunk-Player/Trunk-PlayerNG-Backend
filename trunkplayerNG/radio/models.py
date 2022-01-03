@@ -58,6 +58,8 @@ class System(models.Model):
     name = models.CharField(max_length=100, db_index=True, unique=True)
     systemACL = models.ForeignKey(SystemACL, on_delete=models.CASCADE)
     enableTalkGroupACLs = models.BooleanField(default=False)
+    pruneTransmissions = models.BooleanField('Enable Pruneing Transmissions',default=False)
+    pruneTransmissionsAfterDays = models.IntegerField('Days to keep Transmissions (Prune)',default=365)
 
     def __str__(self):
         return self.name
@@ -233,9 +235,8 @@ def execute_after_save(sender, instance, created, *args, **kwargs):
 
     # Used for Incident forwarding
 
-    if created:
-        IncidentData = IncidentSerializer(instance)
-        forward_Incident.delay(IncidentData.data)
+    IncidentData = IncidentSerializer(instance)
+    forward_Incident.delay(IncidentData.data, created)
 
 
 class TalkGroupACL(models.Model):

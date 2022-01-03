@@ -8,7 +8,7 @@ if settings.SEND_TELEMETRY:
 logger = logging.getLogger(__name__)
 
 
-def handle_incident_forwarding(data):
+def handle_incident_forwarding(data,created):
     """
     Handles Forwarding New Inicidents
     """
@@ -22,11 +22,11 @@ def handle_incident_forwarding(data):
         Forwarder: SystemForwarder
         if SystemX in Forwarder.forwardedSystems.all():
             send_Incident.delay(
-                data, Forwarder.name, Forwarder.recorderKey, Forwarder.remoteURL
+                data, Forwarder.name, Forwarder.recorderKey, Forwarder.remoteURL, created
             )
 
 
-def forwardincident(data, ForwarderName, recorderKey, ForwarderURL):
+def forwardincident(data, ForwarderName, recorderKey, ForwarderURL, created):
     """
     Forwards a single Inicident via API Call
     """
