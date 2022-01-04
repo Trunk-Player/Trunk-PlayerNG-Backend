@@ -312,6 +312,22 @@ class GlobalEmailTemplate(models.Model):
     def __str__(self):
         return self.name
 
+class UserAlert(models.Model):
+    UUID = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+    )
+    user = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING)
+    name = models.CharField(max_length=250)
+    description = models.TextField(blank=True, null=True)
+    webNotification = models.BooleanField(default=False)
+    appRiseNotification = models.BooleanField(default=False)
+    appRiseURLs = models.TextField(", Seperated AppriseURL(s)",default="")
+    talkgroups = models.ManyToManyField(TalkGroup)
+    units = models.ManyToManyField(Unit)
+
+
+    def __str__(self):    
+        return f"{self.name}"
 
 class SystemReciveRate(models.Model):
     UUID = models.UUIDField(

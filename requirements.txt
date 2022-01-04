@@ -47,3 +47,5 @@ uwsgi
 zeep
 gevent
 python-socketio
+kombu
+apprise

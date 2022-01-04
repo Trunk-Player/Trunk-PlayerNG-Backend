@@ -4,6 +4,10 @@ from rest_framework import serializers
 from radio.models import *
 from rest_framework import permissions
 
+class UserAlertSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserAlert
+        fields = ["UUID", "name", "user", "description", "webNotification", "appRiseNotification", "appRiseURLs"]
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:

@@ -16,5 +16,7 @@ import socketio
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "trunkplayerNG.settings")
 
 application = get_wsgi_application()
-sio = socketio.Server(async_mode='gevent_uwsgi')
+
+mgr = socketio.KombuManager(os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/"))
+sio = socketio.Server(async_mode='gevent_uwsgi', client_manager=mgr)
 application = socketio.WSGIApp(sio, application)

@@ -6,6 +6,7 @@ from celery.utils.log import get_task_logger
 from radio.transmission import handle_forwarding, forwardTX
 from radio.incident import forwardincident, handle_incident_forwarding
 from radio.cleanup import pruneTransmissions
+from trunkplayerNG.radio.notifications import send_user_notification
 
 logger = get_task_logger(__name__)
 
@@ -46,3 +47,10 @@ def import_radio_refrence(UUID, siteid, username, password):
 def prune_tranmissions(data, ForwarderName, recorderKey, ForwarderURL, created):
     pruneTransmissions(data, ForwarderName, recorderKey, ForwarderURL, created)
 
+@shared_task
+def publish_user_notification(type, Transmission, value, alert):
+    send_user_notification(type, Transmission, value, alert)
+
+@shared_task
+def broadcast_web_notification(alert, Transmission, type, value):
+    pass

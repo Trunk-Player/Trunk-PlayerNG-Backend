@@ -3,6 +3,10 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from radio import views
 
 urlpatterns = [
+    path("radio/users/alerts/list", views.UserAlertList.as_view(), name="users_alerts_list"),
+    path("radio/users/alerts/create", views.UserAlertCreate.as_view(), name="users_alerts_create"),
+    path("radio/users/alerts/<uuid:UUID>", views.UserAlertView.as_view(), name="users_alerts_view"),
+
     path("radio/users/list", views.UserProfileList.as_view(), name="users_list"),
     path("radio/users/<uuid:UUID>", views.UserProfileView.as_view(), name="users_view"),
     path("radio/systemacl/list", views.SystemACLList.as_view(), name="systemacl_list"),
@@ -229,6 +233,6 @@ urlpatterns = [
     path("radio/call/<uuid:UUID>", views.CallView.as_view(), name="call_view"),
 ]
 
-urlpatterns += [
-    path("radio/socket", views.socket, name="Socket")
-]
+# urlpatterns += [
+#     path("radio/socket", views.socket, name="Socket")
+# ]

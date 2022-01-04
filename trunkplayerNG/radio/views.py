@@ -61,6 +61,139 @@ class PaginationMixin(object):
         return self.paginator.get_paginated_response(data)
 
 
+
+
+class UserAlertList(APIView, PaginationMixin):
+    queryset = UserAlert.objects.all()
+    serializer_class = UserAlertSerializer
+    permission_classes = [IsSAOrUser]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+
+    @swagger_auto_schema(tags=["UserAlert"])
+    def get(self, request, format=None):
+        user:UserProfile = request.user.userProfile
+        if user.siteAdmin:
+            UserAlerts = UserAlert.objects.all()
+        else:            
+            UserAlerts = UserAlert.objects.filter(user=user)
+
+        page = self.paginate_queryset(UserAlerts)
+        if page is not None:
+            serializer = UserAlertSerializer(page, many=True)
+            return Response(serializer.data)
+
+
+class UserAlertCreate(APIView):
+    queryset = UserAlert.objects.all()
+    serializer_class = UserAlertSerializer
+    permission_classes = [IsSAOrUser]
+
+    @swagger_auto_schema(
+        tags=["UserAlert"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["name"],
+            properties={
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
+                "description": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Description",
+                ),
+                "webNotification": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Send Webpage Notification"
+                ),
+                "appRiseNotification": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Send AppRise Notification"
+                ),
+                "appRiseURLs": openapi.Schema(type=openapi.TYPE_STRING, description="appRiseURLs"),
+            },
+        ),
+    )
+    def post(self, request, format=None):
+        user:UserProfile = request.user.userProfile
+        data = JSONParser().parse(request)
+
+        if not "UUID" in data:
+            data["UUID"] = uuid.uuid4()
+
+        data["user"] = str(user.UUID)
+        
+        serializer = UserAlertSerializer(data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserAlertView(APIView):
+    queryset = UserAlert.objects.all()
+    serializer_class = UserAlertSerializer
+    permission_classes = [IsSAOrUser]
+
+    def get_object(self, UUID):
+        try:
+            return UserAlert.objects.get(UUID=UUID)
+        except UserProfile.DoesNotExist:
+            raise Http404
+
+    @swagger_auto_schema(tags=["UserAlert"])
+    def get(self, request, UUID, format=None):
+        user:UserProfile = request.user.userProfile
+        UserAlertX:UserAlert = self.get_object(UUID)
+        if not UserAlertX.user == user:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+       
+        serializer = UserAlertSerializer(UserAlertX)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        tags=["UserAlert"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
+                "description": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Description",
+                ),
+                "webNotification": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Send Webpage Notification"
+                ),
+                "appRiseNotification": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Send AppRise Notification"
+                ),
+                "appRiseURLs": openapi.Schema(type=openapi.TYPE_STRING, description="appRiseURLs"),
+            },
+        ),
+    )
+    def put(self, request, UUID, format=None):
+        user:UserProfile = request.user.userProfile
+        UserAlertX:UserAlert = self.get_object(UUID)
+        if not UserAlertX.user == user:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+        data = request.data
+        if "user" in data:
+            del data["user"]
+
+        serializer = UserAlertSerializer(UserAlertX, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=["UserAlert"])
+    def delete(self, request, UUID, format=None):
+        user:UserProfile = request.user.userProfile
+        UserAlertX:UserAlert = self.get_object(UUID)
+        if not UserAlertX.user == user:
+                return Response(status=status.HTTP_401_UNAUTHORIZED)
+        UserAlertX.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
 class UserProfileList(APIView, PaginationMixin):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer

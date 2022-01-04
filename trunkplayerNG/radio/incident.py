@@ -33,6 +33,7 @@ def forwardincident(data, ForwarderName, recorderKey, ForwarderURL, created):
     try:
         data["recorder"] = str(recorderKey)
         del data["system"]
+        
         Response = requests.post(
             f"{ForwarderURL}/api/radio/incident/forward", json=data
         )

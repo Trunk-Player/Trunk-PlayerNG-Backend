@@ -281,6 +281,11 @@ CELERY_QUEUES = (
         Exchange("transmission_forwarding"),
         routing_key="transmission_forwarding",
     ),
+    Queue(
+        "radio_alerts",
+        Exchange("radio_alerts"),
+        routing_key="radio_alerts",
+    ),
     Queue("RR_IMPORT", Exchange("RR_IMPORT"), routing_key="RR_IMPORT"),
 )
 CELERY_TASK_ROUTES = {
@@ -289,6 +294,7 @@ CELERY_TASK_ROUTES = {
     "radio.tasks.forward_Incident": {"queue": "transmission_forwarding"},
     "radio.tasks.send_Incident": {"queue": "transmission_forwarding"},
     "radio.tasks.import_radio_refrence": {"queue": "RR_IMPORT"},
+    "radio.tasks.publish_user_notification": {"queue": "radio_alerts"},
 }
 CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_TASK_DEFAULT_EXCHANGE = "default"
