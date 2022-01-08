@@ -6,11 +6,12 @@ from requests.api import request
 from .utils import TransmissionDetails
 from django.core.files.base import ContentFile
 from radio.models import System, SystemRecorder, SystemForwarder
-
+import asyncio
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
+
 
 
 def new_transmission_handler(data):
@@ -41,7 +42,6 @@ def new_transmission_handler(data):
     Payload["audioFile"] = ContentFile(audio_bytes, name=f'{data["name"]}')
 
     forward_Transmission.delay(data)
-
     return Payload
 
 
@@ -78,7 +78,7 @@ def forwardTX(data, ForwarderName, recorderKey, ForwarderURL):
         )
         return f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {ForwarderName} - {Response.text}"
     except Exception as e:
-        logger.error(f"[!] FAILED FORWARDING TX {data['name']} to {ForwarderName}")
-        if settings.SEND_TELEMETRY:
-            capture_exception(e)
+        logger.warning(f"[!] FAILED FORWARDING TX {data['name']} to {ForwarderName}")
+        # if settings.SEND_TELEMETRY:
+        #     capture_exception(e)
         raise (e)

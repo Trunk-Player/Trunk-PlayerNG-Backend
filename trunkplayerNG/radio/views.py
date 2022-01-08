@@ -1,3 +1,5 @@
+from logging import log
+import logging, json
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from django.http import Http404
@@ -10,11 +12,12 @@ from rest_framework import status
 from django.db.models import Q
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from asgiref.sync import sync_to_async
 
 from radio.tasks import import_radio_refrence
 
-from radio.transmission import new_transmission_handler
-from radio.utils import (
+from radio.helpers.transmission import new_transmission_handler
+from radio.helpers.utils import (
     getUserAllowedSystems,
     getUserAllowedTalkgroups,
 )
@@ -27,7 +30,6 @@ from radio.permission import (
     IsUser,
 )
 
-from trunkplayerNG.storage_backends import StaticStorage
 
 
 class PaginationMixin(object):
@@ -1647,6 +1649,7 @@ class TransmissionCreate(APIView):
         ),
     )
     def post(self, request, format=None):
+        from radio.helpers.notifications import handle_Transmission_Notification
         data = JSONParser().parse(request)
 
         if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
@@ -1656,7 +1659,6 @@ class TransmissionCreate(APIView):
             )
 
         # try:
-
         Callback = new_transmission_handler(data)
 
         if not Callback:
@@ -1676,6 +1678,7 @@ class TransmissionCreate(APIView):
 
         if TX.is_valid(raise_exception=True):
             TX.save()
+            handle_Transmission_Notification(TX.validated_data)
             return Response({"success": True, "UUID": Callback["UUID"]})
         else:
             Response(TX.errors)
@@ -2040,7 +2043,7 @@ class ScanListCreate(APIView):
         if not "public" in data:
             data["public"] = False
 
-        serializer = ScanListSerializer(data=data)
+        serializer = ScanListSerializer(data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

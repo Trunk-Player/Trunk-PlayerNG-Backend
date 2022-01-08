@@ -279,12 +279,12 @@ CELERY_QUEUES = (
     Queue(
         "transmission_forwarding",
         Exchange("transmission_forwarding"),
-        routing_key="transmission_forwarding",
+        routing_key="transmission_forwarding"
     ),
     Queue(
         "radio_alerts",
         Exchange("radio_alerts"),
-        routing_key="radio_alerts",
+        routing_key="radio_alerts"
     ),
     Queue("RR_IMPORT", Exchange("RR_IMPORT"), routing_key="RR_IMPORT"),
 )

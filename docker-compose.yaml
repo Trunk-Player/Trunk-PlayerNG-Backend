@@ -5,7 +5,7 @@ services:
     restart: always
     network_mode: "host"
     build: .
-    command: "bash -c 'python manage.py migrate && python manage.py collectstatic --no-input && uwsgi --ini /code/uwsgi.conf'"
+    command: "bash -c 'python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
     # ports:
     #   - 3031:3031
     environment:
@@ -31,7 +31,7 @@ services:
     restart: always
     network_mode: "host"
     build: .
-    command: celery -A trunkplayerNG worker -l info -Q default,transmission_forwarding,RR_IMPORT
+    command: celery -A trunkplayerNG worker -l info --pool=gevent -Q default,transmission_forwarding,RR_IMPORT,radio_alerts
     environment:
       DEBUG: "True"
       FORCE_SECURE: "False"

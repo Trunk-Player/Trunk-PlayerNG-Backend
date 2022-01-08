@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 import uuid
 from django.db import models
+from django.db.models.fields import NullBooleanField
 from django.dispatch import receiver
 from datetime import datetime
 
@@ -57,7 +58,7 @@ class System(models.Model):
     )
     name = models.CharField(max_length=100, db_index=True, unique=True)
     systemACL = models.ForeignKey(SystemACL, on_delete=models.CASCADE)
-    enableTalkGroupACLs = models.BooleanField(default=False)
+    enableTalkGroupACLs = models.BooleanField('Enable Talkgroup ACLs', default=False)
     pruneTransmissions = models.BooleanField('Enable Pruneing Transmissions',default=False)
     pruneTransmissionsAfterDays = models.IntegerField('Days to keep Transmissions (Prune)',default=365)
 
@@ -211,6 +212,14 @@ class Transmission(models.Model):
     def __str__(self):
         return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"
 
+@receiver(models.signals.post_save, sender=Transmission)
+def execute_Transmission_alerts(sender, instance, created, *args, **kwargs):
+    from radio.helpers.notifications import handle_Transmission_Notification
+
+    # Used for Transmission Alerting
+
+    #handle_Transmission_Notification(instance)
+
 
 class Incident(models.Model):
     UUID = models.UUIDField(
@@ -322,8 +331,8 @@ class UserAlert(models.Model):
     webNotification = models.BooleanField(default=False)
     appRiseNotification = models.BooleanField(default=False)
     appRiseURLs = models.TextField(", Seperated AppriseURL(s)",default="")
-    talkgroups = models.ManyToManyField(TalkGroup)
-    units = models.ManyToManyField(Unit)
+    talkgroups = models.ManyToManyField(TalkGroup,blank=True)
+    units = models.ManyToManyField(Unit,blank=True)
 
 
     def __str__(self):    
@@ -349,7 +358,7 @@ class Call(models.Model):
     trunkRecorderID = models.CharField(max_length=30, unique=True)
     startTime = models.DateTimeField(db_index=True)
     endTime = models.DateTimeField(null=True, blank=True)
-    units = models.ManyToManyField(Unit, related_name="TG_UNITS")
+    units = models.ForeignKey(Unit, related_name="TG_UNITS", blank=True, null=True, on_delete=models.DO_NOTHING)
     active = models.BooleanField(default=True)
     emergency = models.BooleanField(default=True)
     encrypted = models.BooleanField(default=True)
@@ -359,4 +368,4 @@ class Call(models.Model):
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.time.strftime("%c")} - {str(self.rate)}'
+        return f'{self.trunkRecorderID}'
