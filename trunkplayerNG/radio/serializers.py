@@ -38,6 +38,7 @@ class SystemForwarderSerializer(serializers.ModelSerializer):
             "remoteURL",
             "forwardIncidents",
             "forwardedSystems",
+            "talkGroupFilter"
         ]
 
 
@@ -145,6 +146,8 @@ class TransmissionFreqSerializer(serializers.ModelSerializer):
 
 
 class TransmissionSerializer(serializers.ModelSerializer):
+    talkgroup = TalkGroupSerializer()
+
     class Meta:
         model = Transmission
         fields = [
@@ -161,6 +164,7 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
+            "transcript"
         ]
 
 
@@ -187,6 +191,7 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
+            "transcript"
         ]
 
 

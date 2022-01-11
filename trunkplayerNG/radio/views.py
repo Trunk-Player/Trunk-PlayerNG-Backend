@@ -1,5 +1,7 @@
 from logging import log
+import operator
 import logging, json
+from celery.utils.log import logger_isa
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from django.http import Http404
@@ -625,6 +627,11 @@ class SystemForwarderCreate(APIView):
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="System UUIDs",
+                ),
+                "talkGroupFilter": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="Filtered TG UUIDs",
                 ),
             },
         ),
@@ -1602,18 +1609,18 @@ class TransmissionList(APIView, PaginationMixin):
             AllowedTransmissions = Transmission.objects.all()
         else:
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
-            Transmissions = Transmission.objects.filter(system__in=systems)
             AllowedTransmissions = []
-            for TransmissionX in Transmissions:
-                SystemX: System = TransmissionX.system
-                if not SystemX in systems:
-                    continue
-                if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
-                    if TransmissionX.talkgroup in talkgroupsAllowed:
-                        AllowedTransmissions.append(TransmissionX)
+
+
+            for system in systems:
+                if system.enableTalkGroupACLs:
+                    TGAllowed = getUserAllowedTalkgroups(system, user.UUID)
+                    AllowedTransmissions.extend(Transmission.objects.filter(system=system, talkgroup__in=TGAllowed))
                 else:
-                    AllowedTransmissions.append(TransmissionX)
+                    AllowedTransmissions.extend(Transmission.objects.filter(system=system))
+                    
+
+        AllowedTransmissions = sorted(AllowedTransmissions, key=lambda instance: instance.startTime, reverse=True)
 
         page = self.paginate_queryset(AllowedTransmissions)
         if page is not None:

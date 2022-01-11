@@ -66,26 +66,6 @@ class System(models.Model):
         return self.name
 
 
-class SystemForwarder(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
-    name = models.CharField(max_length=100, unique=True)
-    enabled = models.BooleanField(default=False)
-    recorderKey = models.UUIDField()
-    remoteURL = models.CharField(max_length=250)
-
-    forwardIncidents = models.BooleanField(default=False)
-    forwardedSystems = models.ManyToManyField(System)
-
-    def __str__(self):
-        return self.name
-
-    def webhook(self):
-        pass
-        # add forward logic
-
-
 class City(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -122,6 +102,41 @@ class TalkGroup(models.Model):
 
     def __str__(self):
         return f"[{self.system.name}] {self.alphaTag}"
+
+@receiver(models.signals.post_save, sender=TalkGroup)
+def execute_TalkGroup_dedup_check(sender, instance, created, *args, **kwargs):
+    from radio.helpers.notifications import handle_Transmission_Notification
+
+    system = instance.system
+
+    if instance.alphaTag != "":
+        TGs = TalkGroup.objects.filter(system=system, decimalID=instance.decimalID)
+        TGs.delete()
+    else:
+        if TalkGroup.objects.filter(system=system, decimalID=instance.decimalID).exclude(alphaTag=""):
+            instance.delete()
+            
+    #handle_Transmission_Notification(instance)
+
+class SystemForwarder(models.Model):
+    UUID = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+    )
+    name = models.CharField(max_length=100, unique=True)
+    enabled = models.BooleanField(default=False)
+    recorderKey = models.UUIDField()
+    remoteURL = models.CharField(max_length=250)
+
+    forwardIncidents = models.BooleanField(default=False)
+    forwardedSystems = models.ManyToManyField(System)
+    talkGroupFilter = models.ManyToManyField('Talkgroups to Exclude', TalkGroup)
+
+    def __str__(self):
+        return self.name
+
+    def webhook(self):
+        pass
+        # add forward logic
 
 
 class SystemRecorder(models.Model):
@@ -194,12 +209,12 @@ class Transmission(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
-    system = models.ForeignKey(System, on_delete=models.CASCADE)
+    system = models.ForeignKey(System, on_delete=models.CASCADE, db_index=True)
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     startTime = models.DateTimeField()
     endTime = models.DateTimeField(null=True, blank=True)
     audioFile = models.FileField()
-    talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
+    talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
     emergency = models.BooleanField(default=False, db_index=True)
     units = models.ManyToManyField(TransmissionUnit)
@@ -208,6 +223,7 @@ class Transmission(models.Model):
     length = models.FloatField(default=0.0)
 
     locked = models.BooleanField(default=False, db_index=True)
+    transcript = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"

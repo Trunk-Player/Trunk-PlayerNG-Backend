@@ -77,6 +77,7 @@ class TalkGroupAdmin(admin.ModelAdmin):
 
     )
     list_filter = ("system",)
+    search_fields= ("UUID","alphaTag", "decimalID")
 
 
 class SystemRecorderAdmin(admin.ModelAdmin):
@@ -115,6 +116,7 @@ class transmissionUnitAdmin(admin.ModelAdmin):
         
     )
     list_filter = ("emergency",)
+    search_fields = ("UUID",)
 
 
 class transmissionFreqAdmin(admin.ModelAdmin):
@@ -129,10 +131,12 @@ class transmissionFreqAdmin(admin.ModelAdmin):
         "spike_count",  
         
     )
+    search_fields = ("UUID",)
 
 
 class transmissionAdmin(admin.ModelAdmin):
     ordering = ("-startTime",)
+    autocomplete_fields = ("units","frequencys")
     list_display = (
         "UUID",
         "system",
@@ -146,8 +150,8 @@ class transmissionAdmin(admin.ModelAdmin):
         "length",
         "frequency",
     )
-    list_filter = ("system", "recorder", "emergency")
-    search_fields= ("UUID",)
+    list_filter = ("system", "recorder", "emergency", "locked")
+    search_fields= ("UUID","talkgroup", "frequency")
 
 
 class IncidentAdmin(admin.ModelAdmin):
@@ -251,6 +255,7 @@ class CallAdmin(admin.ModelAdmin):
         "emergency",
     )
     list_filter = ("emergency", "active", "encrypted")
+
 
 admin.site.register(UserAlert,UserAlertAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)

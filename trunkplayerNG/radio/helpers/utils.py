@@ -119,10 +119,15 @@ class TransmissionDetails:
             alphatag = self.talkgroup
         else:
             alphatag = self.talkgroup_tag
-        Talkgroup, created = TalkGroup.objects.get_or_create(
-            decimalID=self.talkgroup, system=system, alphaTag=alphatag
-        )
-        Talkgroup.save()
+
+        if TalkGroup.objects.filter(decimalID=self.talkgroup, system=system):
+            Talkgroup = TalkGroup.objects.get(decimalID=self.talkgroup, system=system)
+            created = False
+        else:
+            Talkgroup, created = TalkGroup.objects.get_or_create(
+                decimalID=self.talkgroup, system=system, alphaTag=alphatag
+            )
+            Talkgroup.save()
 
         if created:
             for acl in TalkGroupACL.objects.filter(defaultNewTalkgroups=True):

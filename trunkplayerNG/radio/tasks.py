@@ -12,8 +12,8 @@ logger = get_task_logger(__name__)
 
 ### Iterates over Forwarders and dispatches send_transmission
 @shared_task()
-def forward_Transmission(data, *args, **kwargs):
-    handle_forwarding(data)
+def forward_Transmission(data, TG_UUID, *args, **kwargs):
+    handle_forwarding(data, TG_UUID)
 
 
 ### Makes Web request to forward incident to single Forwarder

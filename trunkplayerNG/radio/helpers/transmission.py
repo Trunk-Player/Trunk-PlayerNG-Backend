@@ -5,7 +5,7 @@ from django.conf import settings
 from requests.api import request
 from .utils import TransmissionDetails
 from django.core.files.base import ContentFile
-from radio.models import System, SystemRecorder, SystemForwarder
+from radio.models import System, SystemRecorder, SystemForwarder, TalkGroup
 import asyncio
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
@@ -41,11 +41,11 @@ def new_transmission_handler(data):
     Payload["recorder"] = recorderUUID
     Payload["audioFile"] = ContentFile(audio_bytes, name=f'{data["name"]}')
 
-    forward_Transmission.delay(data)
+    forward_Transmission.delay(data, Payload["talkgroup"])
     return Payload
 
 
-def handle_forwarding(data):
+def handle_forwarding(data, TG_UUID):
     """
     Handles Forwarding New Transmissions
     """
@@ -55,12 +55,15 @@ def handle_forwarding(data):
         forwarderWebhookUUID=data["recorder"]
     )
 
+    talkgroup: TalkGroup = TalkGroup.objects.get(UUID=TG_UUID)
+
     for Forwarder in SystemForwarder.objects.filter(enabled=True):
         Forwarder: SystemForwarder
         if recorder.system in Forwarder.forwardedSystems.all():
-            send_transmission.delay(
-                data, Forwarder.name, Forwarder.recorderKey, Forwarder.remoteURL
-            )
+            if not talkgroup in Forwarder.talkGroupFilter.all():
+                send_transmission.delay(
+                    data, Forwarder.name, Forwarder.recorderKey, Forwarder.remoteURL,TG_UUID
+                )
 
 
 def forwardTX(data, ForwarderName, recorderKey, ForwarderURL):
