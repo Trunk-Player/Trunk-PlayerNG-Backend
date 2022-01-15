@@ -234,5 +234,5 @@ urlpatterns = [
 ]
 
 # urlpatterns += [
-#     path("radio/socket", views.socket, name="Socket")
+   
 # ]

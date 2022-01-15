@@ -90,6 +90,12 @@ class Agency(models.Model):
 
 
 class TalkGroup(models.Model):
+    MODE_OPTS = (
+        ("digital","Digital"),
+        ("analog","Analog"),
+        ("tdma", "TDMA")
+    )
+
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
@@ -97,6 +103,7 @@ class TalkGroup(models.Model):
     decimalID = models.IntegerField(db_index=True)
     alphaTag = models.CharField(max_length=30, blank=True, default="")
     description = models.CharField(max_length=250, blank=True, null=True)
+    mode = models.CharField(max_length=250, default="digital", choices=MODE_OPTS)
     encrypted = models.BooleanField(default=False, blank=True)
     agency = models.ManyToManyField(Agency, blank=True)
 
@@ -109,13 +116,14 @@ def execute_TalkGroup_dedup_check(sender, instance, created, *args, **kwargs):
 
     system = instance.system
 
-    if instance.alphaTag != "":
-        TGs = TalkGroup.objects.filter(system=system, decimalID=instance.decimalID)
-        TGs.delete()
-    else:
-        if TalkGroup.objects.filter(system=system, decimalID=instance.decimalID).exclude(alphaTag=""):
-            instance.delete()
-            
+    if created:
+        if instance.alphaTag != "":
+            TGs = TalkGroup.objects.filter(system=system, decimalID=instance.decimalID).exclude(UUID=instance.UUID)
+            TGs.delete()
+        else:
+            if TalkGroup.objects.filter(system=system, decimalID=instance.decimalID).exclude(alphaTag=""):
+                instance.delete()
+                
     #handle_Transmission_Notification(instance)
 
 class SystemForwarder(models.Model):
@@ -129,7 +137,7 @@ class SystemForwarder(models.Model):
 
     forwardIncidents = models.BooleanField(default=False)
     forwardedSystems = models.ManyToManyField(System)
-    talkGroupFilter = models.ManyToManyField('Talkgroups to Exclude', TalkGroup)
+    talkGroupFilter = models.ManyToManyField(TalkGroup)
 
     def __str__(self):
         return self.name

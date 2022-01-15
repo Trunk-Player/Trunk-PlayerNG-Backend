@@ -72,12 +72,14 @@ class TalkGroupAdmin(admin.ModelAdmin):
     list_display = (
         "decimalID",
         "alphaTag",
+        "encrypted",
+        "mode",
         "system",
         "description"
 
     )
-    list_filter = ("system",)
-    search_fields= ("UUID","alphaTag", "decimalID")
+    list_filter = ("system", "mode", "encrypted")
+    search_fields= ("UUID", "alphaTag", "decimalID")
 
 
 class SystemRecorderAdmin(admin.ModelAdmin):
