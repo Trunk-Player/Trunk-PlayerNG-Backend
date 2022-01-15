@@ -26,7 +26,7 @@ class RR:
         myAuthInfo = auth_type(
             username=self.rrUser,
             password=self.rrPass,
-            appKey="28801163",
+            appKey="c820a9fd-7488-11ec-ba68-0ecc8ab9ccec",
             version="15",
             style="rpc",
         )
@@ -53,8 +53,11 @@ class RR:
 
         TalkGroups = []
 
+        mode_types = {"D": "digital", "A": "analog", "T": "tdma"}
+
         for talkgroup in RR_TGs:
-            Encrypted = True if "E" in talkgroup["tgMode"] else False
+            Encrypted = True if talkgroup["enc"] > 0 else False
+            Mode = mode_types[talkgroup["tgMode"].upper()]
             try:
                 UUID = uuid.uuid5(
                     uuid.NAMESPACE_DNS, f"{SystemUUID}+{str(talkgroup['tgDec'])}"
@@ -66,6 +69,7 @@ class RR:
                     alphaTag=talkgroup["tgAlpha"],
                     description=talkgroup["tgDescr"][:250],
                     encrypted=Encrypted,
+                    mode=Mode
                 )
 
                 tgX.save()
