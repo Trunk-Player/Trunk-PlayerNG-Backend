@@ -203,6 +203,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             "system",
             "transmission",
             "name",
+            "active"
             "description",
             "agency",
             "time",

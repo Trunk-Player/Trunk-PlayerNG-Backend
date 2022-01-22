@@ -124,7 +124,7 @@ urlpatterns = [
     ),
     path(
         "radio/incident/forward",
-        views.IncidentCreate.as_view(),
+        views.IncidentForward.as_view(),
         name="incident_forward",
     ),
     path(

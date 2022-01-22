@@ -46,6 +46,8 @@ django-cors-headers
 uwsgi
 zeep
 gevent
+gevent-websocket
+python-engineio
 python-socketio
 kombu
 apprise

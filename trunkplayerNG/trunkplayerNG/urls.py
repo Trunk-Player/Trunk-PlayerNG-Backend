@@ -25,6 +25,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+#from radio.helpers.socket import index
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -40,6 +41,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    #path("", index),
     path("admin/", admin.site.urls),
     path("api/", include("radio.urls"), name="Radio"),
     path("api/users/", include("users.urls"), name="Radio"),

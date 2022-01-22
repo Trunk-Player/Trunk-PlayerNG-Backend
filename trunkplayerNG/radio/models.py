@@ -137,7 +137,7 @@ class SystemForwarder(models.Model):
 
     forwardIncidents = models.BooleanField(default=False)
     forwardedSystems = models.ManyToManyField(System)
-    talkGroupFilter = models.ManyToManyField(TalkGroup)
+    talkGroupFilter = models.ManyToManyField(TalkGroup, blank=True)
 
     def __str__(self):
         return self.name

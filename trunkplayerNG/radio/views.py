@@ -1839,23 +1839,58 @@ class IncidentForward(APIView):
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
-        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+        #try:
+        SR: SystemRecorder = SystemRecorder.objects.get(
+                forwarderWebhookUUID=data["recorder"]
+            )
+        # except:
+        #     return Response(
+        #         "Not allowed to post this talkgroup",
+        #         status=status.HTTP_401_UNAUTHORIZED,
+        #     )
+
+        if not SR:
             return Response(
                 "Not allowed to post this talkgroup",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+       
+        data["system"] = str(SR.system.UUID)
+        del data["recorder"]
 
+        serializer = IncidentCreateSerializer(data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, UUID, format=None):
+        data = JSONParser().parse(request)
+
+        #try:
         SR: SystemRecorder = SystemRecorder.objects.get(
-            forwarderWebhookUUID=data["recorder"]
-        )
-        data["system"] = SR.system.UUID
+                forwarderWebhookUUID=data["recorder"]
+            )
+        # except:
+        #     return Response(
+        #         "Not allowed to post this talkgroup",
+        #         status=status.HTTP_401_UNAUTHORIZED,
+        #     )
+
+        if not SR:
+            return Response(
+                "Not allowed to post this talkgroup",
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+       
+        data["system"] = str(SR.system.UUID)
+
+        
 
         del data["recorder"]
 
-        if not "UUID" in data:
-            data["UUID"] = uuid.uuid4()
-
-        serializer = IncidentCreateSerializer(data=data)
+        Incident = self.get_object(UUID)
+        serializer = IncidentCreateSerializer(Incident, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

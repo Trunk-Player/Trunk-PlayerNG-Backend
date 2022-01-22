@@ -34,15 +34,20 @@ def forwardincident(data, ForwarderName, recorderKey, ForwarderURL, created):
         data["recorder"] = str(recorderKey)
         del data["system"]
         
-        Response = requests.post(
-            f"{ForwarderURL}/api/radio/incident/forward", json=data
-        )
+        if created:
+            Response = requests.post(
+                f"{ForwarderURL}/api/radio/incident/forward", json=data
+            )
+        else:
+            Response = requests.put(
+                f"{ForwarderURL}/api/radio/incident/forward", json=data
+            ) 
         assert Response.ok
         logger.info(
             f"[+] SUCCESSFULLY FORWARDED INCIDENT {data['name']} to {ForwarderName} - {Response.text}"
         )
     except Exception as e:
-        logger.error(f"[!] FAILED FORWARDING TX {data['name']} to {ForwarderName}")
+        logger.error(f"[!] FAILED FORWARDING INCIDENT {data['name']} to {ForwarderName}")
         if settings.SEND_TELEMETRY:
             capture_exception(e)
         raise (e)

@@ -18,8 +18,8 @@ def forward_Transmission(data, TG_UUID, *args, **kwargs):
 
 ### Makes Web request to forward incident to single Forwarder
 @shared_task()
-def send_transmission(data, ForwarderName, recorderKey, ForwarderURL):
-    forwardTX(data, ForwarderName, recorderKey, ForwarderURL)
+def send_transmission(data, ForwarderName, recorderKey, ForwarderURL,TG_UUID):
+    forwardTX(data, ForwarderName, recorderKey, ForwarderURL, TG_UUID)
 
 
 ### Iterates over Forwarders and dispatches send_Incident
