@@ -16,7 +16,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from asgiref.sync import sync_to_async
 
-from radio.tasks import import_radio_refrence
+from radio.tasks import forward_Transmission, import_radio_refrence, send_transmission_to_web
 
 from radio.helpers.transmission import new_transmission_handler
 from radio.helpers.utils import (
@@ -1685,6 +1685,7 @@ class TransmissionCreate(APIView):
         if TX.is_valid(raise_exception=True):
             TX.save()
             handle_Transmission_Notification(TX.validated_data)
+            send_transmission_to_web.delay(TX.data, Callback["talkgroup"])
             return Response({"success": True, "UUID": Callback["UUID"]})
         else:
             Response(TX.errors)

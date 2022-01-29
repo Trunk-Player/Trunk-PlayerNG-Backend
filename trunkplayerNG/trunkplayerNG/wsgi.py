@@ -19,5 +19,5 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "trunkplayerNG.settings")
 django_app  = get_wsgi_application()
 
 mgr = socketio.KombuManager(os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/"))
-sio = socketio.Server(async_mode='gevent_uwsgi', client_manager=mgr, logger=True, engineio_logger=True)
+sio = socketio.Server(async_mode='gevent_uwsgi', client_manager=mgr, logger=True, engineio_logger=False)
 application = socketio.WSGIApp(sio, wsgi_app=django_app)

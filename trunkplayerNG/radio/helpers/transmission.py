@@ -47,6 +47,15 @@ def new_transmission_handler(data):
     forward_Transmission.delay(data, Payload["talkgroup"])
     return Payload
 
+def handle_web_forwarding(data):
+    """
+    Handles Forwarding New Transmissions
+    """
+
+    mgr = socketio.KombuManager(os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/"))
+    sio = socketio.Server(async_mode='gevent', client_manager=mgr, logger=True, engineio_logger=True)
+    sio.emit("TX", data)
+
 
 def handle_forwarding(data, TG_UUID):
     """
@@ -59,10 +68,6 @@ def handle_forwarding(data, TG_UUID):
     )
 
     talkgroup: TalkGroup = TalkGroup.objects.get(UUID=TG_UUID)
-
-    mgr = socketio.KombuManager(os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/"))
-    sio = socketio.Server(async_mode='gevent', client_manager=mgr, logger=True, engineio_logger=True)
-    sio.emit("TX", f"New TX {data['name']}")
 
     for Forwarder in SystemForwarder.objects.filter(enabled=True):
         Forwarder: SystemForwarder
