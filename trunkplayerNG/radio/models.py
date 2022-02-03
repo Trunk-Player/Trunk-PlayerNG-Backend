@@ -221,7 +221,7 @@ class Transmission(models.Model):
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     startTime = models.DateTimeField()
     endTime = models.DateTimeField(null=True, blank=True)
-    audioFile = models.FileField()
+    audioFile = models.FileField(upload_to='audio/%Y/%m/%d/')
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
     emergency = models.BooleanField(default=False, db_index=True)
@@ -356,7 +356,10 @@ class UserAlert(models.Model):
     appRiseNotification = models.BooleanField(default=False)
     appRiseURLs = models.TextField(", Seperated AppriseURL(s)",default="")
     talkgroups = models.ManyToManyField(TalkGroup,blank=True)
+    emergencyOnly = models.BooleanField(default=False)
     units = models.ManyToManyField(Unit,blank=True)
+    title = models.CharField(max_length=255, default="New Activity Alert")
+    body = models.TextField( default="New Activity on %T - %I")
 
 
     def __str__(self):    

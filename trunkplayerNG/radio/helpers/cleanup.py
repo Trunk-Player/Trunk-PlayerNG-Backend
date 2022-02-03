@@ -19,11 +19,23 @@ def pruneTransmissions():
             prunetime = timezone.now() - timedelta(days=system.pruneTransmissionsAfterDays)
             TXs = Transmission.objects.filter(system=system, startTime__lte=prunetime)
             for TX in TXs:
-                TX:Transmission
+                try:
+                    TX:Transmission
 
-                Units = TX.units.all()
-                Units.delete()
+                    Units = TX.units.all()
+                    Units.delete()
 
-                freqs = TX.frequencys.all()
-                freqs.delete()
-            TXs.delete()
+                    freqs = TX.frequencys.all()
+                    freqs.delete()
+                except Exception as e:
+                    if settings.SEND_TELEMETRY:
+                        capture_exception(e)
+                    logging.error(f"[!] ERROR PRUNING TRANSMISSION CHILDREN {str(TX.UUID)}")
+
+            try:
+                TXs.delete()
+            except Exception as e:
+                if settings.SEND_TELEMETRY:
+                    capture_exception(e)
+                logging.error(f"[!] ERROR PRUNING TRANSMISSIONS ON SYSTEM {str(system)}")
+            

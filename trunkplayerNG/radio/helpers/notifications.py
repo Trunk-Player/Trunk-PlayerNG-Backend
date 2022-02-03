@@ -20,18 +20,18 @@ def handle_Transmission_Notification(TransmissionX:Transmission):
     from radio.tasks import publish_user_notification
     talkgroup = TransmissionX["talkgroup"]
     transunits = TransmissionX["units"]
-    units = []
-    for UnitX in transunits:
-        units.append(UnitX.unit.UUID)
-
-    logging.warning(talkgroup.UUID)
+    units = [UnitX.unit.UUID for UnitX in transunits]
 
     for alert in UserAlert.objects.all():
         alert:UserAlert
 
         if talkgroup in alert.talkgroups.all():
             talkgroup:TalkGroup
-            publish_user_notification.delay("Talkgroup", TransmissionX["UUID"], talkgroup.alphaTag, alert.appRiseURLs, alert.appRiseNotification, alert.webNotification)
+            if alert.emergencyOnly:
+                if TransmissionX["emergency"]:
+                    publish_user_notification.delay("Talkgroup", TransmissionX["UUID"], talkgroup.alphaTag, alert.appRiseURLs, alert.appRiseNotification, alert.webNotification, TransmissionX["emergency"], alert.body, alert.title)
+            else:
+                publish_user_notification.delay("Talkgroup", TransmissionX["UUID"], talkgroup.alphaTag, alert.appRiseURLs, alert.appRiseNotification, alert.webNotification, TransmissionX["emergency"], alert.body, alert.title)
         
         AlertUnits = alert.units.all()
         AlertUnitUUIDs = []
@@ -53,10 +53,27 @@ def handle_Transmission_Notification(TransmissionX:Transmission):
                 else:
                     UnitID = str(AU.decimalID)
                 AUs = AUs + f"; {UnitID}" 
-                
-            publish_user_notification.delay("Unit", TransmissionX["UUID"], AUs, alert.appRiseURLs, alert.appRiseNotification, alert.webNotification)
 
-def send_user_notification(type, TransmissionUUID, value, appRiseURLs, appRiseNotification, webNotification):
+            if alert.emergencyOnly:
+                if TransmissionX["emergency"]:                
+                    publish_user_notification.delay("Unit", TransmissionX["UUID"], AUs, alert.appRiseURLs, alert.appRiseNotification, alert.webNotification, TransmissionX["emergency"], alert.body, alert.title)
+            else:
+                publish_user_notification.delay("Unit", TransmissionX["UUID"], AUs, alert.appRiseURLs, alert.appRiseNotification, alert.webNotification, TransmissionX["emergency"], alert.body, alert.title)
+
+def format_message(type: str, value: str, url: str, emergency: bool, title: str, body: str):
+    title = title.replace("%T",type)
+    title = title.replace("%I",value)
+    title = title.replace("%E",str(emergency))
+    title = title.replace("%U",url)
+
+    body = body.replace("%T",type)
+    body = body.replace("%I",value)
+    body = body.replace("%E",str(emergency))
+    body = body.replace("%U",url)
+
+    return title, body
+
+def send_user_notification(type, TransmissionUUID, value, appRiseURLs, appRiseNotification, webNotification, emergency, titleTemplate, bodyTemplate):
     if webNotification:
         # broadcast_web_notification(alert, Transmission, type, value)
         pass
@@ -67,7 +84,10 @@ def send_user_notification(type, TransmissionUUID, value, appRiseURLs, appRiseNo
         for URL in URLs:
             apobj.add(URL)
         
+        body, title  = format_message(type,value, TransmissionUUID, emergency,titleTemplate,bodyTemplate)
+
         apobj.notify(    
-            body=f'New Activity on {type} - {value}\nTransmission: {TransmissionUUID}',
-            title=f'Activity Alert! - {type} - {value}',
+            body=body,
+            title=title,
         )
+        

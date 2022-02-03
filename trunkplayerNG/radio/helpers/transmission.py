@@ -1,5 +1,6 @@
 import base64, json, logging
 import os
+import uuid
 import requests
 from django.conf import settings
 
@@ -9,6 +10,7 @@ from .utils import TransmissionDetails
 from django.core.files.base import ContentFile
 from radio.models import System, SystemRecorder, SystemForwarder, TalkGroup
 import asyncio
+from asgiref.sync import sync_to_async
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
 
@@ -42,7 +44,8 @@ def new_transmission_handler(data):
         return False
 
     Payload["recorder"] = recorderUUID
-    Payload["audioFile"] = ContentFile(audio_bytes, name=f'{data["name"]}')
+    name = data["name"].split(".")
+    Payload["audioFile"] = ContentFile(audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).split("-")[-1]}.{name[1]}')
    
     forward_Transmission.delay(data, Payload["talkgroup"])
     return Payload
@@ -53,8 +56,8 @@ def handle_web_forwarding(data):
     """
 
     mgr = socketio.KombuManager(os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/"))
-    sio = socketio.Server(async_mode='gevent', client_manager=mgr, logger=True, engineio_logger=True)
-    sio.emit("TX", data)
+    sio = socketio.Server(async_mode='gevent', client_manager=mgr, logger=True, engineio_logger=False)
+    sync_to_async(sio.emit("TX", data))
 
 
 def handle_forwarding(data, TG_UUID):

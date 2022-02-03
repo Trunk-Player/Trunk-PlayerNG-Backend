@@ -7,7 +7,7 @@ from rest_framework import permissions
 class UserAlertSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAlert
-        fields = ["UUID", "name", "user", "description", "webNotification", "appRiseNotification", "appRiseURLs"]
+        fields = ["UUID", "name", "user", "description", "webNotification", "appRiseNotification", "appRiseURLs", "title", "body", "emergencyOnly"]
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -186,6 +186,7 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "audioFile",
             "talkgroup",
             "encrypted",
+            "emergency",
             "units",
             "frequency",
             "frequencys",

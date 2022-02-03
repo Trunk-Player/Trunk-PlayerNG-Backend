@@ -22,7 +22,7 @@ if SEND_TELEMETRY:
     import sentry_sdk
 
     sentry_sdk.init(
-        "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io//2",
+        "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io/2",
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         # We recommend adjusting this value in production.
@@ -52,6 +52,7 @@ else:
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", default="*").split(" ")
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 
 INSTALLED_APPS = [
     "radio",
@@ -172,19 +173,22 @@ USE_S3 = os.getenv("USE_S3", "False").lower() in ("true", "1", "t")
 
 if USE_S3:
     # aws settings
-    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+    AWS_ACCESS_KEY_ID   = os.getenv("S3_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY   = os.getenv("S3_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME  = os.getenv("S3_BUCKET_NAME")
+    AWS_S3_ENDPOINT_URL  = os.getenv("S3_ENDPOINT_URL") 
     AWS_DEFAULT_ACL = None
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+    AWS_S3_CUSTOM_DOMAIN = f"{AWS_S3_ENDPOINT_URL.replace('https://','')}"
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+
     # s3 static settings
     STATIC_LOCATION = "static"
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
+    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}/{STATIC_LOCATION}/"
     STATICFILES_STORAGE = "trunkplayerNG.storage_backends.StaticStorage"
+
     # s3 public media settings
     PUBLIC_MEDIA_LOCATION = "media"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/"
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}/{PUBLIC_MEDIA_LOCATION}/"
     # s3 private media settings
     PRIVATE_MEDIA_LOCATION = "private"
     PRIVATE_FILE_STORAGE = "trunkplayerNG.storage_backends.PrivateMediaStorage"

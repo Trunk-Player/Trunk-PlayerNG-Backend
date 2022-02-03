@@ -6,7 +6,7 @@ from celery.utils.log import get_task_logger
 from django.http import request
 import socketio
 
-
+from asgiref.sync import sync_to_async
 from radio.helpers.transmission import handle_forwarding, handle_web_forwarding,  forwardTX
 from radio.helpers.incident import forwardincident, handle_incident_forwarding
 from radio.helpers.cleanup import pruneTransmissions
@@ -23,7 +23,7 @@ def forward_Transmission(data, TG_UUID, *args, **kwargs):
 @shared_task()
 def send_transmission_to_web(data, *args, **kwargs):
     
-    handle_web_forwarding(data)
+    sync_to_async(handle_web_forwarding(data))
 
 
 ### Makes Web request to forward incident to single Forwarder
@@ -57,8 +57,8 @@ def prune_tranmissions(data, ForwarderName, recorderKey, ForwarderURL, created):
     pruneTransmissions(data, ForwarderName, recorderKey, ForwarderURL, created)
 
 @shared_task
-def publish_user_notification(type, Transmission, value,  appRiseURLs, appRiseNotification, webNotification):
-    send_user_notification(type, Transmission, value,  appRiseURLs, appRiseNotification, webNotification)
+def publish_user_notification(type, Transmission, value,  appRiseURLs, appRiseNotification, webNotification, emergency, titleTemplate, bodyTemplate):
+    send_user_notification(type, Transmission, value,  appRiseURLs, appRiseNotification, webNotification, emergency, titleTemplate, bodyTemplate)
 
 @shared_task
 def broadcast_web_notification(alert, Transmission, type, value):
