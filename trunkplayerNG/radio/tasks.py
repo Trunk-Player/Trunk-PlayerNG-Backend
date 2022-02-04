@@ -53,8 +53,8 @@ def import_radio_refrence(UUID, siteid, username, password):
 
 ### Prunes Transmissions per system based on age
 @shared_task()
-def prune_tranmissions(data, ForwarderName, recorderKey, ForwarderURL, created):
-    pruneTransmissions(data, ForwarderName, recorderKey, ForwarderURL, created)
+def prune_tranmissions():
+    pruneTransmissions()
 
 @shared_task
 def publish_user_notification(type, Transmission, value,  appRiseURLs, appRiseNotification, webNotification, emergency, titleTemplate, bodyTemplate):
