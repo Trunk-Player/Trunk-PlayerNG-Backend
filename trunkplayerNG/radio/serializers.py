@@ -10,6 +10,7 @@ class UserAlertSerializer(serializers.ModelSerializer):
             "UUID",
             "name",
             "user",
+            "enabled"
             "description",
             "webNotification",
             "appRiseNotification",

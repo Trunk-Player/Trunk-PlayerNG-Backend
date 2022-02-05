@@ -47,7 +47,7 @@ uwsgi
 zeep
 gevent
 gevent-websocket
-git+https://github.com/MaxwellDPS/python-engineio@main#egg=python-engineio
+python-engineio
 python-socketio
 kombu
 apprise

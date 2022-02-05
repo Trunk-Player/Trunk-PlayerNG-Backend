@@ -21,6 +21,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
 
     for alert in UserAlert.objects.all():
         alert: UserAlert
+        if not alert.enabled: continue
 
         try:
             if alert.talkgroups.filter(UUID=talkgroup).exists():

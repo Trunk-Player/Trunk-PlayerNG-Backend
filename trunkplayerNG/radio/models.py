@@ -108,6 +108,8 @@ class TalkGroup(models.Model):
     encrypted = models.BooleanField(default=False, blank=True)
     agency = models.ManyToManyField(Agency, blank=True)
 
+ 
+
     def __str__(self):
         return f"[{self.system.name}] {self.alphaTag}"
 
@@ -360,6 +362,7 @@ class UserAlert(models.Model):
     )
     user = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=250)
+    enabled = models.BooleanField(default=True)
     description = models.TextField(blank=True, null=True)
     webNotification = models.BooleanField(default=False)
     appRiseNotification = models.BooleanField(default=False)

@@ -98,6 +98,9 @@ class UserAlertCreate(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Description",
                 ),
+                "enabled": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Enable Notification"
+                ),
                 "webNotification": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Send Webpage Notification"
                 ),
@@ -168,6 +171,9 @@ class UserAlertView(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Description",
                 ),
+                "enabled": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Enable Notification"
+                ),
                 "webNotification": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Send Webpage Notification"
                 ),
@@ -176,6 +182,16 @@ class UserAlertView(APIView):
                 ),
                 "appRiseURLs": openapi.Schema(
                     type=openapi.TYPE_STRING, description="appRiseURLs"
+                ),
+                "title": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="The title of the alert"
+                ),
+                "body": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="The body of the alert"
+                ),
+                "emergencyOnly": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Only alert on Emergency Transmissions",
                 ),
             },
         ),
