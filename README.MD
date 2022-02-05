@@ -1,7 +1,8 @@
 # TrunkPlayer-NG
 
-🚧 TrunkPlayer-NG is still under active development 🚧
+## 🚧 TrunkPlayer-NG is still under active development 🚧
 
+![image](https://user-images.githubusercontent.com/11069376/152628284-ec1ba428-c8e4-4ba3-bac4-6ca13ed5ea59.png)
 
 This will be a complete rewrite of Trunk Player, all from scratch! The new version will be all API based, Kubernetes Ready, and Feature a beautiful new REACT UI thanks to @nebraskaCoder!
 
@@ -65,5 +66,3 @@ As for the frontend, dev is just starting as now the API's are Functional and @n
 
 ***We are on a mission to build the most functional, feature rich, and obviously coolest looking Trunk playback UI***
 
-## What Do You Want To See?
-Reply with anything you want to see in trunk player!
