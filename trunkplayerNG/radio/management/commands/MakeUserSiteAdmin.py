@@ -21,7 +21,6 @@ class Command(BaseCommand):
                 )
             else:
                 User.userProfile.siteAdmin = True
-                User.userProfile.feedAllowed = True
                 User.userProfile.save()
                 User.save()
 

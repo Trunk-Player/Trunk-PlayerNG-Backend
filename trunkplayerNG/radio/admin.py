@@ -108,6 +108,7 @@ class UnitAdmin(admin.ModelAdmin):
         "description",
     )
     list_filter = ("system",)
+    search_fields = ("decimalID", "system", "description")
 
 
 class transmissionUnitAdmin(admin.ModelAdmin):

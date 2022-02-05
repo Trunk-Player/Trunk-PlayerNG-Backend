@@ -19,7 +19,6 @@ class Command(BaseCommand):
                 )
             else:
                 User.userProfile.siteAdmin = False
-                User.userProfile.feedAllowed = False
                 User.userProfile.save()
                 User.save()
 
