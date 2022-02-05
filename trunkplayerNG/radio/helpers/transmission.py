@@ -1,29 +1,24 @@
-import base64, json, logging
-import os
-import uuid
-import requests
-from django.conf import settings
+import base64, logging, os, uuid, requests, socketio
 
-from requests.api import request
-import socketio
-from .utils import TransmissionDetails
+from django.conf import settings
 from django.core.files.base import ContentFile
-from radio.models import System, SystemRecorder, SystemForwarder, TalkGroup
-import asyncio
 from asgiref.sync import sync_to_async
+
+from .utils import TransmissionDetails
+from radio.models import System, SystemRecorder, SystemForwarder, TalkGroup
+
+
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
 
 
-
-def new_transmission_handler(data):
+def new_transmission_handler(data: dict) -> dict:
     """
     Converts API call to DB format and stores file
     """
     from radio.tasks import forward_Transmission
-    
 
     recorderUUID = data["recorder"]
     jsonx = data["json"]
@@ -45,22 +40,29 @@ def new_transmission_handler(data):
 
     Payload["recorder"] = recorderUUID
     name = data["name"].split(".")
-    Payload["audioFile"] = ContentFile(audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).split("-")[-1]}.{name[1]}')
-   
+    Payload["audioFile"] = ContentFile(
+        audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).split("-")[-1]}.{name[1]}'
+    )
+
     forward_Transmission.delay(data, Payload["talkgroup"])
     return Payload
 
-def handle_web_forwarding(data):
+
+def handle_web_forwarding(data: dict) -> None:
     """
     Handles Forwarding New Transmissions
     """
 
-    mgr = socketio.KombuManager(os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/"))
-    sio = socketio.Server(async_mode='gevent', client_manager=mgr, logger=True, engineio_logger=False)
+    mgr = socketio.KombuManager(
+        os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
+    )
+    sio = socketio.Server(
+        async_mode="gevent", client_manager=mgr, logger=True, engineio_logger=False
+    )
     sync_to_async(sio.emit("TX", data))
 
 
-def handle_forwarding(data, TG_UUID):
+def handle_forwarding(data, TG_UUID: str) -> None:
     """
     Handles Forwarding New Transmissions
     """
@@ -77,15 +79,25 @@ def handle_forwarding(data, TG_UUID):
         if recorder.system in Forwarder.forwardedSystems.all():
             if len(Forwarder.talkGroupFilter.all()) == 0:
                 send_transmission.delay(
-                    data, Forwarder.name, Forwarder.recorderKey, Forwarder.remoteURL,TG_UUID
+                    data,
+                    Forwarder.name,
+                    Forwarder.recorderKey,
+                    Forwarder.remoteURL,
+                    TG_UUID,
                 )
             if not talkgroup in Forwarder.talkGroupFilter.all():
                 send_transmission.delay(
-                    data, Forwarder.name, Forwarder.recorderKey, Forwarder.remoteURL,TG_UUID
+                    data,
+                    Forwarder.name,
+                    Forwarder.recorderKey,
+                    Forwarder.remoteURL,
+                    TG_UUID,
                 )
 
 
-def forwardTX(data, ForwarderName, recorderKey, ForwarderURL, TG_UUID):
+def forwardTX(
+    data: dict, ForwarderName: str, recorderKey: str, ForwarderURL: str, TG_UUID: str
+) -> None:
     """
     Sends a single new transmission via API Call
     """
@@ -98,11 +110,11 @@ def forwardTX(data, ForwarderName, recorderKey, ForwarderURL, TG_UUID):
         logger.info(
             f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {ForwarderName} - {Response.text}"
         )
-        
+
         return f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {ForwarderName} - {Response.text}"
-    except Exception as e:        
+    except Exception as e:
         logger.warning(f"[!] FAILED FORWARDING TX {data['name']} to {ForwarderName}")
-        
-        # if settings.SEND_TELEMETRY:
-        #     capture_exception(e)
+
+        if settings.SEND_TELEMETRY:
+            capture_exception(e)
         raise (e)

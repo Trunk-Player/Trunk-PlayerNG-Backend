@@ -1,9 +1,16 @@
+import logging
+from django.conf import settings
 from rest_framework import permissions
+
+if settings.SEND_TELEMETRY:
+    from sentry_sdk import capture_exception
+
+logger = logging.getLogger(__name__)
 
 
 class IsSAOrReadOnly(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it.
+    Custom permission - Site admin or Read Only
     """
 
     def has_permission(self, request, view):
@@ -26,7 +33,7 @@ class IsSAOrReadOnly(permissions.BasePermission):
 
 class IsSAOrUser(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it.
+    Custom permission - Site admin or User
     """
 
     def has_permission(self, request, view):
@@ -53,7 +60,7 @@ class IsSAOrUser(permissions.BasePermission):
 
 class IsUser(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it.
+    Custom permission - Is a user
     """
 
     def has_permission(self, request, view):
@@ -74,7 +81,7 @@ class IsUser(permissions.BasePermission):
 
 class IsSiteAdmin(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it.
+    Custom permission - Site admin
     """
 
     def has_permission(self, request, view):
@@ -89,7 +96,7 @@ class IsSiteAdmin(permissions.BasePermission):
 
 class Feeder(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it.
+    Custom permission - Authenticated feed
     """
 
     def has_permission(self, request, view):
@@ -108,7 +115,7 @@ class Feeder(permissions.BasePermission):
 
 class FeederFree(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it.
+    Custom permission - Token only feed
     """
 
     def has_permission(self, request, view):

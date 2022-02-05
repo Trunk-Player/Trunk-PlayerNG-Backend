@@ -5,12 +5,7 @@ from radio.models import *
 
 class UserAlertAdmin(admin.ModelAdmin):
     ordering = ("-user",)
-    list_display = (
-        "name",
-        "user",
-        "webNotification",
-        "appRiseNotification"
-    )
+    list_display = ("name", "user", "webNotification", "appRiseNotification")
     list_filter = ("webNotification", "appRiseNotification")
 
 
@@ -22,7 +17,7 @@ class systemACLAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = (
         "name",
-        "public",       
+        "public",
     )
     list_filter = ("public",)
 
@@ -36,18 +31,17 @@ class systemAdmin(admin.ModelAdmin):
         "pruneTransmissions",
         "pruneTransmissionsAfterDays",
     )
-    list_filter = ("systemACL", "enableTalkGroupACLs", "pruneTransmissions", "pruneTransmissionsAfterDays", )
+    list_filter = (
+        "systemACL",
+        "enableTalkGroupACLs",
+        "pruneTransmissions",
+        "pruneTransmissionsAfterDays",
+    )
 
 
 class systemForwarderAdmin(admin.ModelAdmin):
     ordering = ("-name",)
-    list_display = (
-        "name",
-        "enabled",
-        "forwardIncidents",
-        "remoteURL",
-        "recorderKey"
-    )
+    list_display = ("name", "enabled", "forwardIncidents", "remoteURL", "recorderKey")
     list_filter = ("enabled", "forwardIncidents")
 
 
@@ -75,11 +69,10 @@ class TalkGroupAdmin(admin.ModelAdmin):
         "encrypted",
         "mode",
         "system",
-        "description"
-
+        "description",
     )
     list_filter = ("system", "mode", "encrypted")
-    search_fields= ("UUID", "alphaTag", "decimalID")
+    search_fields = ("UUID", "alphaTag", "decimalID")
 
 
 class SystemRecorderAdmin(admin.ModelAdmin):
@@ -90,9 +83,11 @@ class SystemRecorderAdmin(admin.ModelAdmin):
         "siteID",
         "enabled",
         "user",
-
     )
-    list_filter = ("system","enabled", )
+    list_filter = (
+        "system",
+        "enabled",
+    )
 
 
 class UnitAdmin(admin.ModelAdmin):
@@ -109,13 +104,12 @@ class transmissionUnitAdmin(admin.ModelAdmin):
     ordering = ("-time",)
     list_display = (
         "UUID",
-        "unit", 
+        "unit",
         "emergency",
         "tag",
         "length",
         "pos",
-        "signal_system",       
-        
+        "signal_system",
     )
     list_filter = ("emergency",)
     search_fields = ("UUID",)
@@ -126,19 +120,18 @@ class transmissionFreqAdmin(admin.ModelAdmin):
     list_display = (
         "UUID",
         "time",
-        "freq", 
+        "freq",
         "len",
         "pos",
         "error_count",
-        "spike_count",  
-        
+        "spike_count",
     )
     search_fields = ("UUID",)
 
 
 class transmissionAdmin(admin.ModelAdmin):
     ordering = ("-startTime",)
-    autocomplete_fields = ("units","frequencys")
+    autocomplete_fields = ("units", "frequencys")
     list_display = (
         "UUID",
         "system",
@@ -153,96 +146,83 @@ class transmissionAdmin(admin.ModelAdmin):
         "frequency",
     )
     list_filter = ("system", "recorder", "emergency", "locked")
-    search_fields= ("UUID","talkgroup", "frequency")
+    search_fields = ("UUID", "talkgroup", "frequency")
 
 
 class IncidentAdmin(admin.ModelAdmin):
     ordering = ("-time",)
     autocomplete_fields = ("transmission",)
-    list_display = (
-        "name",
-        "time",
-        "system",
-        "description"
-
-    )
+    list_display = ("name", "time", "system", "description")
     list_filter = ("system",)
 
 
 class TalkGroupACLAdmin(admin.ModelAdmin):
     ordering = ("-name",)
-    #autocomplete_fields = ("transmission",)
+    # autocomplete_fields = ("transmission",)
     list_display = (
         "name",
         "defaultNewUsers",
         "defaultNewTalkgroups",
     )
-    list_filter = ("defaultNewUsers", "defaultNewTalkgroups", )
+    list_filter = (
+        "defaultNewUsers",
+        "defaultNewTalkgroups",
+    )
 
 
 class ScanListAdmin(admin.ModelAdmin):
-    #ordering = ("-owner",)
-    #autocomplete_fields = ("transmission",)
-    list_display = (
-        "UUID",
-        "name",
-        "owner",
+    # ordering = ("-owner",)
+    # autocomplete_fields = ("transmission",)
+    list_display = ("UUID", "name", "owner", "public", "communityShared")
+    list_filter = (
         "public",
-        "communityShared"
+        "communityShared",
     )
-    list_filter = ("public", "communityShared", )
 
 
 class ScannerAdmin(admin.ModelAdmin):
-    #ordering = ("-owner",)
-    #autocomplete_fields = ("transmission",)
-    list_display = (
-        "UUID",
-        "name",
-        "owner",
+    # ordering = ("-owner",)
+    # autocomplete_fields = ("transmission",)
+    list_display = ("UUID", "name", "owner", "public", "communityShared")
+    list_filter = (
         "public",
-        "communityShared"
+        "communityShared",
     )
-    list_filter = ("public", "communityShared", )
 
 
 class GlobalAnnouncementAdmin(admin.ModelAdmin):
-    #ordering = ("-owner",)
-    #autocomplete_fields = ("transmission",)
-    list_display = (
-        "name",
-        "enabled",
-        "description"
-    )
-    list_filter = ("enabled", )
+    # ordering = ("-owner",)
+    # autocomplete_fields = ("transmission",)
+    list_display = ("name", "enabled", "description")
+    list_filter = ("enabled",)
 
 
 class GlobalEmailTemplateAdmin(admin.ModelAdmin):
-    #ordering = ("-owner",)
-    #autocomplete_fields = ("transmission",)
+    # ordering = ("-owner",)
+    # autocomplete_fields = ("transmission",)
     list_display = (
         "name",
         "type",
         "enabled",
     )
-    list_filter = ("enabled", )
+    list_filter = ("enabled",)
 
 
 class SystemReciveRateAdmin(admin.ModelAdmin):
     ordering = ("-time",)
-    #autocomplete_fields = ("transmission",)
+    # autocomplete_fields = ("transmission",)
     list_display = (
         "UUID",
         "time",
         "recorder",
         "rate",
     )
-    list_filter = ("recorder", )
+    list_filter = ("recorder",)
 
 
 class CallAdmin(admin.ModelAdmin):
     ordering = ("-startTime",)
-    #autocomplete_fields = ("transmission",)
+    # autocomplete_fields = ("transmission",)
     list_display = (
         "trunkRecorderID",
         "talkgroup",
@@ -259,9 +239,9 @@ class CallAdmin(admin.ModelAdmin):
     list_filter = ("emergency", "active", "encrypted")
 
 
-admin.site.register(UserAlert,UserAlertAdmin)
+admin.site.register(UserAlert, UserAlertAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
-admin.site.register(SystemACL,systemACLAdmin)
+admin.site.register(SystemACL, systemACLAdmin)
 admin.site.register(System, systemAdmin)
 admin.site.register(SystemForwarder, systemForwarderAdmin)
 admin.site.register(City, CityAdmin)
@@ -274,7 +254,7 @@ admin.site.register(TransmissionFreq, transmissionFreqAdmin)
 admin.site.register(Transmission, transmissionAdmin)
 admin.site.register(Incident, IncidentAdmin)
 admin.site.register(TalkGroupACL, TalkGroupACLAdmin)
-admin.site.register(ScanList,ScanListAdmin)
+admin.site.register(ScanList, ScanListAdmin)
 admin.site.register(Scanner, ScannerAdmin)
 admin.site.register(GlobalAnnouncement, GlobalAnnouncementAdmin)
 admin.site.register(GlobalEmailTemplate, GlobalEmailTemplateAdmin)

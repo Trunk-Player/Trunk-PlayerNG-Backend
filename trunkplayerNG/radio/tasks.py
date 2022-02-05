@@ -1,65 +1,143 @@
-from datetime import date
 import logging
-import os
+
 from celery import shared_task
-from celery.utils.log import get_task_logger
-from django.http import request
-import socketio
-
 from asgiref.sync import sync_to_async
-from radio.helpers.transmission import handle_forwarding, handle_web_forwarding,  forwardTX
+from django.conf import settings
+
+from radio.helpers.transmission import (
+    handle_forwarding,
+    handle_web_forwarding,
+    forwardTX,
+)
 from radio.helpers.incident import forwardincident, handle_incident_forwarding
-from radio.helpers.cleanup import pruneTransmissions
-from radio.helpers.notifications import send_user_notification
+from radio.helpers.cleanup import _prune_transmissions
+from radio.helpers.notifications import (
+    handle_transmission_notification,
+    broadcast_user_notification,
+)
 
-logger = get_task_logger(__name__)
 
-### Iterates over Forwarders and dispatches send_transmission
+if settings.SEND_TELEMETRY:
+    from sentry_sdk import capture_exception
+
+logger = logging.getLogger(__name__)
+
+
 @shared_task()
-def forward_Transmission(data, TG_UUID, *args, **kwargs):
-    handle_forwarding(data, TG_UUID)
+def forward_Transmission(data: dict, tg_uuid: str, *args, **kwargs):
+    """
+    Iterates over Forwarders and dispatches send_transmission
+    """
+    handle_forwarding(data, tg_uuid)
 
-### Iterates over Forwarders and dispatches send_transmission
+
 @shared_task()
-def send_transmission_to_web(data, *args, **kwargs):
-    
+def send_transmission_to_web(data: dict, *args, **kwargs):
+    """
+    Sends socket.io messages to webclients
+    """
     sync_to_async(handle_web_forwarding(data))
 
 
-### Makes Web request to forward incident to single Forwarder
 @shared_task()
-def send_transmission(data, ForwarderName, recorderKey, ForwarderURL,TG_UUID):
-    forwardTX(data, ForwarderName, recorderKey, ForwarderURL, TG_UUID)
+def send_transmission(
+    data: dict,
+    forwarder_name: str,
+    recorder_key: str,
+    forwarder_url: str,
+    tg_uuid: str,
+    *args,
+    **kwargs
+):
+    """
+    Forwards a single TX to a single system
+    """
+    sync_to_async(forwardTX(data, forwarder_name, recorder_key, forwarder_url, tg_uuid))
 
 
-### Iterates over Forwarders and dispatches send_Incident
 @shared_task()
-def forward_Incident(data,created):
+def forward_Incident(data: dict, created: bool, *args, **kwargs):
+    """
+    Iterates over Forwarders and dispatches send_Incident
+    """
     handle_incident_forwarding(data, created)
-  
 
-### Makes Web request to forward incident to single Forwarder
-@shared_task()
-def send_Incident(data, ForwarderName, recorderKey, ForwarderURL, created):
-    forwardincident(data, ForwarderName, recorderKey, ForwarderURL, created)
 
-### Imports RR Data
 @shared_task()
-def import_radio_refrence(UUID, siteid, username, password):
+def send_Incident(
+    data: dict,
+    forwarder_name: str,
+    recorder_key: str,
+    forwarder_url: str,
+    created: bool,
+    *args,
+    **kwargs
+):
+    """
+    Forwards a single Incident to a single system
+    """
+    forwardincident(data, forwarder_name, recorder_key, forwarder_url, created)
+
+
+@shared_task()
+def import_radio_refrence(
+    uuid: str, site_id: str, username: str, password: str, *args, **kwargs
+):
+    """
+    Imports RR Data
+    """
     from radio.helpers.radioreference import RR
 
-    rr: RR = RR(siteid, username, password)
-    rr.load_system(UUID)
+    rr: RR = RR(site_id, username, password)
+    rr.load_system(uuid)
 
-### Prunes Transmissions per system based on age
+
 @shared_task()
-def prune_tranmissions():
-    pruneTransmissions()
+def prune_tranmissions(*args, **kwargs):
+    """
+    Prunes Transmissions per system based on age
+    """
+    _prune_transmissions()
+
 
 @shared_task
-def publish_user_notification(type, Transmission, value,  appRiseURLs, appRiseNotification, webNotification, emergency, titleTemplate, bodyTemplate):
-    send_user_notification(type, Transmission, value,  appRiseURLs, appRiseNotification, webNotification, emergency, titleTemplate, bodyTemplate)
+def send_tx_notifications(transmission: dict, *args, **kwargs):
+    """
+    Does the logic to send user notifications
+    """
+    sync_to_async(handle_transmission_notification(transmission))
+
 
 @shared_task
-def broadcast_web_notification(alert, Transmission, type, value):
+def publish_user_notification(
+    type: str,
+    transmission: dict,
+    value: str,
+    app_rise_urls: str,
+    app_rise_notification: bool,
+    web_notification: bool,
+    emergency: bool,
+    title_template: str,
+    body_template: str,
+    *args,
+    **kwargs
+):
+    """
+    Sends the User a notification(s)
+    """
+    broadcast_user_notification(
+        type,
+        transmission,
+        value,
+        app_rise_urls,
+        app_rise_notification,
+        web_notification,
+        emergency,
+        title_template,
+        body_template,
+    )
+
+
+@shared_task
+def broadcast_web_notification(alert, transmission, type, value, *args, **kwargs):
     pass

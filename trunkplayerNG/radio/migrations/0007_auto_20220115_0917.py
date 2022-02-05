@@ -7,18 +7,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0006_auto_20220111_1501'),
+        ("radio", "0006_auto_20220111_1501"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='talkgroup',
-            name='mode',
-            field=models.CharField(choices=[('digital', 'Digital'), ('analog', 'Analog'), ('tdma', 'TDMA')], default='digital', max_length=250),
+            model_name="talkgroup",
+            name="mode",
+            field=models.CharField(
+                choices=[
+                    ("digital", "Digital"),
+                    ("analog", "Analog"),
+                    ("tdma", "TDMA"),
+                ],
+                default="digital",
+                max_length=250,
+            ),
         ),
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2022, 1, 15, 9, 17, 41, 902108)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2022, 1, 15, 9, 17, 41, 902108)
+            ),
         ),
     ]

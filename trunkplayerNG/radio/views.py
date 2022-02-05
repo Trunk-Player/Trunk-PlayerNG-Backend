@@ -1,24 +1,19 @@
-
-
-from logging import log
-import operator
-import logging, json
-from celery.utils.log import logger_isa
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
-from django.http import Http404, HttpResponse
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from radio.models import *
-from radio.serializers import *
+
+from django.http import Http404
+from django.db.models import Q
 from rest_framework.parsers import JSONParser
 from rest_framework import status
-from django.db.models import Q
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from asgiref.sync import sync_to_async
 
-from radio.tasks import forward_Transmission, import_radio_refrence, send_transmission_to_web
+from radio.models import *
+from radio.serializers import *
+from radio.tasks import import_radio_refrence, send_transmission_to_web
 
 from radio.helpers.transmission import new_transmission_handler
 from radio.helpers.utils import (
@@ -33,7 +28,6 @@ from radio.permission import (
     IsSiteAdmin,
     IsUser,
 )
-
 
 
 class PaginationMixin(object):
@@ -67,7 +61,6 @@ class PaginationMixin(object):
         return self.paginator.get_paginated_response(data)
 
 
-
 class UserAlertList(APIView, PaginationMixin):
     queryset = UserAlert.objects.all()
     serializer_class = UserAlertSerializer
@@ -76,10 +69,10 @@ class UserAlertList(APIView, PaginationMixin):
 
     @swagger_auto_schema(tags=["UserAlert"])
     def get(self, request, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         if user.siteAdmin:
             UserAlerts = UserAlert.objects.all()
-        else:            
+        else:
             UserAlerts = UserAlert.objects.filter(user=user)
 
         page = self.paginate_queryset(UserAlerts)
@@ -111,22 +104,31 @@ class UserAlertCreate(APIView):
                 "appRiseNotification": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Send AppRise Notification"
                 ),
-                "appRiseURLs": openapi.Schema(type=openapi.TYPE_STRING, description="appRiseURLs"),
-                "title": openapi.Schema(type=openapi.TYPE_STRING, description="The title of the alert"),
-                "body": openapi.Schema(type=openapi.TYPE_STRING, description="The body of the alert"),
-                "emergencyOnly": openapi.Schema(type=openapi.TYPE_STRING, description="Only alert on Emergency Transmissions"),
+                "appRiseURLs": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="appRiseURLs"
+                ),
+                "title": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="The title of the alert"
+                ),
+                "body": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="The body of the alert"
+                ),
+                "emergencyOnly": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Only alert on Emergency Transmissions",
+                ),
             },
         ),
     )
     def post(self, request, format=None):
-        user:UserProfile = request.user.userProfile
+        user: UserProfile = request.user.userProfile
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
 
         data["user"] = str(user.UUID)
-        
+
         serializer = UserAlertSerializer(data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -147,11 +149,11 @@ class UserAlertView(APIView):
 
     @swagger_auto_schema(tags=["UserAlert"])
     def get(self, request, UUID, format=None):
-        user:UserProfile = request.user.userProfile
-        UserAlertX:UserAlert = self.get_object(UUID)
+        user: UserProfile = request.user.userProfile
+        UserAlertX: UserAlert = self.get_object(UUID)
         if not UserAlertX.user == user:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
-       
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
         serializer = UserAlertSerializer(UserAlertX)
         return Response(serializer.data)
 
@@ -172,15 +174,17 @@ class UserAlertView(APIView):
                 "appRiseNotification": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Send AppRise Notification"
                 ),
-                "appRiseURLs": openapi.Schema(type=openapi.TYPE_STRING, description="appRiseURLs"),
+                "appRiseURLs": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="appRiseURLs"
+                ),
             },
         ),
     )
     def put(self, request, UUID, format=None):
-        user:UserProfile = request.user.userProfile
-        UserAlertX:UserAlert = self.get_object(UUID)
+        user: UserProfile = request.user.userProfile
+        UserAlertX: UserAlert = self.get_object(UUID)
         if not UserAlertX.user == user:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         data = request.data
         if "user" in data:
             del data["user"]
@@ -193,13 +197,12 @@ class UserAlertView(APIView):
 
     @swagger_auto_schema(tags=["UserAlert"])
     def delete(self, request, UUID, format=None):
-        user:UserProfile = request.user.userProfile
-        UserAlertX:UserAlert = self.get_object(UUID)
+        user: UserProfile = request.user.userProfile
+        UserAlertX: UserAlert = self.get_object(UUID)
         if not UserAlertX.user == user:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         UserAlertX.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 
 class UserProfileList(APIView, PaginationMixin):
@@ -436,7 +439,8 @@ class SystemCreate(APIView):
                     description="Enable Pruneing Transmissions on system",
                 ),
                 "pruneTransmissionsAfterDays": openapi.Schema(
-                    type=openapi.TYPE_INTEGER, description="Days to keep Transmissions (Prune)"
+                    type=openapi.TYPE_INTEGER,
+                    description="Days to keep Transmissions (Prune)",
                 ),
             },
         ),
@@ -513,7 +517,8 @@ class SystemView(APIView):
                     description="Enable Pruneing Transmissions on system",
                 ),
                 "pruneTransmissionsAfterDays": openapi.Schema(
-                    type=openapi.TYPE_INTEGER, description="Days to keep Transmissions (Prune)"
+                    type=openapi.TYPE_INTEGER,
+                    description="Days to keep Transmissions (Prune)",
                 ),
             },
         ),
@@ -1615,16 +1620,22 @@ class TransmissionList(APIView, PaginationMixin):
             systemUUIDs, systems = getUserAllowedSystems(user.UUID)
             AllowedTransmissions = []
 
-
             for system in systems:
                 if system.enableTalkGroupACLs:
                     TGAllowed = getUserAllowedTalkgroups(system, user.UUID)
-                    AllowedTransmissions.extend(Transmission.objects.filter(system=system, talkgroup__in=TGAllowed))
+                    AllowedTransmissions.extend(
+                        Transmission.objects.filter(
+                            system=system, talkgroup__in=TGAllowed
+                        )
+                    )
                 else:
-                    AllowedTransmissions.extend(Transmission.objects.filter(system=system))
-                    
+                    AllowedTransmissions.extend(
+                        Transmission.objects.filter(system=system)
+                    )
 
-        AllowedTransmissions = sorted(AllowedTransmissions, key=lambda instance: instance.startTime, reverse=True)
+        AllowedTransmissions = sorted(
+            AllowedTransmissions, key=lambda instance: instance.startTime, reverse=True
+        )
 
         page = self.paginate_queryset(AllowedTransmissions)
         if page is not None:
@@ -1660,7 +1671,8 @@ class TransmissionCreate(APIView):
         ),
     )
     def post(self, request, format=None):
-        from radio.helpers.notifications import handle_Transmission_Notification
+        from radio.tasks import send_tx_notifications
+
         data = JSONParser().parse(request)
 
         if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
@@ -1689,8 +1701,8 @@ class TransmissionCreate(APIView):
 
         if TX.is_valid(raise_exception=True):
             TX.save()
-            handle_Transmission_Notification(TX.validated_data)
             send_transmission_to_web.delay(TX.data, Callback["talkgroup"])
+            send_tx_notifications.delay(TX.data)
             return Response({"success": True, "UUID": Callback["UUID"]})
         else:
             Response(TX.errors)
@@ -1845,10 +1857,10 @@ class IncidentForward(APIView):
     def post(self, request, format=None):
         data = JSONParser().parse(request)
 
-        #try:
+        # try:
         SR: SystemRecorder = SystemRecorder.objects.get(
-                forwarderWebhookUUID=data["recorder"]
-            )
+            forwarderWebhookUUID=data["recorder"]
+        )
         # except:
         #     return Response(
         #         "Not allowed to post this talkgroup",
@@ -1860,7 +1872,7 @@ class IncidentForward(APIView):
                 "Not allowed to post this talkgroup",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-       
+
         data["system"] = str(SR.system.UUID)
         del data["recorder"]
 
@@ -1873,10 +1885,10 @@ class IncidentForward(APIView):
     def put(self, request, UUID, format=None):
         data = JSONParser().parse(request)
 
-        #try:
+        # try:
         SR: SystemRecorder = SystemRecorder.objects.get(
-                forwarderWebhookUUID=data["recorder"]
-            )
+            forwarderWebhookUUID=data["recorder"]
+        )
         # except:
         #     return Response(
         #         "Not allowed to post this talkgroup",
@@ -1888,10 +1900,8 @@ class IncidentForward(APIView):
                 "Not allowed to post this talkgroup",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-       
-        data["system"] = str(SR.system.UUID)
 
-        
+        data["system"] = str(SR.system.UUID)
 
         del data["recorder"]
 

@@ -1,13 +1,24 @@
-from os import system
-from typing import SupportsRound
 from rest_framework import serializers
+
 from radio.models import *
-from rest_framework import permissions
+
 
 class UserAlertSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAlert
-        fields = ["UUID", "name", "user", "description", "webNotification", "appRiseNotification", "appRiseURLs", "title", "body", "emergencyOnly"]
+        fields = [
+            "UUID",
+            "name",
+            "user",
+            "description",
+            "webNotification",
+            "appRiseNotification",
+            "appRiseURLs",
+            "title",
+            "body",
+            "emergencyOnly",
+        ]
+
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,7 +35,14 @@ class SystemACLSerializer(serializers.ModelSerializer):
 class SystemSerializer(serializers.ModelSerializer):
     class Meta:
         model = System
-        fields = ["UUID", "name", "systemACL", "enableTalkGroupACLs", "pruneTransmissions", "pruneTransmissionsAfterDays"]
+        fields = [
+            "UUID",
+            "name",
+            "systemACL",
+            "enableTalkGroupACLs",
+            "pruneTransmissions",
+            "pruneTransmissionsAfterDays",
+        ]
 
 
 class SystemForwarderSerializer(serializers.ModelSerializer):
@@ -38,7 +56,7 @@ class SystemForwarderSerializer(serializers.ModelSerializer):
             "remoteURL",
             "forwardIncidents",
             "forwardedSystems",
-            "talkGroupFilter"
+            "talkGroupFilter",
         ]
 
 
@@ -164,7 +182,7 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
-            "transcript"
+            "transcript",
         ]
 
 
@@ -192,7 +210,7 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
-            "transcript"
+            "transcript",
         ]
 
 
@@ -204,8 +222,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             "system",
             "transmission",
             "name",
-            "active"
-            "description",
+            "active" "description",
             "agency",
             "time",
         ]

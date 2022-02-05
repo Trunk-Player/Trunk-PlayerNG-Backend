@@ -1,8 +1,10 @@
-import logging, requests
+import logging
+
+from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
-from datetime import timedelta
-from radio.models import System, SystemForwarder, Transmission
+
+from radio.models import System, Transmission
 
 
 if settings.SEND_TELEMETRY:
@@ -11,16 +13,22 @@ if settings.SEND_TELEMETRY:
 logger = logging.getLogger(__name__)
 
 
-def pruneTransmissions():
+def _prune_transmissions() -> None:
+    """
+    Prunes transmissions when set in the database
+    """
+
     for system in System.objects.all():
-        system:System
+        system: System
 
         if system.pruneTransmissions:
-            prunetime = timezone.now() - timedelta(days=system.pruneTransmissionsAfterDays)
+            prunetime = timezone.now() - timedelta(
+                days=system.pruneTransmissionsAfterDays
+            )
             TXs = Transmission.objects.filter(system=system, startTime__lte=prunetime)
             for TX in TXs:
                 try:
-                    TX:Transmission
+                    TX: Transmission
 
                     Units = TX.units.all()
                     Units.delete()
@@ -30,12 +38,15 @@ def pruneTransmissions():
                 except Exception as e:
                     if settings.SEND_TELEMETRY:
                         capture_exception(e)
-                    logging.error(f"[!] ERROR PRUNING TRANSMISSION CHILDREN {str(TX.UUID)}")
+                    logging.error(
+                        f"[!] ERROR PRUNING TRANSMISSION CHILDREN {str(TX.UUID)}"
+                    )
 
             try:
                 TXs.delete()
             except Exception as e:
                 if settings.SEND_TELEMETRY:
                     capture_exception(e)
-                logging.error(f"[!] ERROR PRUNING TRANSMISSIONS ON SYSTEM {str(system)}")
-            
+                logging.error(
+                    f"[!] ERROR PRUNING TRANSMISSIONS ON SYSTEM {str(system)}"
+                )

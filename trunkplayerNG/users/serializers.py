@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from users.models import CustomUser
-
 from radio.serializers import UserProfileSerializer
 
 

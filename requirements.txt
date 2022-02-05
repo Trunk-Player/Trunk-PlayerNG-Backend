@@ -18,7 +18,7 @@ inflection
 itypes
 Jinja2
 MarkupSafe
-mysqlclient
+mysqlclient==2.1.0
 oauthlib
 packaging
 pycparser
@@ -47,7 +47,7 @@ uwsgi
 zeep
 gevent
 gevent-websocket
-python-engineio
+git+https://github.com/MaxwellDPS/python-engineio@main#egg=python-engineio
 python-socketio
 kombu
 apprise

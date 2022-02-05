@@ -8,37 +8,47 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0002_alter_systemreciverate_time'),
+        ("radio", "0002_alter_systemreciverate_time"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='call',
-            name='units',
+            model_name="call",
+            name="units",
         ),
         migrations.AddField(
-            model_name='call',
-            name='units',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='TG_UNITS', to='radio.unit'),
+            model_name="call",
+            name="units",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="TG_UNITS",
+                to="radio.unit",
+            ),
         ),
         migrations.AlterField(
-            model_name='system',
-            name='enableTalkGroupACLs',
-            field=models.BooleanField(default=False, verbose_name='Enable Talkgroup ACLs'),
+            model_name="system",
+            name="enableTalkGroupACLs",
+            field=models.BooleanField(
+                default=False, verbose_name="Enable Talkgroup ACLs"
+            ),
         ),
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2022, 1, 7, 17, 4, 25, 532875)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2022, 1, 7, 17, 4, 25, 532875)
+            ),
         ),
         migrations.AlterField(
-            model_name='useralert',
-            name='talkgroups',
-            field=models.ManyToManyField(blank=True, to='radio.TalkGroup'),
+            model_name="useralert",
+            name="talkgroups",
+            field=models.ManyToManyField(blank=True, to="radio.TalkGroup"),
         ),
         migrations.AlterField(
-            model_name='useralert',
-            name='units',
-            field=models.ManyToManyField(blank=True, to='radio.Unit'),
+            model_name="useralert",
+            name="units",
+            field=models.ManyToManyField(blank=True, to="radio.Unit"),
         ),
     ]

@@ -1,9 +1,10 @@
-from django.contrib.auth.models import User
-from django.db import models
 import uuid
+
+from django.db import models
 from django.db import models
 from django.db.models.fields import NullBooleanField
 from django.dispatch import receiver
+
 from datetime import datetime
 
 from trunkplayerNG.storage_backends import PrivateMediaStorage
@@ -58,9 +59,13 @@ class System(models.Model):
     )
     name = models.CharField(max_length=100, db_index=True, unique=True)
     systemACL = models.ForeignKey(SystemACL, on_delete=models.CASCADE)
-    enableTalkGroupACLs = models.BooleanField('Enable Talkgroup ACLs', default=False)
-    pruneTransmissions = models.BooleanField('Enable Pruneing Transmissions',default=False)
-    pruneTransmissionsAfterDays = models.IntegerField('Days to keep Transmissions (Prune)',default=365)
+    enableTalkGroupACLs = models.BooleanField("Enable Talkgroup ACLs", default=False)
+    pruneTransmissions = models.BooleanField(
+        "Enable Pruneing Transmissions", default=False
+    )
+    pruneTransmissionsAfterDays = models.IntegerField(
+        "Days to keep Transmissions (Prune)", default=365
+    )
 
     def __str__(self):
         return self.name
@@ -90,11 +95,7 @@ class Agency(models.Model):
 
 
 class TalkGroup(models.Model):
-    MODE_OPTS = (
-        ("digital","Digital"),
-        ("analog","Analog"),
-        ("tdma", "TDMA")
-    )
+    MODE_OPTS = (("digital", "Digital"), ("analog", "Analog"), ("tdma", "TDMA"))
 
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -110,21 +111,27 @@ class TalkGroup(models.Model):
     def __str__(self):
         return f"[{self.system.name}] {self.alphaTag}"
 
+
 @receiver(models.signals.post_save, sender=TalkGroup)
 def execute_TalkGroup_dedup_check(sender, instance, created, *args, **kwargs):
-    from radio.helpers.notifications import handle_Transmission_Notification
+    from radio.helpers.notifications import handle_transmission_notification
 
     system = instance.system
 
     if created:
         if instance.alphaTag != "":
-            TGs = TalkGroup.objects.filter(system=system, decimalID=instance.decimalID).exclude(UUID=instance.UUID)
+            TGs = TalkGroup.objects.filter(
+                system=system, decimalID=instance.decimalID
+            ).exclude(UUID=instance.UUID)
             TGs.delete()
         else:
-            if TalkGroup.objects.filter(system=system, decimalID=instance.decimalID).exclude(alphaTag=""):
+            if TalkGroup.objects.filter(
+                system=system, decimalID=instance.decimalID
+            ).exclude(alphaTag=""):
                 instance.delete()
-                
-    #handle_Transmission_Notification(instance)
+
+    # handle_transmission_notification(instance)
+
 
 class SystemForwarder(models.Model):
     UUID = models.UUIDField(
@@ -221,7 +228,7 @@ class Transmission(models.Model):
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
     startTime = models.DateTimeField()
     endTime = models.DateTimeField(null=True, blank=True)
-    audioFile = models.FileField(upload_to='audio/%Y/%m/%d/')
+    audioFile = models.FileField(upload_to="audio/%Y/%m/%d/")
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
     emergency = models.BooleanField(default=False, db_index=True)
@@ -236,13 +243,14 @@ class Transmission(models.Model):
     def __str__(self):
         return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"
 
+
 @receiver(models.signals.post_save, sender=Transmission)
 def execute_Transmission_alerts(sender, instance, created, *args, **kwargs):
-    from radio.helpers.notifications import handle_Transmission_Notification
+    from radio.helpers.notifications import handle_transmission_notification
 
     # Used for Transmission Alerting
 
-    #handle_Transmission_Notification(instance)
+    # handle_transmission_notification(instance)
 
 
 class Incident(models.Model):
@@ -345,6 +353,7 @@ class GlobalEmailTemplate(models.Model):
     def __str__(self):
         return self.name
 
+
 class UserAlert(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -354,16 +363,16 @@ class UserAlert(models.Model):
     description = models.TextField(blank=True, null=True)
     webNotification = models.BooleanField(default=False)
     appRiseNotification = models.BooleanField(default=False)
-    appRiseURLs = models.TextField(", Seperated AppriseURL(s)",default="")
-    talkgroups = models.ManyToManyField(TalkGroup,blank=True)
+    appRiseURLs = models.TextField(", Seperated AppriseURL(s)", default="")
+    talkgroups = models.ManyToManyField(TalkGroup, blank=True)
     emergencyOnly = models.BooleanField(default=False)
-    units = models.ManyToManyField(Unit,blank=True)
+    units = models.ManyToManyField(Unit, blank=True)
     title = models.CharField(max_length=255, default="New Activity Alert")
-    body = models.TextField( default="New Activity on %T - %I")
+    body = models.TextField(default="New Activity on %T - %I")
 
-
-    def __str__(self):    
+    def __str__(self):
         return f"{self.name}"
+
 
 class SystemReciveRate(models.Model):
     UUID = models.UUIDField(
@@ -385,7 +394,13 @@ class Call(models.Model):
     trunkRecorderID = models.CharField(max_length=30, unique=True)
     startTime = models.DateTimeField(db_index=True)
     endTime = models.DateTimeField(null=True, blank=True)
-    units = models.ForeignKey(Unit, related_name="TG_UNITS", blank=True, null=True, on_delete=models.DO_NOTHING)
+    units = models.ForeignKey(
+        Unit,
+        related_name="TG_UNITS",
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+    )
     active = models.BooleanField(default=True)
     emergency = models.BooleanField(default=True)
     encrypted = models.BooleanField(default=True)
@@ -395,4 +410,4 @@ class Call(models.Model):
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.trunkRecorderID}'
+        return f"{self.trunkRecorderID}"

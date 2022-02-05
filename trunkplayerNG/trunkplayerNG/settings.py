@@ -22,7 +22,10 @@ if SEND_TELEMETRY:
     import sentry_sdk
 
     sentry_sdk.init(
-        "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io/2",
+        os.getenv(
+            "SENTRY_DSN",
+            "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io/2",
+        ),
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         # We recommend adjusting this value in production.
@@ -46,7 +49,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
 if DEBUG:
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 else:
     logging.basicConfig(level=logging.WARNING)
 
@@ -173,17 +176,19 @@ USE_S3 = os.getenv("USE_S3", "False").lower() in ("true", "1", "t")
 
 if USE_S3:
     # aws settings
-    AWS_ACCESS_KEY_ID   = os.getenv("S3_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY   = os.getenv("S3_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME  = os.getenv("S3_BUCKET_NAME")
-    AWS_S3_ENDPOINT_URL  = os.getenv("S3_ENDPOINT_URL") 
+    AWS_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+    AWS_S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
     AWS_DEFAULT_ACL = None
     AWS_S3_CUSTOM_DOMAIN = f"{AWS_S3_ENDPOINT_URL.replace('https://','')}"
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
 
     # s3 static settings
     STATIC_LOCATION = "static"
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}/{STATIC_LOCATION}/"
+    STATIC_URL = (
+        f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}/{STATIC_LOCATION}/"
+    )
     STATICFILES_STORAGE = "trunkplayerNG.storage_backends.StaticStorage"
 
     # s3 public media settings
@@ -283,13 +288,9 @@ CELERY_QUEUES = (
     Queue(
         "transmission_forwarding",
         Exchange("transmission_forwarding"),
-        routing_key="transmission_forwarding"
+        routing_key="transmission_forwarding",
     ),
-    Queue(
-        "radio_alerts",
-        Exchange("radio_alerts"),
-        routing_key="radio_alerts"
-    ),
+    Queue("radio_alerts", Exchange("radio_alerts"), routing_key="radio_alerts"),
     Queue("RR_IMPORT", Exchange("RR_IMPORT"), routing_key="RR_IMPORT"),
 )
 CELERY_TASK_ROUTES = {
@@ -298,6 +299,7 @@ CELERY_TASK_ROUTES = {
     "radio.tasks.forward_Incident": {"queue": "transmission_forwarding"},
     "radio.tasks.send_Incident": {"queue": "transmission_forwarding"},
     "radio.tasks.import_radio_refrence": {"queue": "RR_IMPORT"},
+    "radio.tasks.send_tx_notifications": {"queue": "radio_alerts"},
     "radio.tasks.publish_user_notification": {"queue": "radio_alerts"},
 }
 CELERY_TASK_DEFAULT_QUEUE = "default"

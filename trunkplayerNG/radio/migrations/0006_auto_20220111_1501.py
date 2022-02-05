@@ -7,18 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0005_auto_20220109_0656'),
+        ("radio", "0005_auto_20220109_0656"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='systemforwarder',
-            name='talkGroupFilter',
-            field=models.ManyToManyField(to='radio.TalkGroup'),
+            model_name="systemforwarder",
+            name="talkGroupFilter",
+            field=models.ManyToManyField(to="radio.TalkGroup"),
         ),
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2022, 1, 11, 15, 1, 38, 273052)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2022, 1, 11, 15, 1, 38, 273052)
+            ),
         ),
     ]

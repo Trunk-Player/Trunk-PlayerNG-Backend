@@ -1,11 +1,11 @@
 import logging
 import uuid
-from os import system
-from sentry_sdk.api import capture_exception
+
 from zeep import Client
 from django.db import IntegrityError
-from radio.models import TalkGroup, System
 from django.conf import settings
+
+from radio.models import TalkGroup, System
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
@@ -14,12 +14,18 @@ logger = logging.getLogger(__name__)
 
 
 class RR:
-    def __init__(self, rrSystemId, User, Pass):
+    def __init__(self, rrSystemId: str, User: str, Pass: str) -> None:
+        """
+        Radio Refrence interface library
+        """
         self.rrSystemId = rrSystemId
         self.rrUser = User
         self.rrPass = Pass
 
-    def fetch_system_talkgroups(self):
+    def fetch_system_talkgroups(self) -> list[dict]:
+        """
+        Radio Refrence interface library
+        """
         # radio reference authentication
         client = Client("http://api.radioreference.com/soap2/?wsdl&v=15&s=rpc")
         auth_type = client.get_type("ns0:authInfo")
@@ -43,11 +49,17 @@ class RR:
         )
         return result
 
-    def get_system(self, UUID):
+    def get_system(self, UUID) -> System:
+        """
+        Gets System ORM Object via UUID
+        """
         systemX = System.objects.get(UUID=UUID)
         return systemX
 
-    def load_system(self, SystemUUID):
+    def load_system(self, SystemUUID: str) -> list[TalkGroup]:
+        """
+        Downloads and stores RR talkgroups
+        """
         RR_TGs = self.fetch_system_talkgroups()
         system: System = self.get_system(SystemUUID)
 
@@ -69,7 +81,7 @@ class RR:
                     alphaTag=talkgroup["tgAlpha"],
                     description=talkgroup["tgDescr"][:250],
                     encrypted=Encrypted,
-                    mode=Mode
+                    mode=Mode,
                 )
 
                 tgX.save()
