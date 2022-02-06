@@ -1,7 +1,10 @@
 import logging, apprise
+import os
 from django.contrib.auth.models import User
 from django.conf import settings
+import socketio
 from radio.models import TalkGroup, Unit, UserAlert
+
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
@@ -33,6 +36,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
                             "Talkgroup",
                             TransmissionX["UUID"],
                             talkgroupObject.alphaTag,
+                            alert.user.UUID,
                             alert.appRiseURLs,
                             alert.appRiseNotification,
                             alert.webNotification,
@@ -48,6 +52,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
                         "Talkgroup",
                         TransmissionX["UUID"],
                         talkgroupObject.alphaTag,
+                        alert.user.UUID,
                         alert.appRiseURLs,
                         alert.appRiseNotification,
                         alert.webNotification,
@@ -84,6 +89,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
                             "Unit",
                             TransmissionX["UUID"],
                             AUs,
+                            alert.user.UUID,
                             alert.appRiseURLs,
                             alert.appRiseNotification,
                             alert.webNotification,
@@ -99,6 +105,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
                         "Unit",
                         TransmissionX["UUID"],
                         AUs,
+                        alert.user.UUID,
                         alert.appRiseURLs,
                         alert.appRiseNotification,
                         alert.webNotification,
@@ -134,6 +141,7 @@ def broadcast_user_notification(
     type: str,
     TransmissionUUID: str,
     value: str,
+    alertuser_uuid: str,
     appRiseURLs: str,
     appRiseNotification: bool,
     webNotification: bool,
@@ -141,9 +149,14 @@ def broadcast_user_notification(
     titleTemplate: str,
     bodyTemplate: str,
 ) -> None:
+
+    body, title = format_message(
+        type, value, TransmissionUUID, emergency, titleTemplate, bodyTemplate
+    )
+
     if webNotification:
-        # broadcast_web_notification(alert, Transmission, type, value)
-        pass
+        from radio.tasks import dispatch_web_notification
+        dispatch_web_notification.delay(alertuser_uuid, TransmissionUUID, emergency, title, body)
     if appRiseNotification:
         URLs = appRiseURLs.split(",")
         apobj = apprise.Apprise()
@@ -151,12 +164,20 @@ def broadcast_user_notification(
         for URL in URLs:
             apobj.add(URL)
 
-        body, title = format_message(
-            type, value, TransmissionUUID, emergency, titleTemplate, bodyTemplate
-        )
+       
 
         logging.debug(f"[+] BROADCASTING TO APPRISE {TransmissionUUID}")
         apobj.notify(
             body=body,
             title=title,
         )
+
+def broadcast_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str):
+    mgr = socketio.KombuManager(
+        os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
+    )
+    sio = socketio.Server(
+        async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
+    )
+    data = {"TransmissionUUID": TransmissionUUID, "emergency": emergency, "title": title, "body": body}
+    sio.emit(f"alert", data, room=f'alert_{alertuser_uuid}')

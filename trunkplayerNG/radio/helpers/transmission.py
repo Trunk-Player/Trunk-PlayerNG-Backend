@@ -57,7 +57,7 @@ def handle_web_forwarding(data: dict) -> None:
         os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
     )
     sio = socketio.Server(
-        async_mode="gevent", client_manager=mgr, logger=True, engineio_logger=False
+        async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
     )
     sync_to_async(sio.emit("TX", data))
 

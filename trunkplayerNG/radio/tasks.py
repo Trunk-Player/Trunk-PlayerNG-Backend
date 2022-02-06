@@ -9,6 +9,7 @@ from radio.helpers.incident import forwardincident, handle_incident_forwarding
 from radio.helpers.cleanup import _prune_transmissions
 
 from radio.helpers.notifications import (
+    broadcast_web_notification,
     handle_transmission_notification,
     broadcast_user_notification,
 )
@@ -115,6 +116,7 @@ def publish_user_notification(
     type: str,
     transmission: dict,
     value: str,
+    alertuser_uuid: str,
     app_rise_urls: str,
     app_rise_notification: bool,
     web_notification: bool,
@@ -131,6 +133,7 @@ def publish_user_notification(
         type,
         transmission,
         value,
+        alertuser_uuid,
         app_rise_urls,
         app_rise_notification,
         web_notification,
@@ -141,5 +144,5 @@ def publish_user_notification(
 
 
 @shared_task
-def broadcast_web_notification(alert, transmission, type, value, *args, **kwargs):
-    pass
+def dispatch_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str, *args, **kwargs):
+    sync_to_async(broadcast_web_notification(alertuser_uuid, TransmissionUUID, emergency, title, body))

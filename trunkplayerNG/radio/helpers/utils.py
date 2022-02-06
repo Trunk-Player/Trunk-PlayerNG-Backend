@@ -160,7 +160,7 @@ class TransmissionDetails:
             Talkgroup.save()
 
         if created:
-            for acl in TalkGroupACL.objects.filter(defaultNewTalkgroups=True).update():
+            for acl in TalkGroupACL.objects.filter(defaultNewTalkgroups=True):
                 acl: TalkGroupACL
                 acl.allowedTalkgroups.add(Talkgroup)
                 acl.save()
