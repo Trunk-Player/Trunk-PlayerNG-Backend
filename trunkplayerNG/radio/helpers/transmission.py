@@ -5,7 +5,7 @@ from django.core.files.base import ContentFile
 from asgiref.sync import sync_to_async
 
 from .utils import TransmissionDetails
-from radio.models import System, SystemRecorder, SystemForwarder, TalkGroup
+from radio.models import ScanList, Scanner, System, SystemRecorder, SystemForwarder, TalkGroup
 
 
 if settings.SEND_TELEMETRY:
@@ -52,14 +52,20 @@ def handle_web_forwarding(data: dict) -> None:
     """
     Handles Forwarding New Transmissions
     """
+    from radio.tasks import broadcast_transmission
 
-    mgr = socketio.KombuManager(
-        os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
-    )
-    sio = socketio.Server(
-        async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
-    )
-    sync_to_async(sio.emit("TX", data))
+    talkgroup = TalkGroup.objects.get(UUID=data["talkgroup"])
+    broadcast_transmission.delay(f"tx_{data['talkgroup']}",  f'tx_{data["talkgroup"]}', data)
+
+    scanlists = ScanList.objects.filter(talkgroups=talkgroup)
+    for scanlist in scanlists:
+        broadcast_transmission.delay(f"tx_{scanlist.UUID}", f'tx_{scanlist.UUID}', data )
+        
+    scanners = Scanner.objects.filter(scanlists__in=scanlists)
+    for scanner in scanners:
+       broadcast_transmission.delay(f"tx_{scanner.UUID}", f'tx_{scanner.UUID}', data )
+
+
 
 
 def handle_forwarding(data, TG_UUID: str) -> None:
@@ -118,3 +124,18 @@ def forwardTX(
         if settings.SEND_TELEMETRY:
             capture_exception(e)
         raise (e)
+        
+def _broadcast_tx(event: str, room: str, data: dict):
+    try:
+        mgr = socketio.KombuManager(
+            os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
+        )
+        sio = socketio.Server(
+            async_mode="gevent", client_manager=mgr, logger=True, engineio_logger=True
+        )
+        sync_to_async(sio.emit(event, data, room=room))
+        logging.debug(f"[+] BROADCASTING TO {room}")
+    except Exception as e:
+        if settings.SEND_TELEMETRY:
+            capture_exception(e)
+        raise(e)

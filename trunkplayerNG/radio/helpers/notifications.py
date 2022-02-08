@@ -1,10 +1,10 @@
-import logging, apprise
-import os
+import logging, apprise, os, socketio
+
 from django.contrib.auth.models import User
 from django.conf import settings
-import socketio
-from radio.models import TalkGroup, Unit, UserAlert
 
+from radio.models import TalkGroup, Unit, UserAlert
+from kombu import Queue, Exchange
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception

@@ -229,17 +229,8 @@ class TransmissionDetails:
 
 
 def getUserAllowedSystems(UserUUID: str) -> tuple[list, list]:
-    userACLs = []
+    userACLs = SystemACL.objects.filter(users__UUID=UserUUID)  
     ACLs = SystemACL.objects.all()
-
-    SystemACL.objects.filter()
-
-    for ACL in ACLs:
-        ACL: SystemACL
-        if ACL.users.filter(UUID=UserUUID):
-            userACLs.append(ACL)
-        elif ACL.public:
-            userACLs.append(ACL)
     Systems = System.objects.filter(systemACL__in=userACLs)
     systemUUIDs = [system.UUID for system in Systems]
     return systemUUIDs, Systems
@@ -248,17 +239,12 @@ def getUserAllowedSystems(UserUUID: str) -> tuple[list, list]:
 def getUserAllowedTalkgroups(System: System, UserUUID: str) -> list:
     userACLsTGIDs = []
 
-    SystemTalkGroups = TalkGroup.objects.filter(system=System)
     if not System.enableTalkGroupACLs:
-        return SystemTalkGroups
+        return TalkGroup.objects.filter(system=System)
 
-    ACLs = TalkGroupACL.objects.all()
-    for ACL in ACLs:
-        ACL: TalkGroupACL
-        if ACL.users.filter(UUID=UserUUID):
-            for TGID in ACL.allowedTalkgroups.all():
-                userACLsTGIDs.append(TGID.UUID)
+    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID)  
+    Allowed = list(ACLs.values_list('UUID',flat=True))
 
-    AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=userACLsTGIDs)
+    AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=Allowed)
 
     return AllowedTalkgropups

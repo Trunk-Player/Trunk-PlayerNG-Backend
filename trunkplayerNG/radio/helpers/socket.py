@@ -8,6 +8,7 @@ from django.conf import settings
 from django.http.response import HttpResponse
 from django.contrib.auth import authenticate
 
+from kombu import Queue, Exchange
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
@@ -72,15 +73,16 @@ logger = logging.getLogger(__name__)
 
 @sio.event
 def deregister_tx_source(sid, message):
-    uuid = message["uuid"]
-    type = message["type"]
-    sio.leave_room(sid, f'tx_{type}_{uuid}')
+    for uuid in message["uuids"]:
+        sio.leave_room(sid, f'tx_{uuid}')
+        sio.emit("debug", {"data":f"disconnected to room tx_{uuid}"}, room=sid)
 
 @sio.event
 def register_tx_source(sid, message):
-    uuid = message["uuid"]
-    type = message["type"]
-    sio.enter_room(sid, f'tx_{type}_{uuid}')
+    for uuid in message["uuids"]:
+        sio.enter_room(sid, f'tx_{uuid}')
+        sio.emit("debug", {"data":f"connected to room tx_{uuid}"}, room=sid)
+    
 
 
 @sio.event
@@ -96,10 +98,9 @@ def connect(sid, environ, auth):
 
     sio.save_session(sid, {'username': user})
     logging.debug(f"[+] User {user.email} has connected to the socket")
-    sio.emit("debug", {"data": "Connected"}, room=sid)
     sio.enter_room(sid, 'unicast')
     sio.enter_room(sid, f'alert_{user.userProfile.UUID}')
-    sio.emit('unicast', {"ping":"pong"}, room='unicast')
+    sio.emit("debug", {"data": "Connected"}, room=sid)
 
 
 @sio.event

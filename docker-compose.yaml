@@ -31,13 +31,13 @@ services:
       - /tmp/media:/code/mediafiles
     depends_on:
      # - db
-      - rabbitmq
+      - rabbitmqX
 
   trunk-player-worker:
     restart: always
     network_mode: "host"
     build: .
-    command: celery -A trunkplayerNG worker -l info --pool=gevent -Q default,transmission_forwarding,RR_IMPORT,radio_alerts
+    command: celery -A trunkplayerNG worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,RR_IMPORT,radio_alerts,radio_tx
     environment:
       DEBUG: "True"
       FORCE_SECURE: "False"
@@ -60,7 +60,7 @@ services:
       - /tmp/media:/code/mediafiles
     depends_on:
     #  - db
-      - rabbitmq
+      - rabbitmqX
 
   trunk-player-beat:
     restart: always
@@ -89,7 +89,7 @@ services:
       - /tmp/media:/code/mediafiles
     depends_on:
       #- db
-      - rabbitmq
+      - rabbitmqX
 
   # db:
   #   image: mysql
@@ -104,7 +104,7 @@ services:
   #   volumes:
   #     - /var/lib/mysql
 
-  rabbitmq:
+  rabbitmqX:
     image: 'rabbitmq:management'
     network_mode: "host"
     restart: always

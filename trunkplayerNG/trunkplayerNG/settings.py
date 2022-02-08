@@ -288,10 +288,11 @@ CELERY_QUEUES = (
     Queue(
         "transmission_forwarding",
         Exchange("transmission_forwarding"),
-        routing_key="transmission_forwarding",
+        routing_key="transmission_forwarding",queue_arguments={'x-max-priority': 5}
     ),
-    Queue("radio_alerts", Exchange("radio_alerts"), routing_key="radio_alerts"),
-    Queue("RR_IMPORT", Exchange("RR_IMPORT"), routing_key="RR_IMPORT"),
+    Queue("radio_alerts", Exchange("radio_alerts"), routing_key="radio_alerts",queue_arguments={'x-max-priority': 8}),
+    Queue("radio_tx", Exchange("radio_alerts"), routing_key="radio_alerts",queue_arguments={'x-max-priority': 10}),
+    Queue("RR_IMPORT", Exchange("RR_IMPORT"), routing_key="RR_IMPORT",queue_arguments={'x-max-priority': 1}),
 )
 CELERY_TASK_ROUTES = {
     "radio.tasks.forward_Transmission": {"queue": "transmission_forwarding"},
@@ -301,6 +302,9 @@ CELERY_TASK_ROUTES = {
     "radio.tasks.import_radio_refrence": {"queue": "RR_IMPORT"},
     "radio.tasks.send_tx_notifications": {"queue": "radio_alerts"},
     "radio.tasks.publish_user_notification": {"queue": "radio_alerts"},
+    "radio.tasks.dispatch_web_notification": {"queue": "radio_alerts"},
+    "radio.tasks.publish_user_notification": {"queue": "radio_alerts"},
+    "radio.tasks.broadcast_transmission": {"queue": "radio_tx"},
 }
 CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_TASK_DEFAULT_EXCHANGE = "default"

@@ -190,6 +190,22 @@ class Unit(models.Model):
     def __str__(self):
         return f"[{self.system.name}] {str(self.decimalID)}"
 
+@receiver(models.signals.post_save, sender=Unit)
+def execute_unit_dedup_check(sender, instance, created, *args, **kwargs):
+    system = instance.system
+
+    if created:
+        if instance.description != "":
+            TGs = Unit.objects.filter(
+                system=system, decimalID=instance.decimalID
+            ).exclude(UUID=instance.UUID)
+            TGs.delete()
+        else:
+            if Unit.objects.filter(
+                system=system, decimalID=instance.decimalID
+            ).exclude(alphaTag=""):
+                instance.delete()
+
 
 class TransmissionUnit(models.Model):
     UUID = models.UUIDField(
