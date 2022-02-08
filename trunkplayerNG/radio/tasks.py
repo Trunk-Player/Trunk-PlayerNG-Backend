@@ -1,4 +1,7 @@
+import socketio
 import logging
+import os
+
 
 from celery import shared_task
 from asgiref.sync import sync_to_async
@@ -15,6 +18,7 @@ from radio.helpers.notifications import (
 )
 
 from radio.helpers.transmission import (
+    _broadcast_tx,
     handle_forwarding,
     handle_web_forwarding,
     forwardTX,
@@ -146,3 +150,7 @@ def publish_user_notification(
 @shared_task
 def dispatch_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str, *args, **kwargs):
     sync_to_async(broadcast_web_notification(alertuser_uuid, TransmissionUUID, emergency, title, body))
+
+@shared_task
+def broadcast_transmission(event: str, room: str, data: dict):
+    _broadcast_tx(event, room, data)
