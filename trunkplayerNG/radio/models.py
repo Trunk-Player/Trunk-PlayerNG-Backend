@@ -258,6 +258,9 @@ class Transmission(models.Model):
     locked = models.BooleanField(default=False, db_index=True)
     transcript = models.TextField(null=True, blank=True)
 
+    class Meta:
+        ordering = ["-startTime"]
+
     def __str__(self):
         return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"
 

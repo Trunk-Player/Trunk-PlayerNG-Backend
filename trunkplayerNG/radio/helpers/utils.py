@@ -237,14 +237,11 @@ def getUserAllowedSystems(UserUUID: str) -> tuple[list, list]:
 
 
 def getUserAllowedTalkgroups(System: System, UserUUID: str) -> list:
-    userACLsTGIDs = []
-
     if not System.enableTalkGroupACLs:
         return TalkGroup.objects.filter(system=System)
 
-    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID)  
-    Allowed = list(ACLs.values_list('UUID',flat=True))
-
+    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID) 
+    Allowed = list(ACLs.values_list('allowedTalkgroups__UUID',flat=True))
     AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=Allowed)
 
     return AllowedTalkgropups

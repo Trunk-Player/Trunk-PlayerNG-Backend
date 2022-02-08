@@ -1,3 +1,4 @@
+import logging
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
@@ -1649,9 +1650,9 @@ class TransmissionList(APIView, PaginationMixin):
                         Transmission.objects.filter(system=system)
                     )
 
-        AllowedTransmissions = sorted(
-            AllowedTransmissions, key=lambda instance: instance.startTime, reverse=True
-        )
+        # AllowedTransmissions = sorted(
+        #     AllowedTransmissions, key=lambda instance: instance.startTime, reverse=True
+        # )
 
         page = self.paginate_queryset(AllowedTransmissions)
         if page is not None:
@@ -2408,30 +2409,26 @@ class ScannerTransmissionList(APIView, PaginationMixin):
         ScanListTalkgroups = []
         Transmissions = []
 
-        for ScanListX in ScannerX.scanlists.all():
-            ScanListX: ScanList
-            ScanListTalkgroups.extend(ScanListX.talkgroups.all())
-
-        TransmissionList = Transmission.objects.filter(talkgroup__in=ScanListTalkgroups)
-
-        for TransmissionX in TransmissionList:
-            Transmissions.append(TransmissionX)
+        ScanListTalkgroups = ScannerX.scanlists.all().values_list('talkgroups',flat=True)
+        ScanListTalkgroups = list(dict.fromkeys(ScanListTalkgroups))
+        Transmissions = Transmission.objects.filter(talkgroup__in=ScanListTalkgroups)
 
         if not user.siteAdmin:
-            for TransmissionX in Transmissions:
-                TransmissionX: Transmission
-                if not user.siteAdmin:
-                    SystemX: System = TransmissionX.system
+            acl_systems = Transmissions.filter(system__enableTalkGroupACLs=True, system__in=systems).values_list('system', flat=True)
+            non_acl_systems = Transmissions.filter(system__enableTalkGroupACLs=False, system__in=systems).values_list('system', flat=True)
 
-                    if not SystemX in systems:
-                        continue
+            non_acl_systems = list(dict.fromkeys(non_acl_systems))
+            acl_systems = list(dict.fromkeys(acl_systems))
 
-                    if SystemX.enableTalkGroupACLs:
-                        talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
-                        if TransmissionX.talkgroup in talkgroupsAllowed:
-                            AllowedTransmissions.append(TransmissionX)
-                    else:
-                        AllowedTransmissions.append(TransmissionX)
+            talkgroupsAllowed = [] 
+            talkgroupsAllowed.extend(TalkGroup.objects.filter(system__UUID__in=non_acl_systems))
+
+            for system in acl_systems:            
+                system_object = System.objects.get(UUID=system)
+                user_allowed_talkgroups = getUserAllowedTalkgroups(system_object, user.UUID)
+                talkgroupsAllowed.extend(user_allowed_talkgroups)
+
+            AllowedTransmissions = Transmissions.filter(talkgroup__in=talkgroupsAllowed)
         else:
             AllowedTransmissions = Transmissions
 
