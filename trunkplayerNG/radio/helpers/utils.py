@@ -261,3 +261,22 @@ def UserAllowedTransmission(Transmission: Transmission, UserUUID: str) -> list:
         return True
 
     return False
+
+def get_user_allowed_download_talkgroups(System: System, UserUUID: str) -> list:
+    if not System.enableTalkGroupACLs:
+        return TalkGroup.objects.filter(system=System)
+
+    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID, downloadAllowed=True) 
+    Allowed = list(ACLs.values_list('allowedTalkgroups__UUID',flat=True))
+    AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=Allowed)
+
+    return AllowedTalkgropups
+
+def UserAllowedTransmissionDownload(Transmission: Transmission, UserUUID: str) -> list:
+    allowed_tgs = get_user_allowed_download_talkgroups(Transmission.system, UserUUID=UserUUID)
+
+    if Transmission.talkgroup in allowed_tgs:
+        return True
+    
+
+    return False

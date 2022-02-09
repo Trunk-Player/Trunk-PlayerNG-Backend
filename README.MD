@@ -21,7 +21,7 @@ Please note some of these may change
 - [COMPLETE] System ACLs
 - [COMPLETE] Talkgroup ACLs
 - [UNSTARTED] Kubernetes support (Allows for scaling for massive sites)
-- [IN PROGRESS] Better Security, ACLs and S3 Signing
+- [COMPLETE] Better Security, ACLs and S3 Signing
 - [COMPLETE] All REST API based
 - [UNSTARTED] Trunk-Recorder Status server Metrics Dashboard
 - [UNSTARTED] File and TX Metrics Dashboard

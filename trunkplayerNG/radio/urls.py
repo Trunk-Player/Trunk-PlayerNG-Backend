@@ -119,6 +119,11 @@ urlpatterns = [
         name="transmissionunit_list",
     ),
     path(
+        "radio/transmission/<uuid:uuid>/download",
+        views.transmission_download,
+        name="transmissionunit_list",
+    ),
+    path(
         "radio/transmission/create",
         views.TransmissionCreate.as_view(),
         name="transmission_create",

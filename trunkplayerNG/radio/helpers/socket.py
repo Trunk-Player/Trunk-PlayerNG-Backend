@@ -91,11 +91,11 @@ def tx_request(sid, message):
             data = json.loads(json.dumps(resp.data, cls=UUIDEncoder))
             sio.emit("tx_response", {"UUID": str(message['UUID']), "data": data}, room=sid)
         else:
-            sio.emit("tx_response", {"UUID": message['UUID'],"error": "PERMISSION TO OBJECT DENIED"}, room=sid)
+            sio.emit("tx_response", {"UUID": message['UUID'], "error": "PERMISSION TO OBJECT DENIED"}, room=sid)
     except Exception as e:
         if settings.SEND_TELEMETRY:
             sentry_sdk.capture_exception(e)
-        sio.emit("tx_response", {"UUID": message['UUID'],"error": f"ERROR: {str(e)}"}, room=sid)
+        sio.emit("tx_response", {"UUID": message['UUID'], "error": f"ERROR: {str(e)}"}, room=sid)
         
 
 @sio.event

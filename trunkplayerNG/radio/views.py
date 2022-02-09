@@ -1,10 +1,12 @@
 import logging
+from re import T
+from django.conf import settings
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.db.models import Q
 from rest_framework.parsers import JSONParser
 from rest_framework import status
@@ -18,6 +20,7 @@ from radio.tasks import import_radio_refrence, send_transmission_to_web
 
 from radio.helpers.transmission import new_transmission_handler
 from radio.helpers.utils import (
+    UserAllowedTransmissionDownload,
     getUserAllowedSystems,
     getUserAllowedTalkgroups,
 )
@@ -30,6 +33,35 @@ from radio.permission import (
     IsUser,
 )
 
+
+def transmission_download(request, uuid):
+    import requests
+    try:
+        transmission:Transmission = Transmission.objects.get(UUID=uuid)
+    except Transmission.DoesNotExist:
+        raise Http404
+
+    user = request.user.userProfile
+    if not user.siteAdmin:
+        if not UserAllowedTransmissionDownload(transmission, user.UUID):
+            return HttpResponse("UNAUTHORIZED", status=401)
+
+    file_url = transmission.audioFile.url
+    file_size = transmission.audioFile.size
+
+    if not settings.USE_S3:
+        file_url = f"{settings.AUDIO_DOWNLOAD_HOST}{file_url}"
+
+    audio_type = f'audio/{file_url.split(".")[-1].strip()}'
+    filename = f'{str(transmission.talkgroup.decimalID)}_{str(transmission.startTime.isoformat())}_{str(transmission.UUID)}.{file_url.split(".")[-1].strip()}'
+
+    response = HttpResponse(content_type=audio_type)
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    data = requests.get(file_url, verify=False)
+    response.write(data.content)
+
+    return response
 
 class PaginationMixin(object):
     @property
@@ -1165,6 +1197,9 @@ class TalkGroupACLCreate(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup Allowed UUIDs",
                 ),
+                "downloadAllowed":  openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Display Download Option"
+                ),
             },
         ),
     )
@@ -1219,6 +1254,9 @@ class TalkGroupACLView(APIView):
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup Allowed UUIDs",
+                ),
+                "downloadAllowed":  openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Display Download Option"
                 ),
             },
         ),

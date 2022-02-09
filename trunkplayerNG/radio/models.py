@@ -310,6 +310,7 @@ class TalkGroupACL(models.Model):
     allowedTalkgroups = models.ManyToManyField(TalkGroup)
     defaultNewUsers = models.BooleanField(default=True)
     defaultNewTalkgroups = models.BooleanField(default=True)
+    downloadAllowed =  models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

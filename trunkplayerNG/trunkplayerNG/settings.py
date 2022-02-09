@@ -53,6 +53,7 @@ if DEBUG:
 else:
     logging.basicConfig(level=logging.WARNING)
 
+AUDIO_DOWNLOAD_HOST = os.environ.get("AUDIO_DOWNLOAD_HOST", default="example.com")
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", default="*").split(" ")
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
