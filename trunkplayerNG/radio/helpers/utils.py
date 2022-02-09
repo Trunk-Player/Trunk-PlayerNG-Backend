@@ -99,6 +99,7 @@ class TransmissionFrequency:
             "len": self.len,
             "error_count": self.error_count,
             "spike_count": self.spike_count,
+            "time": self.time 
         }
 
         return payload

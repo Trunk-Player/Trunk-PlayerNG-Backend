@@ -2,6 +2,7 @@ import base64, logging, os, uuid, requests, socketio
 
 from django.conf import settings
 from django.core.files.base import ContentFile
+from asgiref.sync import sync_to_async
 
 from .utils import TransmissionDetails
 from radio.models import ScanList, Scanner, System, SystemRecorder, SystemForwarder, TalkGroup
@@ -46,12 +47,13 @@ def new_transmission_handler(data: dict) -> dict:
     forward_Transmission.delay(data, Payload["talkgroup"])
     return Payload
 
-
 def handle_web_forwarding(data: dict) -> None:
     """
     Handles Forwarding New Transmissions
     """
     from radio.tasks import broadcast_transmission
+
+    logging.debug(f"[+] GOT NEW TX - {data['UUID']}")
 
     talkgroup = TalkGroup.objects.filter(UUID=data["talkgroup"])
     broadcast_transmission.delay(f"tx_{data['talkgroup']}",  f'tx_{data["talkgroup"]}', data)

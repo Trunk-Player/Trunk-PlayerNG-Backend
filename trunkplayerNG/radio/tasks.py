@@ -2,11 +2,9 @@ import socketio
 import logging
 import os
 
-
 from celery import shared_task
 from asgiref.sync import sync_to_async
 from django.conf import settings
-
 
 from radio.helpers.incident import forwardincident, handle_incident_forwarding
 from radio.helpers.cleanup import _prune_transmissions
@@ -43,7 +41,7 @@ def send_transmission_to_web(data: dict, *args, **kwargs):
     """
     Sends socket.io messages to webclients
     """
-    sync_to_async(handle_web_forwarding, thread_sensitive=True)(data)
+    handle_web_forwarding(data)
 
 
 @shared_task()
@@ -59,7 +57,7 @@ def send_transmission(
     """
     Forwards a single TX to a single system
     """
-    sync_to_async(forwardTX, thread_sensitive=True)(data, forwarder_name, recorder_key, forwarder_url, tg_uuid)
+    forwardTX(data, forwarder_name, recorder_key, forwarder_url, tg_uuid)
 
 
 @shared_task()
@@ -112,7 +110,7 @@ def send_tx_notifications(transmission: dict, *args, **kwargs):
     """
     Does the logic to send user notifications
     """
-    sync_to_async(handle_transmission_notification, thread_sensitive=True)(transmission)
+    handle_transmission_notification(transmission)
 
 
 @shared_task
@@ -149,8 +147,8 @@ def publish_user_notification(
 
 @shared_task
 def dispatch_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str, *args, **kwargs):
-    sync_to_async(broadcast_web_notification, thread_sensitive=True)(alertuser_uuid, TransmissionUUID, emergency, title, body)
+    broadcast_web_notification(alertuser_uuid, TransmissionUUID, emergency, title, body)
 
 @shared_task
 def broadcast_transmission(event: str, room: str, data: dict):
-    sync_to_async(_broadcast_tx, thread_sensitive=True)(event, room, data)
+    _broadcast_tx(event, room, data)

@@ -4,8 +4,7 @@ from django.db import models
 from django.db import models
 from django.db.models.fields import NullBooleanField
 from django.dispatch import receiver
-
-from datetime import datetime
+from django.utils import timezone
 
 from trunkplayerNG.storage_backends import PrivateMediaStorage
 
@@ -279,7 +278,7 @@ class Incident(models.Model):
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
     active = models.BooleanField(default=True)
-    time = models.DateTimeField(default=datetime.now)
+    time = models.DateTimeField(default=timezone.now)
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     transmission = models.ManyToManyField(Transmission, blank=True)
     name = models.CharField(max_length=30)
@@ -403,7 +402,7 @@ class SystemReciveRate(models.Model):
     )
 
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
-    time = models.DateTimeField(default=datetime.now())
+    time = models.DateTimeField(default=timezone.now())
     rate = models.FloatField()
 
     def __str__(self):

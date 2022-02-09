@@ -63,7 +63,6 @@ INSTALLED_APPS = [
     "users",
     "corsheaders",
     "django_celery_beat",
-    "django_celery_results",
     "rest_framework_simplejwt",
     "rest_framework",
     "rest_framework.authtoken",
@@ -312,7 +311,6 @@ CELERY_TASK_DEFAULT_EXCHANGE = "default"
 
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
-CELERY_RESULT_BACKEND = "django-db"
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
