@@ -54,10 +54,10 @@ def handle_web_forwarding(data: dict) -> None:
     """
     from radio.tasks import broadcast_transmission
 
-    talkgroup = TalkGroup.objects.get(UUID=data["talkgroup"])
-    broadcast_transmission.delay(f"tx_{data['talkgroup']}",  f'tx_{data["talkgroup"]}', data)
+    talkgroup = TalkGroup.objects.filter(UUID=data["talkgroup"]["UUID"])
+    broadcast_transmission.delay(f"tx_{data['talkgroup']['UUID']}",  f'tx_{data["talkgroup"]["UUID"]}', data)
 
-    scanlists = ScanList.objects.filter(talkgroups=talkgroup)
+    scanlists = ScanList.objects.filter(talkgroups__in=talkgroup)
     for scanlist in scanlists:
         broadcast_transmission.delay(f"tx_{scanlist.UUID}", f'tx_{scanlist.UUID}', data )
         
@@ -131,7 +131,7 @@ def _broadcast_tx(event: str, room: str, data: dict):
             os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
         )
         sio = socketio.Server(
-            async_mode="gevent", client_manager=mgr, logger=True, engineio_logger=True
+            async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
         )
         sync_to_async(sio.emit(event, data, room=room))
         logging.debug(f"[+] BROADCASTING TO {room}")

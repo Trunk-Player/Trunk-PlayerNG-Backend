@@ -1091,7 +1091,7 @@ class TalkGroupView(APIView):
 
 class TalkGroupTransmissionList(APIView, PaginationMixin):
     queryset = Transmission.objects.all()
-    serializer_class = TransmissionSerializer
+    serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
@@ -1121,7 +1121,7 @@ class TalkGroupTransmissionList(APIView, PaginationMixin):
 
         page = self.paginate_queryset(Transmissions)
         if page is not None:
-            serializer = TransmissionSerializer(page, many=True)
+            serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
 
 
@@ -1623,7 +1623,7 @@ class TransmissionFreqView(APIView):
 
 class TransmissionList(APIView, PaginationMixin):
     queryset = Transmission.objects.all()
-    serializer_class = TransmissionSerializer
+    serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
@@ -1656,7 +1656,7 @@ class TransmissionList(APIView, PaginationMixin):
 
         page = self.paginate_queryset(AllowedTransmissions)
         if page is not None:
-            serializer = TransmissionSerializer(page, many=True)
+            serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
 
 
@@ -1718,7 +1718,8 @@ class TransmissionCreate(APIView):
 
         if TX.is_valid(raise_exception=True):
             TX.save()
-            send_transmission_to_web.delay(TX.data, Callback["talkgroup"])
+            resp = TransmissionListSerializer(TX.instance)
+            send_transmission_to_web.delay(resp.data, Callback["talkgroup"])
             send_tx_notifications.delay(TX.data)
             return Response({"success": True, "UUID": Callback["UUID"]})
         else:
@@ -2201,7 +2202,7 @@ class ScanListView(APIView):
 
 class ScanListTransmissionList(APIView, PaginationMixin):
     queryset = Transmission.objects.all()
-    serializer_class = TransmissionSerializer
+    serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
@@ -2238,7 +2239,7 @@ class ScanListTransmissionList(APIView, PaginationMixin):
 
         page = self.paginate_queryset(AllowedTransmissions)
         if page is not None:
-            serializer = TransmissionSerializer(page, many=True)
+            serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
 
 
@@ -2389,7 +2390,7 @@ class ScannerView(APIView):
 
 class ScannerTransmissionList(APIView, PaginationMixin):
     queryset = Transmission.objects.all()
-    serializer_class = TransmissionSerializer
+    serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
@@ -2434,7 +2435,7 @@ class ScannerTransmissionList(APIView, PaginationMixin):
 
         page = self.paginate_queryset(AllowedTransmissions)
         if page is not None:
-            serializer = TransmissionSerializer(page, many=True)
+            serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
 
 

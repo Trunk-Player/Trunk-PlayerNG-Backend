@@ -186,6 +186,30 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "transcript",
         ]
 
+class TransmissionListSerializer(serializers.ModelSerializer):
+    talkgroup = TalkGroupSerializer()
+    units = TransmissionUnitSerializer(read_only=True, many=True)
+    frequencys = TransmissionFreqSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Transmission
+        fields = [
+            "UUID",
+            "system",
+            "recorder",
+            "startTime",
+            "endTime",
+            "audioFile",
+            "talkgroup",
+            "encrypted",
+            "units",
+            "frequency",
+            "frequencys",
+            "length",
+            "locked",
+            "transcript",
+        ]
+
 
 class TransmissionUploadSerializer(serializers.ModelSerializer):
     recorder = serializers.SlugRelatedField(
