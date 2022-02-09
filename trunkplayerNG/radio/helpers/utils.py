@@ -1,6 +1,6 @@
 import uuid, logging, json
 
-from datetime import datetime
+from django.utils import timezone
 from uuid import UUID
 from django.conf import settings
 
@@ -39,7 +39,7 @@ class TransmissionSrc:
         self.emergency = payload.get("emergency") in ("true", "1", "t")
         self.signal_system = payload.get("signal_system")
         self.tag = payload.get("tag")
-        self.time = datetime.fromtimestamp(payload.get("time")).isoformat()
+        self.time = timezone.datetime.fromtimestamp(payload.get("time")).isoformat()
 
     def _to_json(self) -> dict:
         """
@@ -86,7 +86,7 @@ class TransmissionFrequency:
         self.len = payload.get("len")
         self.error_count = payload.get("error_count")
         self.spike_count = payload.get("spike_count")
-        self.time = datetime.fromtimestamp(payload.get("time"))
+        self.time = timezone.datetime.fromtimestamp(payload.get("time"))
 
     def _to_json(self) -> dict:
         """
@@ -133,8 +133,8 @@ class TransmissionDetails:
         self.play_length = payload.get("play_length")
         self.source = payload.get("source")
 
-        self.start_time = datetime.fromtimestamp(payload.get("start_time")).isoformat()
-        self.stop_time = datetime.fromtimestamp(payload.get("stop_time")).isoformat()
+        self.start_time = timezone.datetime.fromtimestamp(payload.get("start_time")).isoformat()
+        self.stop_time = timezone.datetime.fromtimestamp(payload.get("stop_time")).isoformat()
 
         self.emergency = payload.get("emergency") in ("true", "1", "t")
         self.encrypted = payload.get("encrypted") in ("true", "1", "t")

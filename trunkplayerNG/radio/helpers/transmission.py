@@ -2,7 +2,6 @@ import base64, logging, os, uuid, requests, socketio
 
 from django.conf import settings
 from django.core.files.base import ContentFile
-from asgiref.sync import sync_to_async
 
 from .utils import TransmissionDetails
 from radio.models import ScanList, Scanner, System, SystemRecorder, SystemForwarder, TalkGroup
@@ -133,7 +132,7 @@ def _broadcast_tx(event: str, room: str, data: dict):
         sio = socketio.Server(
             async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
         )
-        sync_to_async(sio.emit(event, data, room=room))
+        sio.emit(event, data, room=room)
         logging.debug(f"[+] BROADCASTING TO {room}")
     except Exception as e:
         if settings.SEND_TELEMETRY:
