@@ -277,6 +277,9 @@ class Incident(models.Model):
     description = models.TextField(blank=True, null=True)
     agency = models.ManyToManyField(Agency, blank=True)
 
+    class Meta:
+        ordering = ["-time"]
+
     def __str__(self):
         return f"[{self.system.name}] {self.name}"
 
@@ -388,40 +391,40 @@ class UserAlert(models.Model):
         return f"{self.name}"
 
 
-class SystemReciveRate(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
+# class SystemReciveRate(models.Model):
+#     UUID = models.UUIDField(
+#         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+#     )
 
-    recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
-    time = models.DateTimeField(default=timezone.now())
-    rate = models.FloatField()
+#     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
+#     time = models.DateTimeField(default=timezone.now())
+#     rate = models.FloatField()
 
-    def __str__(self):
-        return f'{self.time.strftime("%c")} - {str(self.rate)}'
+#     def __str__(self):
+#         return f'{self.time.strftime("%c")} - {str(self.rate)}'
 
 
-class Call(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
-    trunkRecorderID = models.CharField(max_length=30, unique=True)
-    startTime = models.DateTimeField(db_index=True)
-    endTime = models.DateTimeField(null=True, blank=True)
-    units = models.ForeignKey(
-        Unit,
-        related_name="TG_UNITS",
-        blank=True,
-        null=True,
-        on_delete=models.DO_NOTHING,
-    )
-    active = models.BooleanField(default=True)
-    emergency = models.BooleanField(default=True)
-    encrypted = models.BooleanField(default=True)
-    frequency = models.FloatField()
-    phase2 = models.CharField(max_length=30)
-    talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
-    recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
+# class Call(models.Model):
+#     UUID = models.UUIDField(
+#         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+#     )
+#     trunkRecorderID = models.CharField(max_length=30, unique=True)
+#     startTime = models.DateTimeField(db_index=True)
+#     endTime = models.DateTimeField(null=True, blank=True)
+#     units = models.ForeignKey(
+#         Unit,
+#         related_name="TG_UNITS",
+#         blank=True,
+#         null=True,
+#         on_delete=models.DO_NOTHING,
+#     )
+#     active = models.BooleanField(default=True)
+#     emergency = models.BooleanField(default=True)
+#     encrypted = models.BooleanField(default=True)
+#     frequency = models.FloatField()
+#     phase2 = models.CharField(max_length=30)
+#     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
+#     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return f"{self.trunkRecorderID}"
+#     def __str__(self):
+#         return f"{self.trunkRecorderID}"

@@ -225,25 +225,25 @@ urlpatterns = [
         views.GlobalEmailTemplateView.as_view(),
         name="globalemailtemplate_view",
     ),
-    path(
-        "radio/systemreciverate/list",
-        views.SystemReciveRateList.as_view(),
-        name="systemreciverate_list",
-    ),
-    path(
-        "radio/systemreciverate/create",
-        views.SystemReciveRateCreate.as_view(),
-        name="systemreciverate_create",
-    ),
-    path(
-        "radio/systemreciverate/<uuid:UUID>",
-        views.SystemReciveRateView.as_view(),
-        name="systemreciverate_view",
-    ),
-    path("radio/call/list", views.CallList.as_view(), name="call_list"),
-    path("radio/call/create", views.CallCreate.as_view(), name="call_create"),
     # path(
-    #     "radio/call/<uuid:UUID>/update", views.CallUpdate.as_view(), name="call_update"
+    #     "radio/systemreciverate/list",
+    #     views.SystemReciveRateList.as_view(),
+    #     name="systemreciverate_list",
     # ),
-    path("radio/call/<uuid:UUID>", views.CallView.as_view(), name="call_view"),
+    # path(
+    #     "radio/systemreciverate/create",
+    #     views.SystemReciveRateCreate.as_view(),
+    #     name="systemreciverate_create",
+    # ),
+    # path(
+    #     "radio/systemreciverate/<uuid:UUID>",
+    #     views.SystemReciveRateView.as_view(),
+    #     name="systemreciverate_view",
+    # ),
+    # path("radio/call/list", views.CallList.as_view(), name="call_list"),
+    # path("radio/call/create", views.CallCreate.as_view(), name="call_create"),
+    # # path(
+    # #     "radio/call/<uuid:UUID>/update", views.CallUpdate.as_view(), name="call_update"
+    # # ),
+    # path("radio/call/<uuid:UUID>", views.CallView.as_view(), name="call_view"),
 ]

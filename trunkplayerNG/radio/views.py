@@ -2694,218 +2694,218 @@ class GlobalEmailTemplateView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SystemReciveRateList(APIView, PaginationMixin):
-    queryset = SystemReciveRate.objects.all()
-    serializer_class = SystemReciveRateSerializer
-    permission_classes = [IsSAOrReadOnly]
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+# class SystemReciveRateList(APIView, PaginationMixin):
+#     queryset = SystemReciveRate.objects.all()
+#     serializer_class = SystemReciveRateSerializer
+#     permission_classes = [IsSAOrReadOnly]
+#     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
-    @swagger_auto_schema(tags=["SystemReciveRate"])
-    def get(self, request, format=None):
-        SystemReciveRates = SystemReciveRate.objects.all()
+#     @swagger_auto_schema(tags=["SystemReciveRate"])
+#     def get(self, request, format=None):
+#         SystemReciveRates = SystemReciveRate.objects.all()
 
-        page = self.paginate_queryset(SystemReciveRates)
-        if page is not None:
-            serializer = SystemReciveRateSerializer(SystemReciveRates, many=True)
-            return Response(serializer.data)
-
-
-class SystemReciveRateCreate(APIView):
-    queryset = SystemReciveRate.objects.all()
-    serializer_class = SystemReciveRateCreateSerializer
-    permission_classes = [FeederFree]
-
-    @swagger_auto_schema(
-        tags=["SystemReciveRate"],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=["time", "rate", "recorder"],
-            properties={
-                "time": openapi.Schema(type=openapi.TYPE_STRING, description="time"),
-                "rate": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="System Message rate"
-                ),
-                "recorder": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Recorder Key"
-                ),
-            },
-        ),
-    )
-    def post(self, request, format=None):
-        data = JSONParser().parse(request)
-
-        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        data["UUID"] = uuid.uuid4()
-
-        serializer = SystemReciveRateCreateSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            dataX = serializer.data
-            print(dataX)
-            dataX["UUID"] = str(dataX["UUID"])
-            return Response(dataX)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#         page = self.paginate_queryset(SystemReciveRates)
+#         if page is not None:
+#             serializer = SystemReciveRateSerializer(SystemReciveRates, many=True)
+#             return Response(serializer.data)
 
 
-class SystemReciveRateView(APIView):
-    queryset = SystemReciveRate.objects.all()
-    serializer_class = SystemReciveRateSerializer
-    permission_classes = [IsSAOrReadOnly]
+# class SystemReciveRateCreate(APIView):
+#     queryset = SystemReciveRate.objects.all()
+#     serializer_class = SystemReciveRateCreateSerializer
+#     permission_classes = [FeederFree]
 
-    def get_object(self, UUID):
-        try:
-            return SystemReciveRate.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+#     @swagger_auto_schema(
+#         tags=["SystemReciveRate"],
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=["time", "rate", "recorder"],
+#             properties={
+#                 "time": openapi.Schema(type=openapi.TYPE_STRING, description="time"),
+#                 "rate": openapi.Schema(
+#                     type=openapi.TYPE_STRING, description="System Message rate"
+#                 ),
+#                 "recorder": openapi.Schema(
+#                     type=openapi.TYPE_STRING, description="Recorder Key"
+#                 ),
+#             },
+#         ),
+#     )
+#     def post(self, request, format=None):
+#         data = JSONParser().parse(request)
 
-    @swagger_auto_schema(tags=["SystemReciveRate"])
-    def get(self, request, UUID, format=None):
-        SystemReciveRateX: SystemReciveRate = self.get_object(UUID)
-        serializer = SystemReciveRateSerializer(SystemReciveRateX)
-        return Response(serializer.data)
+#         if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+#             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-    @swagger_auto_schema(tags=["SystemReciveRate"])
-    def delete(self, request, UUID, format=None):
-        user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-        SystemReciveRateX: SystemReciveRate = self.get_object(UUID)
-        SystemReciveRateX.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+#         data["UUID"] = uuid.uuid4()
 
-
-class CallList(APIView, PaginationMixin):
-    queryset = Call.objects.all()
-    serializer_class = CallSerializer
-    permission_classes = [IsSAOrReadOnly]
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-
-    @swagger_auto_schema(tags=["Call"])
-    def get(self, request, format=None):
-        user: UserProfile = request.user.userProfile
-
-        if user.siteAdmin:
-            Calls = Call.objects.all()
-        else:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            TalkGroups = TalkGroup.objects.filter(system__in=systems)
-            Calls = Call.objects.filter(talkgroup__in=TalkGroups)
-
-        page = self.paginate_queryset(Calls)
-        if page is not None:
-            serializer = CallSerializer(page, many=True, read_only=True)
-            return Response(serializer.data)
+#         serializer = SystemReciveRateCreateSerializer(data=data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             dataX = serializer.data
+#             print(dataX)
+#             dataX["UUID"] = str(dataX["UUID"])
+#             return Response(dataX)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CallCreate(APIView):
-    queryset = Call.objects.all()
-    serializer_class = CallUpdateCreateSerializer
-    permission_classes = [FeederFree]
+# class SystemReciveRateView(APIView):
+#     queryset = SystemReciveRate.objects.all()
+#     serializer_class = SystemReciveRateSerializer
+#     permission_classes = [IsSAOrReadOnly]
 
-    @swagger_auto_schema(
-        tags=["Call"],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=[
-                "trunkRecorderID",
-                "startTime",
-                "endTime",
-                "units",
-                "emergency",
-                "encrypted",
-                "frequency",
-                "phase2",
-                "talkgroup",
-                "recorder",
-            ],
-            properties={
-                "trunkRecorderID": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Trunk Recorder ID"
-                ),
-                "startTime": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Start Time"
-                ),
-                "endTime": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="End Time"
-                ),
-                "units": openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="Unit Decimal IDs",
-                ),
-                "emergency": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Emergency Call"
-                ),
-                "active": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Active Call"
-                ),
-                "encrypted": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Encrypted Call"
-                ),
-                "frequency": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Frequency"
-                ),
-                "phase2": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Phase2"
-                ),
-                "talkgroup": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Talk Group DecimalID"
-                ),
-                "recorder": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Recorder Key"
-                ),
-            },
-        ),
-    )
-    def post(self, request, format=None):
-        data = JSONParser().parse(request)
+#     def get_object(self, UUID):
+#         try:
+#             return SystemReciveRate.objects.get(UUID=UUID)
+#         except UserProfile.DoesNotExist:
+#             raise Http404
 
-        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+#     @swagger_auto_schema(tags=["SystemReciveRate"])
+#     def get(self, request, UUID, format=None):
+#         SystemReciveRateX: SystemReciveRate = self.get_object(UUID)
+#         serializer = SystemReciveRateSerializer(SystemReciveRateX)
+#         return Response(serializer.data)
 
-        if not "UUID" in data:
-            data["UUID"] = uuid.uuid4()
-
-        serializer = CallUpdateCreateSerializer(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     @swagger_auto_schema(tags=["SystemReciveRate"])
+#     def delete(self, request, UUID, format=None):
+#         user: UserProfile = request.user.userProfile
+#         if not user.siteAdmin:
+#             return Response(status=status.HTTP_401_UNAUTHORIZED)
+#         SystemReciveRateX: SystemReciveRate = self.get_object(UUID)
+#         SystemReciveRateX.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CallView(APIView):
-    queryset = Call.objects.all()
-    serializer_class = CallSerializer
-    permission_classes = [IsSiteAdmin]
+# class CallList(APIView, PaginationMixin):
+#     queryset = Call.objects.all()
+#     serializer_class = CallSerializer
+#     permission_classes = [IsSAOrReadOnly]
+#     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
-    def get_object(self, UUID):
-        try:
-            return Call.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+#     @swagger_auto_schema(tags=["Call"])
+#     def get(self, request, format=None):
+#         user: UserProfile = request.user.userProfile
 
-    @swagger_auto_schema(tags=["Call"])
-    def get(self, request, UUID, format=None):
-        user: UserProfile = request.user.userProfile
-        CallX: Call = self.get_object(UUID)
+#         if user.siteAdmin:
+#             Calls = Call.objects.all()
+#         else:
+#             systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+#             TalkGroups = TalkGroup.objects.filter(system__in=systems)
+#             Calls = Call.objects.filter(talkgroup__in=TalkGroups)
 
-        if not user.siteAdmin:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            TalkGroups = TalkGroup.objects.filter(system__in=systems)
-            if not CallX.talkgroup in TalkGroups:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+#         page = self.paginate_queryset(Calls)
+#         if page is not None:
+#             serializer = CallSerializer(page, many=True, read_only=True)
+#             return Response(serializer.data)
 
-        serializer = CallSerializer(CallX)
-        return Response(serializer.data)
 
-    @swagger_auto_schema(tags=["Call"])
-    def delete(self, request, UUID, format=None):
-        user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-        CallX: Call = self.get_object(UUID)
-        CallX.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+# class CallCreate(APIView):
+#     queryset = Call.objects.all()
+#     serializer_class = CallUpdateCreateSerializer
+#     permission_classes = [FeederFree]
+
+#     @swagger_auto_schema(
+#         tags=["Call"],
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=[
+#                 "trunkRecorderID",
+#                 "startTime",
+#                 "endTime",
+#                 "units",
+#                 "emergency",
+#                 "encrypted",
+#                 "frequency",
+#                 "phase2",
+#                 "talkgroup",
+#                 "recorder",
+#             ],
+#             properties={
+#                 "trunkRecorderID": openapi.Schema(
+#                     type=openapi.TYPE_STRING, description="Trunk Recorder ID"
+#                 ),
+#                 "startTime": openapi.Schema(
+#                     type=openapi.TYPE_STRING, description="Start Time"
+#                 ),
+#                 "endTime": openapi.Schema(
+#                     type=openapi.TYPE_STRING, description="End Time"
+#                 ),
+#                 "units": openapi.Schema(
+#                     type=openapi.TYPE_ARRAY,
+#                     items=openapi.Items(type=openapi.TYPE_STRING),
+#                     description="Unit Decimal IDs",
+#                 ),
+#                 "emergency": openapi.Schema(
+#                     type=openapi.TYPE_BOOLEAN, description="Emergency Call"
+#                 ),
+#                 "active": openapi.Schema(
+#                     type=openapi.TYPE_BOOLEAN, description="Active Call"
+#                 ),
+#                 "encrypted": openapi.Schema(
+#                     type=openapi.TYPE_BOOLEAN, description="Encrypted Call"
+#                 ),
+#                 "frequency": openapi.Schema(
+#                     type=openapi.TYPE_BOOLEAN, description="Frequency"
+#                 ),
+#                 "phase2": openapi.Schema(
+#                     type=openapi.TYPE_STRING, description="Phase2"
+#                 ),
+#                 "talkgroup": openapi.Schema(
+#                     type=openapi.TYPE_STRING, description="Talk Group DecimalID"
+#                 ),
+#                 "recorder": openapi.Schema(
+#                     type=openapi.TYPE_STRING, description="Recorder Key"
+#                 ),
+#             },
+#         ),
+#     )
+#     def post(self, request, format=None):
+#         data = JSONParser().parse(request)
+
+#         if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+#             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+#         if not "UUID" in data:
+#             data["UUID"] = uuid.uuid4()
+
+#         serializer = CallUpdateCreateSerializer(data=data)
+
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class CallView(APIView):
+#     queryset = Call.objects.all()
+#     serializer_class = CallSerializer
+#     permission_classes = [IsSiteAdmin]
+
+#     def get_object(self, UUID):
+#         try:
+#             return Call.objects.get(UUID=UUID)
+#         except UserProfile.DoesNotExist:
+#             raise Http404
+
+#     @swagger_auto_schema(tags=["Call"])
+#     def get(self, request, UUID, format=None):
+#         user: UserProfile = request.user.userProfile
+#         CallX: Call = self.get_object(UUID)
+
+#         if not user.siteAdmin:
+#             systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+#             TalkGroups = TalkGroup.objects.filter(system__in=systems)
+#             if not CallX.talkgroup in TalkGroups:
+#                 return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+#         serializer = CallSerializer(CallX)
+#         return Response(serializer.data)
+
+#     @swagger_auto_schema(tags=["Call"])
+#     def delete(self, request, UUID, format=None):
+#         user: UserProfile = request.user.userProfile
+#         if not user.siteAdmin:
+#             return Response(status=status.HTTP_401_UNAUTHORIZED)
+#         CallX: Call = self.get_object(UUID)
+#         CallX.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -326,70 +326,70 @@ class GlobalEmailTemplateSerializer(serializers.ModelSerializer):
         fields = ["UUID", "name", "type", "enabled", "HTML"]
 
 
-class SystemReciveRateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SystemReciveRate
-        fields = ["UUID", "time", "rate", "recorder"]
+# class SystemReciveRateSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = SystemReciveRate
+#         fields = ["UUID", "time", "rate", "recorder"]
 
 
-class SystemReciveRateCreateSerializer(serializers.ModelSerializer):
-    recorder = serializers.SlugRelatedField(
-        read_only=False,
-        queryset=SystemRecorder.objects.all(),
-        slug_field="forwarderWebhookUUID",
-    )
+# class SystemReciveRateCreateSerializer(serializers.ModelSerializer):
+#     recorder = serializers.SlugRelatedField(
+#         read_only=False,
+#         queryset=SystemRecorder.objects.all(),
+#         slug_field="forwarderWebhookUUID",
+#     )
 
-    class Meta:
-        model = SystemReciveRate
-        fields = ["UUID", "time", "rate", "recorder"]
-
-
-class CallSerializer(serializers.ModelSerializer):
-    units = UnitSerializer(many=True)
-
-    class Meta:
-        model = Call
-        fields = [
-            "UUID",
-            "trunkRecorderID",
-            "startTime",
-            "endTime",
-            "units",
-            "active",
-            "emergency",
-            "encrypted",
-            "frequency",
-            "phase2",
-            "talkgroup",
-        ]
+#     class Meta:
+#         model = SystemReciveRate
+#         fields = ["UUID", "time", "rate", "recorder"]
 
 
-class CallUpdateCreateSerializer(serializers.ModelSerializer):
-    # talkgroup = serializers.SlugRelatedField(
-    #     read_only=False, queryset=TalkGroup.objects.all(), slug_field="decimalID"
-    # )
-    units = serializers.SlugRelatedField(
-        many=True, read_only=False, queryset=Unit.objects.all(), slug_field="decimalID"
-    )
-    recorder = serializers.SlugRelatedField(
-        read_only=False,
-        queryset=SystemRecorder.objects.all(),
-        slug_field="forwarderWebhookUUID",
-    )
+# class CallSerializer(serializers.ModelSerializer):
+#     units = UnitSerializer(many=True)
 
-    class Meta:
-        model = Call
-        fields = [
-            "UUID",
-            "trunkRecorderID",
-            "startTime",
-            "endTime",
-            "units",
-            "active",
-            "emergency",
-            "encrypted",
-            "frequency",
-            "phase2",
-            "talkgroup",
-            "recorder",
-        ]
+#     class Meta:
+#         model = Call
+#         fields = [
+#             "UUID",
+#             "trunkRecorderID",
+#             "startTime",
+#             "endTime",
+#             "units",
+#             "active",
+#             "emergency",
+#             "encrypted",
+#             "frequency",
+#             "phase2",
+#             "talkgroup",
+#         ]
+
+
+# class CallUpdateCreateSerializer(serializers.ModelSerializer):
+#     # talkgroup = serializers.SlugRelatedField(
+#     #     read_only=False, queryset=TalkGroup.objects.all(), slug_field="decimalID"
+#     # )
+#     units = serializers.SlugRelatedField(
+#         many=True, read_only=False, queryset=Unit.objects.all(), slug_field="decimalID"
+#     )
+#     recorder = serializers.SlugRelatedField(
+#         read_only=False,
+#         queryset=SystemRecorder.objects.all(),
+#         slug_field="forwarderWebhookUUID",
+#     )
+
+#     class Meta:
+#         model = Call
+#         fields = [
+#             "UUID",
+#             "trunkRecorderID",
+#             "startTime",
+#             "endTime",
+#             "units",
+#             "active",
+#             "emergency",
+#             "encrypted",
+#             "frequency",
+#             "phase2",
+#             "talkgroup",
+#             "recorder",
+#         ]

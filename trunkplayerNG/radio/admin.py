@@ -220,35 +220,35 @@ class GlobalEmailTemplateAdmin(admin.ModelAdmin):
     list_filter = ("enabled",)
 
 
-class SystemReciveRateAdmin(admin.ModelAdmin):
-    ordering = ("-time",)
-    # autocomplete_fields = ("transmission",)
-    list_display = (
-        "UUID",
-        "time",
-        "recorder",
-        "rate",
-    )
-    list_filter = ("recorder",)
+# class SystemReciveRateAdmin(admin.ModelAdmin):
+#     ordering = ("-time",)
+#     # autocomplete_fields = ("transmission",)
+#     list_display = (
+#         "UUID",
+#         "time",
+#         "recorder",
+#         "rate",
+#     )
+#     list_filter = ("recorder",)
 
 
-class CallAdmin(admin.ModelAdmin):
-    ordering = ("-startTime",)
-    # autocomplete_fields = ("transmission",)
-    list_display = (
-        "trunkRecorderID",
-        "talkgroup",
-        "recorder",
-        "startTime",
-        "endTime",
-        "active",
-        "encrypted",
-        "emergency",
-        "frequency",
-        "phase2",
-        "emergency",
-    )
-    list_filter = ("emergency", "active", "encrypted")
+# class CallAdmin(admin.ModelAdmin):
+#     ordering = ("-startTime",)
+#     # autocomplete_fields = ("transmission",)
+#     list_display = (
+#         "trunkRecorderID",
+#         "talkgroup",
+#         "recorder",
+#         "startTime",
+#         "endTime",
+#         "active",
+#         "encrypted",
+#         "emergency",
+#         "frequency",
+#         "phase2",
+#         "emergency",
+#     )
+#     list_filter = ("emergency", "active", "encrypted")
 
 
 admin.site.register(UserAlert, UserAlertAdmin)
@@ -270,5 +270,4 @@ admin.site.register(ScanList, ScanListAdmin)
 admin.site.register(Scanner, ScannerAdmin)
 admin.site.register(GlobalAnnouncement, GlobalAnnouncementAdmin)
 admin.site.register(GlobalEmailTemplate, GlobalEmailTemplateAdmin)
-admin.site.register(SystemReciveRate, SystemReciveRateAdmin)
-admin.site.register(Call, CallAdmin)
+
