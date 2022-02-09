@@ -54,8 +54,8 @@ def handle_web_forwarding(data: dict) -> None:
     """
     from radio.tasks import broadcast_transmission
 
-    talkgroup = TalkGroup.objects.filter(UUID=data["talkgroup"]["UUID"])
-    broadcast_transmission.delay(f"tx_{data['talkgroup']['UUID']}",  f'tx_{data["talkgroup"]["UUID"]}', data)
+    talkgroup = TalkGroup.objects.filter(UUID=data["talkgroup"])
+    broadcast_transmission.delay(f"tx_{data['talkgroup']}",  f'tx_{data["talkgroup"]}', data)
 
     scanlists = ScanList.objects.filter(talkgroups__in=talkgroup)
     for scanlist in scanlists:

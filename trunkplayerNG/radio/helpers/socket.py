@@ -1,4 +1,6 @@
 import base64
+from curses.ascii import US
+import json
 import os
 import sentry_sdk
 import socketio
@@ -10,7 +12,7 @@ from django.contrib.auth import authenticate
 
 from kombu import Queue, Exchange
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+from rest_framework.renderers import JSONRenderer
 
 mgr = socketio.KombuManager(
     os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
@@ -72,14 +74,39 @@ logger = logging.getLogger(__name__)
 #     sio.disconnect(sid)
 
 @sio.event
+def tx_request(sid, message):
+    from radio.helpers.utils import UserAllowedTransmission, UUIDEncoder
+    from radio.models import Transmission
+    from radio.serializers import TransmissionListSerializer
+
+    try:
+        session = sio.get_session(sid)
+        User = session['user']
+        TX = Transmission.objects.get(UUID=message['UUID'])
+
+        if UserAllowedTransmission(TX, User.userProfile.UUID):
+            resp = TransmissionListSerializer(TX)
+            logging.warn(resp.data)
+            # Clean me up
+            data = json.loads(json.dumps(resp.data, cls=UUIDEncoder))
+            sio.emit("tx_response", {"UUID": str(message['UUID']), "data": data}, room=sid)
+        else:
+            sio.emit("tx_response", {"UUID": message['UUID'],"error": "PERMISSION TO OBJECT DENIED"}, room=sid)
+    except Exception as e:
+        if settings.SEND_TELEMETRY:
+            sentry_sdk.capture_exception(e)
+        sio.emit("tx_response", {"UUID": message['UUID'],"error": f"ERROR: {str(e)}"}, room=sid)
+        
+
+@sio.event
 def deregister_tx_source(sid, message):
-    for uuid in message["uuids"]:
+    for uuid in message["UUIDs"]:
         sio.leave_room(sid, f'tx_{uuid}')
         sio.emit("debug", {"data":f"disconnected to room tx_{uuid}"}, room=sid)
 
 @sio.event
 def register_tx_source(sid, message):
-    for uuid in message["uuids"]:
+    for uuid in message["UUIDs"]:
         sio.enter_room(sid, f'tx_{uuid}')
         sio.emit("debug", {"data":f"connected to room tx_{uuid}"}, room=sid)
     
@@ -96,7 +123,7 @@ def connect(sid, environ, auth):
     except:
         raise ConnectionRefusedError('authentication failed')
 
-    sio.save_session(sid, {'username': user})
+    sio.save_session(sid, {'user': user})
     logging.debug(f"[+] User {user.email} has connected to the socket")
     sio.enter_room(sid, 'unicast')
     sio.enter_room(sid, f'alert_{user.userProfile.UUID}')

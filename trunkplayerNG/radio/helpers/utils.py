@@ -1,7 +1,9 @@
-import uuid, logging
+import uuid, logging, json
 
 from datetime import datetime
+from uuid import UUID
 from django.conf import settings
+
 
 from radio.models import (
     System,
@@ -9,6 +11,7 @@ from radio.models import (
     SystemRecorder,
     TalkGroup,
     TalkGroupACL,
+    Transmission,
     TransmissionFreq,
     Unit,
     TransmissionUnit,
@@ -20,6 +23,11 @@ if settings.SEND_TELEMETRY:
 
 logger = logging.getLogger(__name__)
 
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
 
 class TransmissionSrc:
     def __init__(self, payload) -> None:
@@ -245,3 +253,11 @@ def getUserAllowedTalkgroups(System: System, UserUUID: str) -> list:
     AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=Allowed)
 
     return AllowedTalkgropups
+
+def UserAllowedTransmission(Transmission: Transmission, UserUUID: str) -> list:
+    allowed_tgs = getUserAllowedTalkgroups(Transmission.system, UserUUID=UserUUID)
+
+    if Transmission.talkgroup in allowed_tgs:
+        return True
+
+    return False

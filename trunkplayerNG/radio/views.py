@@ -1718,8 +1718,8 @@ class TransmissionCreate(APIView):
 
         if TX.is_valid(raise_exception=True):
             TX.save()
-            resp = TransmissionListSerializer(TX.instance)
-            send_transmission_to_web.delay(resp.data, Callback["talkgroup"])
+            socket_data = {"UUID":TX.data["UUID"], "talkgroup": TX.data["talkgroup"]}
+            send_transmission_to_web.delay(socket_data, Callback["talkgroup"])
             send_tx_notifications.delay(TX.data)
             return Response({"success": True, "UUID": Callback["UUID"]})
         else:
