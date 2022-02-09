@@ -18,7 +18,7 @@ def new_transmission_handler(data: dict) -> dict:
     """
     Converts API call to DB format and stores file
     """
-    from radio.tasks import forward_Transmission
+    from radio.tasks import forward_transmission
 
     recorderUUID = data["recorder"]
     jsonx = data["json"]
@@ -44,10 +44,10 @@ def new_transmission_handler(data: dict) -> dict:
         audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).split("-")[-1]}.{name[1]}'
     )
 
-    forward_Transmission.delay(data, Payload["talkgroup"])
+    forward_transmission.delay(data, Payload["talkgroup"])
     return Payload
 
-def handle_web_forwarding(data: dict) -> None:
+def _send_transmission_to_web(data: dict) -> None:
     """
     Handles Forwarding New Transmissions
     """
@@ -69,11 +69,11 @@ def handle_web_forwarding(data: dict) -> None:
 
 
 
-def handle_forwarding(data, TG_UUID: str) -> None:
+def _forward_transmission(data, TG_UUID: str) -> None:
     """
     Handles Forwarding New Transmissions
     """
-    from radio.tasks import send_transmission
+    from radio.tasks import forward_transmission_to_remote_instance
 
     recorder: SystemRecorder = SystemRecorder.objects.get(
         forwarderWebhookUUID=data["recorder"]
@@ -85,7 +85,7 @@ def handle_forwarding(data, TG_UUID: str) -> None:
         Forwarder: SystemForwarder
         if recorder.system in Forwarder.forwardedSystems.all():
             if len(Forwarder.talkGroupFilter.all()) == 0:
-                send_transmission.delay(
+                forward_transmission_to_remote_instance.delay(
                     data,
                     Forwarder.name,
                     Forwarder.recorderKey,
@@ -93,7 +93,7 @@ def handle_forwarding(data, TG_UUID: str) -> None:
                     TG_UUID,
                 )
             if not talkgroup in Forwarder.talkGroupFilter.all():
-                send_transmission.delay(
+                forward_transmission_to_remote_instance.delay(
                     data,
                     Forwarder.name,
                     Forwarder.recorderKey,
@@ -102,7 +102,7 @@ def handle_forwarding(data, TG_UUID: str) -> None:
                 )
 
 
-def forwardTX(
+def _forward_Transmission_to_remote_instance(
     data: dict, ForwarderName: str, recorderKey: str, ForwarderURL: str, TG_UUID: str
 ) -> None:
     """
@@ -126,7 +126,7 @@ def forwardTX(
             capture_exception(e)
         raise (e)
         
-def _broadcast_tx(event: str, room: str, data: dict):
+def _broadcast_transmission(event: str, room: str, data: dict):
     try:
         mgr = socketio.KombuManager(
             os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")

@@ -1,9 +1,9 @@
 import uuid, logging, json
 
 from django.utils import timezone
-from uuid import UUID
 from django.conf import settings
 
+from uuid import UUID
 
 from radio.models import (
     System,

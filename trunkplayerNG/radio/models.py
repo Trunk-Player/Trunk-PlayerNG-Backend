@@ -264,14 +264,6 @@ class Transmission(models.Model):
         return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"
 
 
-@receiver(models.signals.post_save, sender=Transmission)
-def execute_Transmission_alerts(sender, instance, created, *args, **kwargs):
-    from radio.helpers.notifications import handle_transmission_notification
-
-    # Used for Transmission Alerting
-
-    # handle_transmission_notification(instance)
-
 
 class Incident(models.Model):
     UUID = models.UUIDField(
@@ -291,13 +283,13 @@ class Incident(models.Model):
 
 @receiver(models.signals.post_save, sender=Incident)
 def execute_after_save(sender, instance, created, *args, **kwargs):
-    from radio.tasks import forward_Incident
+    from radio.tasks import forward_incidents
     from radio.serializers import IncidentSerializer
 
     # Used for Incident forwarding
 
     IncidentData = IncidentSerializer(instance)
-    forward_Incident.delay(IncidentData.data, created)
+    forward_incidents.delay(IncidentData.data, created)
 
 
 class TalkGroupACL(models.Model):

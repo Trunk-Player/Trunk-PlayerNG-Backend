@@ -6,20 +6,20 @@ from celery import shared_task
 from asgiref.sync import sync_to_async
 from django.conf import settings
 
-from radio.helpers.incident import forwardincident, handle_incident_forwarding
+from radio.helpers.incident import _send_incident, _forward_incident
 from radio.helpers.cleanup import _prune_transmissions
 
 from radio.helpers.notifications import (
-    broadcast_web_notification,
-    handle_transmission_notification,
-    broadcast_user_notification,
+    _broadcast_web_notification,
+    _send_transmission_notifications,
+    _broadcast_user_notification,
 )
 
 from radio.helpers.transmission import (
-    _broadcast_tx,
-    handle_forwarding,
-    handle_web_forwarding,
-    forwardTX,
+    _broadcast_transmission,
+    _forward_transmission,
+    _send_transmission_to_web,
+    _forward_transmission_to_remote_instance,
 )
 
 if settings.SEND_TELEMETRY:
@@ -29,23 +29,23 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task()
-def forward_Transmission(data: dict, tg_uuid: str, *args, **kwargs):
+def forward_transmission(data: dict, tg_uuid: str, *args, **kwargs) -> None:
     """
     Iterates over Forwarders and dispatches send_transmission
     """
-    handle_forwarding(data, tg_uuid)
+    _forward_transmission(data, tg_uuid)
 
 
 @shared_task()
-def send_transmission_to_web(data: dict, *args, **kwargs):
+def send_transmission_to_web(data: dict, *args, **kwargs) -> None:
     """
     Sends socket.io messages to webclients
     """
-    handle_web_forwarding(data)
+    _send_transmission_to_web(data)
 
 
 @shared_task()
-def send_transmission(
+def forward_transmission_to_remote_instance(
     data: dict,
     forwarder_name: str,
     recorder_key: str,
@@ -53,23 +53,23 @@ def send_transmission(
     tg_uuid: str,
     *args,
     **kwargs
-):
+) -> None:
     """
     Forwards a single TX to a single system
     """
-    forwardTX(data, forwarder_name, recorder_key, forwarder_url, tg_uuid)
+    _forward_transmission_to_remote_instance(data, forwarder_name, recorder_key, forwarder_url, tg_uuid)
 
 
 @shared_task()
-def forward_Incident(data: dict, created: bool, *args, **kwargs):
+def forward_incidents(data: dict, created: bool, *args, **kwargs) -> None:
     """
     Iterates over Forwarders and dispatches send_Incident
     """
-    handle_incident_forwarding(data, created)
+    _forward_incident(data, created)
 
 
 @shared_task()
-def send_Incident(
+def send_incident(
     data: dict,
     forwarder_name: str,
     recorder_key: str,
@@ -81,13 +81,13 @@ def send_Incident(
     """
     Forwards a single Incident to a single system
     """
-    forwardincident(data, forwarder_name, recorder_key, forwarder_url, created)
+    _send_incident(data, forwarder_name, recorder_key, forwarder_url, created)
 
 
 @shared_task()
 def import_radio_refrence(
     uuid: str, site_id: str, username: str, password: str, *args, **kwargs
-):
+) -> None:
     """
     Imports RR Data
     """
@@ -98,7 +98,7 @@ def import_radio_refrence(
 
 
 @shared_task()
-def prune_tranmissions(*args, **kwargs):
+def prune_tranmissions(*args, **kwargs) -> None:
     """
     Prunes Transmissions per system based on age
     """
@@ -106,15 +106,15 @@ def prune_tranmissions(*args, **kwargs):
 
 
 @shared_task
-def send_tx_notifications(transmission: dict, *args, **kwargs):
+def send_transmission_notifications(transmission: dict, *args, **kwargs) -> None:
     """
     Does the logic to send user notifications
     """
-    handle_transmission_notification(transmission)
+    _send_transmission_notifications(transmission)
 
 
 @shared_task
-def publish_user_notification(
+def broadcast_user_notification(
     type: str,
     transmission: dict,
     value: str,
@@ -127,11 +127,11 @@ def publish_user_notification(
     body_template: str,
     *args,
     **kwargs
-):
+) -> None:
     """
     Sends the User a notification(s)
     """
-    broadcast_user_notification(
+    _broadcast_user_notification(
         type,
         transmission,
         value,
@@ -146,9 +146,9 @@ def publish_user_notification(
 
 
 @shared_task
-def dispatch_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str, *args, **kwargs):
-    broadcast_web_notification(alertuser_uuid, TransmissionUUID, emergency, title, body)
+def broadcast_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str, *args, **kwargs) -> None:
+    _broadcast_web_notification(alertuser_uuid, TransmissionUUID, emergency, title, body)
 
 @shared_task
-def broadcast_transmission(event: str, room: str, data: dict):
-    _broadcast_tx(event, room, data)
+def broadcast_transmission(event: str, room: str, data: dict) -> None:
+    _broadcast_transmission(event, room, data)

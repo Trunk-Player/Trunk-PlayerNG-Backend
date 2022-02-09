@@ -9,11 +9,11 @@ if settings.SEND_TELEMETRY:
 logger = logging.getLogger(__name__)
 
 
-def handle_incident_forwarding(data: dict, created: bool) -> None:
+def _forward_incident(data: dict, created: bool) -> None:
     """
     Handles Forwarding New Inicidents
     """
-    from radio.tasks import send_Incident
+    from radio.tasks import send_incident
 
     SystemX = System.objects.get(UUID=data["system"])
 
@@ -22,7 +22,7 @@ def handle_incident_forwarding(data: dict, created: bool) -> None:
     ):
         Forwarder: SystemForwarder
         if SystemX in Forwarder.forwardedSystems.all():
-            send_Incident.delay(
+            send_incident.delay(
                 data,
                 Forwarder.name,
                 Forwarder.recorderKey,
@@ -31,7 +31,7 @@ def handle_incident_forwarding(data: dict, created: bool) -> None:
             )
 
 
-def forwardincident(
+def _send_incident(
     data: dict, ForwarderName: str, recorderKey: str, ForwarderURL: str, created: bool
 ) -> None:
     """

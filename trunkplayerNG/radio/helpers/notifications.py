@@ -12,11 +12,11 @@ if settings.SEND_TELEMETRY:
 logger = logging.getLogger(__name__)
 
 
-def handle_transmission_notification(TransmissionX: dict) -> None:
+def _send_transmission_notifications(TransmissionX: dict) -> None:
     """
     Handles Dispatching Transmission Notifications
     """
-    from radio.tasks import publish_user_notification
+    from radio.tasks import broadcast_user_notification
 
     talkgroup = TransmissionX["talkgroup"]
     units = TransmissionX["units"]
@@ -32,7 +32,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
                 talkgroup: TalkGroup
                 if alert.emergencyOnly:
                     if TransmissionX["emergency"]:
-                        publish_user_notification.delay(
+                        broadcast_user_notification.delay(
                             "Talkgroup",
                             TransmissionX["UUID"],
                             talkgroupObject.alphaTag,
@@ -48,7 +48,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
                             f'[+] Handling Sent notification for TX:{TransmissionX["UUID"]} - {alert.name} - {alert.user}'
                         )
                 else:
-                    publish_user_notification.delay(
+                    broadcast_user_notification.delay(
                         "Talkgroup",
                         TransmissionX["UUID"],
                         talkgroupObject.alphaTag,
@@ -85,7 +85,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
 
                 if alert.emergencyOnly:
                     if TransmissionX["emergency"]:
-                        publish_user_notification.delay(
+                        broadcast_user_notification.delay(
                             "Unit",
                             TransmissionX["UUID"],
                             AUs,
@@ -101,7 +101,7 @@ def handle_transmission_notification(TransmissionX: dict) -> None:
                             f'[+] Handling Sent notification for TX:{TransmissionX["UUID"]} - {alert.name} - {alert.user}'
                         )
                 else:
-                    publish_user_notification.delay(
+                    broadcast_user_notification.delay(
                         "Unit",
                         TransmissionX["UUID"],
                         AUs,
@@ -137,7 +137,7 @@ def format_message(
     return title, body
 
 
-def broadcast_user_notification(
+def _broadcast_user_notification(
     type: str,
     TransmissionUUID: str,
     value: str,
@@ -155,8 +155,9 @@ def broadcast_user_notification(
     )
 
     if webNotification:
-        from radio.tasks import dispatch_web_notification
-        dispatch_web_notification.delay(alertuser_uuid, TransmissionUUID, emergency, title, body)
+        from radio.tasks import broadcast_web_notification
+        broadcast_web_notification.delay(alertuser_uuid, TransmissionUUID, emergency, title, body)
+        
     if appRiseNotification:
         URLs = appRiseURLs.split(",")
         apobj = apprise.Apprise()
@@ -164,15 +165,13 @@ def broadcast_user_notification(
         for URL in URLs:
             apobj.add(URL)
 
-       
-
         logging.debug(f"[+] BROADCASTING TO APPRISE {TransmissionUUID}")
         apobj.notify(
             body=body,
             title=title,
         )
 
-def broadcast_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str):
+def _broadcast_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str):
     mgr = socketio.KombuManager(
         os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
     )

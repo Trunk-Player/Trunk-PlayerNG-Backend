@@ -1726,7 +1726,7 @@ class TransmissionCreate(APIView):
         ),
     )
     def post(self, request, format=None):
-        from radio.tasks import send_tx_notifications
+        from radio.tasks import send_transmission_notifications
 
         data = JSONParser().parse(request)
 
@@ -1758,7 +1758,7 @@ class TransmissionCreate(APIView):
             TX.save()
             socket_data = {"UUID":TX.data["UUID"], "talkgroup": TX.data["talkgroup"]}
             send_transmission_to_web.delay(socket_data, Callback["talkgroup"])
-            send_tx_notifications.delay(TX.data)
+            send_transmission_notifications.delay(TX.data)
             return Response({"success": True, "UUID": Callback["UUID"]})
         else:
             Response(TX.errors)
