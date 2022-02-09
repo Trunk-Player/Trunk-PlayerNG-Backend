@@ -43,7 +43,7 @@ def send_transmission_to_web(data: dict, *args, **kwargs):
     """
     Sends socket.io messages to webclients
     """
-    sync_to_async(handle_web_forwarding(data))
+    sync_to_async(handle_web_forwarding(data), thread_sensitive=True)
 
 
 @shared_task()
@@ -112,7 +112,7 @@ def send_tx_notifications(transmission: dict, *args, **kwargs):
     """
     Does the logic to send user notifications
     """
-    sync_to_async(handle_transmission_notification(transmission))
+    sync_to_async(handle_transmission_notification(transmission), thread_sensitive=True)
 
 
 @shared_task
@@ -153,4 +153,4 @@ def dispatch_web_notification(alertuser_uuid: str, TransmissionUUID: str, emerge
 
 @shared_task
 def broadcast_transmission(event: str, room: str, data: dict):
-    _broadcast_tx(event, room, data)
+    sync_to_async(_broadcast_tx(event, room, data), thread_sensitive=True)
