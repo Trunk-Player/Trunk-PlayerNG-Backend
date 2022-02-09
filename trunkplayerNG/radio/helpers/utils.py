@@ -237,7 +237,7 @@ class TransmissionDetails:
             return True
 
 
-def getUserAllowedSystems(UserUUID: str) -> tuple[list, list]:
+def get_user_allowed_systems(UserUUID: str) -> tuple[list, list]:
     userACLs = SystemACL.objects.filter(users__UUID=UserUUID)  
     ACLs = SystemACL.objects.all()
     Systems = System.objects.filter(systemACL__in=userACLs)
@@ -245,7 +245,7 @@ def getUserAllowedSystems(UserUUID: str) -> tuple[list, list]:
     return systemUUIDs, Systems
 
 
-def getUserAllowedTalkgroups(System: System, UserUUID: str) -> list:
+def get_user_allowed_talkgroups(System: System, UserUUID: str) -> list:
     if not System.enableTalkGroupACLs:
         return TalkGroup.objects.filter(system=System)
 
@@ -255,8 +255,8 @@ def getUserAllowedTalkgroups(System: System, UserUUID: str) -> list:
 
     return AllowedTalkgropups
 
-def UserAllowedTransmission(Transmission: Transmission, UserUUID: str) -> list:
-    allowed_tgs = getUserAllowedTalkgroups(Transmission.system, UserUUID=UserUUID)
+def user_allowed_to_access_transmission(Transmission: Transmission, UserUUID: str) -> list:
+    allowed_tgs = get_user_allowed_talkgroups(Transmission.system, UserUUID=UserUUID)
 
     if Transmission.talkgroup in allowed_tgs:
         return True
@@ -273,7 +273,7 @@ def get_user_allowed_download_talkgroups(System: System, UserUUID: str) -> list:
 
     return AllowedTalkgropups
 
-def UserAllowedTransmissionDownload(Transmission: Transmission, UserUUID: str) -> list:
+def user_allowed_to_download_transmission(Transmission: Transmission, UserUUID: str) -> list:
     allowed_tgs = get_user_allowed_download_talkgroups(Transmission.system, UserUUID=UserUUID)
 
     if Transmission.talkgroup in allowed_tgs:

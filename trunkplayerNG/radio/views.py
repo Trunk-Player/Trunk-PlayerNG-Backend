@@ -20,9 +20,9 @@ from radio.tasks import import_radio_refrence, send_transmission_to_web
 
 from radio.helpers.transmission import new_transmission_handler
 from radio.helpers.utils import (
-    UserAllowedTransmissionDownload,
-    getUserAllowedSystems,
-    getUserAllowedTalkgroups,
+    user_allowed_to_download_transmission,
+    get_user_allowed_systems,
+    get_user_allowed_talkgroups,
 )
 
 from radio.permission import (
@@ -43,7 +43,7 @@ def transmission_download(request, uuid):
 
     user = request.user.userProfile
     if not user.siteAdmin:
-        if not UserAllowedTransmissionDownload(transmission, user.UUID):
+        if not user_allowed_to_download_transmission(transmission, user.UUID):
             return HttpResponse("UNAUTHORIZED", status=401)
 
     file_url = transmission.audioFile.url
@@ -976,11 +976,11 @@ class TalkGroupList(APIView, PaginationMixin):
         if user.siteAdmin:
             AllowedTalkgroups = TalkGroup.objects.all()
         else:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
 
             AllowedTalkgroups = []
             for system in systems:
-                AllowedTalkgroups.extend(getUserAllowedTalkgroups(system, user.UUID))
+                AllowedTalkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
 
         page = self.paginate_queryset(AllowedTalkgroups)
         if page is not None:
@@ -1059,11 +1059,11 @@ class TalkGroupView(APIView):
             serializer = TalkGroupViewListSerializer(talkGroup)
             return Response(serializer.data)
         else:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
 
             AllowedTalkgroups = []
             for system in systems:
-                AllowedTalkgroups.extend(getUserAllowedTalkgroups(system, user.UUID))
+                AllowedTalkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
 
             if not talkGroup in AllowedTalkgroups:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -1142,8 +1142,8 @@ class TalkGroupTransmissionList(APIView, PaginationMixin):
 
         if not user.siteAdmin:
             SystemX: System = TalkGroupX.system
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
-            talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+            talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
 
             if not SystemX in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -1417,7 +1417,7 @@ class UnitList(APIView, PaginationMixin):
         if user.siteAdmin:
             Units = Unit.objects.all()
         else:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             Units = Unit.objects.filter(system__in=systemUUIDs)
 
         page = self.paginate_queryset(Units)
@@ -1480,7 +1480,7 @@ class UnitView(APIView):
         if user.siteAdmin:
             serializer = UnitSerializer(unit)
         else:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             if not unit.system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1535,7 +1535,7 @@ class TransmissionUnitList(APIView):
         Units = TransmissionX.units.all()
 
         if not user.siteAdmin:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             if TransmissionX.system in systems:
                 SystemX: System = TransmissionX.system
 
@@ -1543,7 +1543,7 @@ class TransmissionUnitList(APIView):
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
 
                 if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
                     if not TransmissionX.talkgroup in talkgroupsAllowed:
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
@@ -1574,13 +1574,13 @@ class TransmissionUnitView(APIView):
         )
 
         if not user.siteAdmin:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             if TransmissionX.system in systems:
                 SystemX: System = TransmissionX.system
                 if not SystemX in systems:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
                 if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
                     if not TransmissionX.talkgroup in talkgroupsAllowed:
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
@@ -1624,13 +1624,13 @@ class TransmissionFreqList(APIView):
         Freqs = TransmissionX.frequencys.all()
 
         if not user.siteAdmin:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             if TransmissionX.system in systems:
                 SystemX: System = TransmissionX.system
                 if not SystemX in systems:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
                 if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
                     if not TransmissionX.talkgroup in talkgroupsAllowed:
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
@@ -1672,12 +1672,12 @@ class TransmissionList(APIView, PaginationMixin):
         if user.siteAdmin:
             AllowedTransmissions = Transmission.objects.all()
         else:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             AllowedTransmissions = []
 
             for system in systems:
                 if system.enableTalkGroupACLs:
-                    TGAllowed = getUserAllowedTalkgroups(system, user.UUID)
+                    TGAllowed = get_user_allowed_talkgroups(system, user.UUID)
                     AllowedTransmissions.extend(
                         Transmission.objects.filter(
                             system=system, talkgroup__in=TGAllowed
@@ -1782,12 +1782,12 @@ class TransmissionView(APIView):
         user: UserProfile = request.user.userProfile
 
         if not user.siteAdmin:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             if not TransmissionX.system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
             SystemX: System = TransmissionX.system
             if SystemX.enableTalkGroupACLs:
-                talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
                 if not TransmissionX.talkgroup in talkgroupsAllowed:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1818,7 +1818,7 @@ class IncidentList(APIView, PaginationMixin):
         if user.siteAdmin:
             Incidents = Incident.objects.all()
         else:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             Incidents = Incident.objects.filter(system__in=systems)
 
         page = self.paginate_queryset(Incidents)
@@ -2034,7 +2034,7 @@ class IncidentView(APIView):
         user: UserProfile = request.user.userProfile
 
         if not user.siteAdmin:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             if not IncidentX.system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -2260,14 +2260,14 @@ class ScanListTransmissionList(APIView, PaginationMixin):
         AllowedTransmissions = []
 
         if not user.siteAdmin:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             for TransmissionX in Transmissions:
                 SystemX: System = TransmissionX.system
                 if not SystemX in systems:
                     continue
 
                 if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = getUserAllowedTalkgroups(SystemX, user.UUID)
+                    talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
                     if TransmissionX.talkgroup in talkgroupsAllowed:
                         AllowedTransmissions.append(TransmissionX)
                 else:
@@ -2442,7 +2442,7 @@ class ScannerTransmissionList(APIView, PaginationMixin):
     def get(self, request, UUID, format=None):
         user: UserProfile = request.user.userProfile
         ScannerX: Scanner = self.get_object(UUID)
-        systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+        systemUUIDs, systems = get_user_allowed_systems(user.UUID)
 
         AllowedTransmissions = []
         ScanListTalkgroups = []
@@ -2464,7 +2464,7 @@ class ScannerTransmissionList(APIView, PaginationMixin):
 
             for system in acl_systems:            
                 system_object = System.objects.get(UUID=system)
-                user_allowed_talkgroups = getUserAllowedTalkgroups(system_object, user.UUID)
+                user_allowed_talkgroups = get_user_allowed_talkgroups(system_object, user.UUID)
                 talkgroupsAllowed.extend(user_allowed_talkgroups)
 
             AllowedTransmissions = Transmissions.filter(talkgroup__in=talkgroupsAllowed)
@@ -2789,7 +2789,7 @@ class CallList(APIView, PaginationMixin):
         if user.siteAdmin:
             Calls = Call.objects.all()
         else:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             TalkGroups = TalkGroup.objects.filter(system__in=systems)
             Calls = Call.objects.filter(talkgroup__in=TalkGroups)
 
@@ -2893,7 +2893,7 @@ class CallView(APIView):
         CallX: Call = self.get_object(UUID)
 
         if not user.siteAdmin:
-            systemUUIDs, systems = getUserAllowedSystems(user.UUID)
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
             TalkGroups = TalkGroup.objects.filter(system__in=systems)
             if not CallX.talkgroup in TalkGroups:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)

@@ -75,7 +75,7 @@ logger = logging.getLogger(__name__)
 
 @sio.event
 def tx_request(sid, message):
-    from radio.helpers.utils import UserAllowedTransmission, UUIDEncoder
+    from radio.helpers.utils import user_allowed_to_access_transmission, UUIDEncoder
     from radio.models import Transmission
     from radio.serializers import TransmissionListSerializer
 
@@ -84,7 +84,7 @@ def tx_request(sid, message):
         User = session['user']
         TX = Transmission.objects.get(UUID=message['UUID'])
 
-        if UserAllowedTransmission(TX, User.userProfile.UUID):
+        if user_allowed_to_access_transmission(TX, User.userProfile.UUID):
             resp = TransmissionListSerializer(TX)
             logging.warn(resp.data)
             # Clean me up

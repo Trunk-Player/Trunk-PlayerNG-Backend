@@ -102,7 +102,7 @@ def _forward_transmission(data, TG_UUID: str) -> None:
                 )
 
 
-def _forward_Transmission_to_remote_instance(
+def _forward_transmission_to_remote_instance(
     data: dict, ForwarderName: str, recorderKey: str, ForwarderURL: str, TG_UUID: str
 ) -> None:
     """
