@@ -13,6 +13,7 @@ from rest_framework import status
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+import sentry_sdk
 
 from radio.models import *
 from radio.serializers import *
@@ -36,8 +37,9 @@ from radio.permission import (
 
 def transmission_download(request, uuid):
     import requests
+
     try:
-        transmission:Transmission = Transmission.objects.get(UUID=uuid)
+        transmission: Transmission = Transmission.objects.get(UUID=uuid)
     except Transmission.DoesNotExist:
         raise Http404
 
@@ -56,12 +58,13 @@ def transmission_download(request, uuid):
     filename = f'{str(transmission.talkgroup.decimalID)}_{str(transmission.startTime.isoformat())}_{str(transmission.UUID)}.{file_url.split(".")[-1].strip()}'
 
     response = HttpResponse(content_type=audio_type)
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     data = requests.get(file_url, verify=False)
     response.write(data.content)
 
     return response
+
 
 class PaginationMixin(object):
     @property
@@ -1197,7 +1200,7 @@ class TalkGroupACLCreate(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup Allowed UUIDs",
                 ),
-                "downloadAllowed":  openapi.Schema(
+                "downloadAllowed": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Display Download Option"
                 ),
             },
@@ -1255,7 +1258,7 @@ class TalkGroupACLView(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup Allowed UUIDs",
                 ),
-                "downloadAllowed":  openapi.Schema(
+                "downloadAllowed": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Display Download Option"
                 ),
             },
@@ -1604,11 +1607,14 @@ class TransmissionUnitView(APIView):
     #         return Response(serializer.data)
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # @swagger_auto_schema(tags=['TransmissionUnit'])
-    # def delete(self, request, UUID, format=None):
-    #     TransmissionUnit = self.get_object(UUID)
-    #     TransmissionUnit.delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
+    @swagger_auto_schema(tags=["TransmissionUnit"])
+    def delete(self, request, UUID, format=None):
+        user: UserProfile = request.user.userProfile
+        if user.siteAdmin:
+            TransmissionUnit = self.get_object(UUID)
+            TransmissionUnit.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
 class TransmissionFreqList(APIView):
@@ -1736,34 +1742,49 @@ class TransmissionCreate(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        # try:
-        Callback = new_transmission_handler(data)
+        try:
+            Callback = new_transmission_handler(data)
 
-        if not Callback:
-            return Response(
-                "Not allowed to post this talkgroup",
-                status=status.HTTP_401_UNAUTHORIZED,
+            if not Callback:
+                return Response(
+                    "Not allowed to post this talkgroup",
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            Callback["UUID"] = uuid.uuid4()
+
+            recorderX: SystemRecorder = SystemRecorder.objects.get(
+                forwarderWebhookUUID=Callback["recorder"]
             )
+            Callback["system"] = str(recorderX.system.UUID)
 
-        Callback["UUID"] = uuid.uuid4()
+            TX = TransmissionUploadSerializer(data=Callback, partial=True)
 
-        recorderX: SystemRecorder = SystemRecorder.objects.get(
-            forwarderWebhookUUID=Callback["recorder"]
-        )
-        Callback["system"] = str(recorderX.system.UUID)
-
-        TX = TransmissionUploadSerializer(data=Callback, partial=True)
-
-        if TX.is_valid(raise_exception=True):
-            TX.save()
-            socket_data = {"UUID":TX.data["UUID"], "talkgroup": TX.data["talkgroup"]}
-            send_transmission_to_web.delay(socket_data, Callback["talkgroup"])
-            send_transmission_notifications.delay(TX.data)
-            return Response({"success": True, "UUID": Callback["UUID"]})
-        else:
-            Response(TX.errors)
-        # except Exception as e:
-        #    return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+            if TX.is_valid(raise_exception=True):
+                TX.save()
+                socket_data = {
+                    "UUID": TX.data["UUID"],
+                    "talkgroup": TX.data["talkgroup"],
+                }
+                send_transmission_to_web.delay(socket_data, Callback["talkgroup"])
+                send_transmission_notifications.delay(TX.data)
+                return Response({"success": True, "UUID": Callback["UUID"]})
+            else:
+                Response(TX.errors)
+        except Exception as e:
+            if settings.SEND_TELEMETRY:
+                sentry_sdk.set_context(
+                    "add_tx_data",
+                    {
+                        "data": data,
+                        "Callback": Callback,
+                        "TX": TX,
+                        "TX.data": TX.data,
+                        "recorder": recorderX,
+                    },
+                )
+                sentry_sdk.capture_exception(e)
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
 class TransmissionView(APIView):
@@ -2448,23 +2469,33 @@ class ScannerTransmissionList(APIView, PaginationMixin):
         ScanListTalkgroups = []
         Transmissions = []
 
-        ScanListTalkgroups = ScannerX.scanlists.all().values_list('talkgroups',flat=True)
+        ScanListTalkgroups = ScannerX.scanlists.all().values_list(
+            "talkgroups", flat=True
+        )
         ScanListTalkgroups = list(dict.fromkeys(ScanListTalkgroups))
         Transmissions = Transmission.objects.filter(talkgroup__in=ScanListTalkgroups)
 
         if not user.siteAdmin:
-            acl_systems = Transmissions.filter(system__enableTalkGroupACLs=True, system__in=systems).values_list('system', flat=True)
-            non_acl_systems = Transmissions.filter(system__enableTalkGroupACLs=False, system__in=systems).values_list('system', flat=True)
+            acl_systems = Transmissions.filter(
+                system__enableTalkGroupACLs=True, system__in=systems
+            ).values_list("system", flat=True)
+            non_acl_systems = Transmissions.filter(
+                system__enableTalkGroupACLs=False, system__in=systems
+            ).values_list("system", flat=True)
 
             non_acl_systems = list(dict.fromkeys(non_acl_systems))
             acl_systems = list(dict.fromkeys(acl_systems))
 
-            talkgroupsAllowed = [] 
-            talkgroupsAllowed.extend(TalkGroup.objects.filter(system__UUID__in=non_acl_systems))
+            talkgroupsAllowed = []
+            talkgroupsAllowed.extend(
+                TalkGroup.objects.filter(system__UUID__in=non_acl_systems)
+            )
 
-            for system in acl_systems:            
+            for system in acl_systems:
                 system_object = System.objects.get(UUID=system)
-                user_allowed_talkgroups = get_user_allowed_talkgroups(system_object, user.UUID)
+                user_allowed_talkgroups = get_user_allowed_talkgroups(
+                    system_object, user.UUID
+                )
                 talkgroupsAllowed.extend(user_allowed_talkgroups)
 
             AllowedTransmissions = Transmissions.filter(talkgroup__in=talkgroupsAllowed)
