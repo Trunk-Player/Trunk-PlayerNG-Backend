@@ -2,14 +2,15 @@ from django.contrib import admin
 
 from radio.models import *
 
-@admin.action(description='Lock selected Transmissions')
+
+@admin.action(description="Lock selected Transmissions")
 def lock_transmssions(modeladmin, request, queryset):
     queryset.update(locked=True)
 
-@admin.action(description='Unlock selected Transmissions')
+
+@admin.action(description="Unlock selected Transmissions")
 def unlock_transmssions(modeladmin, request, queryset):
     queryset.update(locked=False)
-
 
 
 class UserAlertAdmin(admin.ModelAdmin):
@@ -52,7 +53,6 @@ class systemForwarderAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = ("name", "enabled", "forwardIncidents", "remoteURL", "recorderKey")
     list_filter = ("enabled", "forwardIncidents")
-
 
 
 class CityAdmin(admin.ModelAdmin):
@@ -270,4 +270,3 @@ admin.site.register(ScanList, ScanListAdmin)
 admin.site.register(Scanner, ScannerAdmin)
 admin.site.register(GlobalAnnouncement, GlobalAnnouncementAdmin)
 admin.site.register(GlobalEmailTemplate, GlobalEmailTemplateAdmin)
-

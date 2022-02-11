@@ -6,18 +6,18 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0014_auto_20220209_1546'),
+        ("radio", "0014_auto_20220209_1546"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='systemreciverate',
-            name='recorder',
+            model_name="systemreciverate",
+            name="recorder",
         ),
         migrations.DeleteModel(
-            name='Call',
+            name="Call",
         ),
         migrations.DeleteModel(
-            name='SystemReciveRate',
+            name="SystemReciveRate",
         ),
     ]

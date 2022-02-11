@@ -5,5 +5,5 @@ from users import views
 
 urlpatterns = [
     path("list", views.UserList.as_view(), name="user_list"),
-    path("<uuid:UUID>", views.UserView.as_view(), name="user_view"),
+    path("<uuid:uuid>", views.UserView.as_view(), name="user_view"),
 ]

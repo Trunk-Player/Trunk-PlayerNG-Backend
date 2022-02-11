@@ -1,15 +1,31 @@
 import logging, apprise, os, socketio
 
-from django.contrib.auth.models import User
 from django.conf import settings
 
 from radio.models import TalkGroup, Unit, UserAlert
-from kombu import Queue, Exchange
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
+
+def format_message(
+    type: str, value: str, url: str, emergency: bool, title: str, body: str
+) -> tuple[str, str]:
+    '''
+    Takes the alert data and template to produce the fomatted message
+    '''
+    title = title.replace("%T", type)
+    title = title.replace("%I", value)
+    title = title.replace("%E", str(emergency))
+    title = title.replace("%U", url)
+
+    body = body.replace("%T", type)
+    body = body.replace("%I", value)
+    body = body.replace("%E", str(emergency))
+    body = body.replace("%U", url)
+
+    return title, body
 
 
 def _send_transmission_notifications(TransmissionX: dict) -> None:
@@ -24,7 +40,8 @@ def _send_transmission_notifications(TransmissionX: dict) -> None:
 
     for alert in UserAlert.objects.all():
         alert: UserAlert
-        if not alert.enabled: continue
+        if not alert.enabled:
+            continue
 
         try:
             if alert.talkgroups.filter(UUID=talkgroup).exists():
@@ -121,20 +138,6 @@ def _send_transmission_notifications(TransmissionX: dict) -> None:
                 capture_exception(e)
 
 
-def format_message(
-    type: str, value: str, url: str, emergency: bool, title: str, body: str
-) -> tuple[str, str]:
-    title = title.replace("%T", type)
-    title = title.replace("%I", value)
-    title = title.replace("%E", str(emergency))
-    title = title.replace("%U", url)
-
-    body = body.replace("%T", type)
-    body = body.replace("%I", value)
-    body = body.replace("%E", str(emergency))
-    body = body.replace("%U", url)
-
-    return title, body
 
 
 def _broadcast_user_notification(
@@ -156,8 +159,11 @@ def _broadcast_user_notification(
 
     if webNotification:
         from radio.tasks import broadcast_web_notification
-        broadcast_web_notification.delay(alertuser_uuid, TransmissionUUID, emergency, title, body)
-        
+
+        broadcast_web_notification.delay(
+            alertuser_uuid, TransmissionUUID, emergency, title, body
+        )
+
     if appRiseNotification:
         URLs = appRiseURLs.split(",")
         apobj = apprise.Apprise()
@@ -171,12 +177,20 @@ def _broadcast_user_notification(
             title=title,
         )
 
-def _broadcast_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str):
+
+def _broadcast_web_notification(
+    alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str
+):
     mgr = socketio.KombuManager(
         os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
     )
     sio = socketio.Server(
         async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
     )
-    data = {"TransmissionUUID": TransmissionUUID, "emergency": emergency, "title": title, "body": body}
-    sio.emit(f"alert", data, room=f'alert_{alertuser_uuid}')
+    data = {
+        "TransmissionUUID": TransmissionUUID,
+        "emergency": emergency,
+        "title": title,
+        "body": body,
+    }
+    sio.emit(f"alert", data, room=f"alert_{alertuser_uuid}")

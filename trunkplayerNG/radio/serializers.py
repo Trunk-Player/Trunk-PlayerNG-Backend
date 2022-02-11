@@ -10,8 +10,7 @@ class UserAlertSerializer(serializers.ModelSerializer):
             "UUID",
             "name",
             "user",
-            "enabled"
-            "description",
+            "enabled" "description",
             "webNotification",
             "appRiseNotification",
             "appRiseURLs",
@@ -186,6 +185,7 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "transcript",
         ]
 
+
 class TransmissionListSerializer(serializers.ModelSerializer):
     talkgroup = TalkGroupSerializer()
     units = TransmissionUnitSerializer(read_only=True, many=True)
@@ -278,7 +278,7 @@ class TalkGroupACLSerializer(serializers.ModelSerializer):
             "allowedTalkgroups",
             "defaultNewUsers",
             "defaultNewTalkgroups",
-            "downloadAllowed"
+            "downloadAllowed",
         ]
 
 

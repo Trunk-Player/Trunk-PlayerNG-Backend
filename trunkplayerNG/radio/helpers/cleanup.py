@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from radio.models import System, Transmission
+from radio.models import System, Transmission, TransmissionUnit
 
 
 if settings.SEND_TELEMETRY:

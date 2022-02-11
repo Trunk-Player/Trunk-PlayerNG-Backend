@@ -9,18 +9,20 @@ import django.utils.timezone
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0012_auto_20220209_1017'),
+        ("radio", "0012_auto_20220209_1017"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='incident',
-            name='time',
+            model_name="incident",
+            name="time",
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2022, 2, 9, 19, 49, 15, 505835, tzinfo=utc)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2022, 2, 9, 19, 49, 15, 505835, tzinfo=utc)
+            ),
         ),
     ]

@@ -23,11 +23,13 @@ if settings.SEND_TELEMETRY:
 
 logger = logging.getLogger(__name__)
 
+
 class UUIDEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, UUID):
             return str(obj)
         return json.JSONEncoder.default(self, obj)
+
 
 class TransmissionSrc:
     def __init__(self, payload) -> None:
@@ -99,7 +101,7 @@ class TransmissionFrequency:
             "len": self.len,
             "error_count": self.error_count,
             "spike_count": self.spike_count,
-            "time": self.time 
+            "time": self.time,
         }
 
         return payload
@@ -134,8 +136,12 @@ class TransmissionDetails:
         self.play_length = payload.get("play_length")
         self.source = payload.get("source")
 
-        self.start_time = timezone.datetime.fromtimestamp(payload.get("start_time")).isoformat()
-        self.stop_time = timezone.datetime.fromtimestamp(payload.get("stop_time")).isoformat()
+        self.start_time = timezone.datetime.fromtimestamp(
+            payload.get("start_time")
+        ).isoformat()
+        self.stop_time = timezone.datetime.fromtimestamp(
+            payload.get("stop_time")
+        ).isoformat()
 
         self.emergency = payload.get("emergency") in ("true", "1", "t")
         self.encrypted = payload.get("encrypted") in ("true", "1", "t")
@@ -238,7 +244,7 @@ class TransmissionDetails:
 
 
 def get_user_allowed_systems(UserUUID: str) -> tuple[list, list]:
-    userACLs = SystemACL.objects.filter(users__UUID=UserUUID)  
+    userACLs = SystemACL.objects.filter(users__UUID=UserUUID)
     ACLs = SystemACL.objects.all()
     Systems = System.objects.filter(systemACL__in=userACLs)
     systemUUIDs = [system.UUID for system in Systems]
@@ -249,13 +255,16 @@ def get_user_allowed_talkgroups(System: System, UserUUID: str) -> list:
     if not System.enableTalkGroupACLs:
         return TalkGroup.objects.filter(system=System)
 
-    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID) 
-    Allowed = list(ACLs.values_list('allowedTalkgroups__UUID',flat=True))
+    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID)
+    Allowed = list(ACLs.values_list("allowedTalkgroups__UUID", flat=True))
     AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=Allowed)
 
     return AllowedTalkgropups
 
-def user_allowed_to_access_transmission(Transmission: Transmission, UserUUID: str) -> list:
+
+def user_allowed_to_access_transmission(
+    Transmission: Transmission, UserUUID: str
+) -> list:
     allowed_tgs = get_user_allowed_talkgroups(Transmission.system, UserUUID=UserUUID)
 
     if Transmission.talkgroup in allowed_tgs:
@@ -263,21 +272,26 @@ def user_allowed_to_access_transmission(Transmission: Transmission, UserUUID: st
 
     return False
 
+
 def get_user_allowed_download_talkgroups(System: System, UserUUID: str) -> list:
     if not System.enableTalkGroupACLs:
         return TalkGroup.objects.filter(system=System)
 
-    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID, downloadAllowed=True) 
-    Allowed = list(ACLs.values_list('allowedTalkgroups__UUID',flat=True))
+    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID, downloadAllowed=True)
+    Allowed = list(ACLs.values_list("allowedTalkgroups__UUID", flat=True))
     AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=Allowed)
 
     return AllowedTalkgropups
 
-def user_allowed_to_download_transmission(Transmission: Transmission, UserUUID: str) -> list:
-    allowed_tgs = get_user_allowed_download_talkgroups(Transmission.system, UserUUID=UserUUID)
+
+def user_allowed_to_download_transmission(
+    Transmission: Transmission, UserUUID: str
+) -> list:
+    allowed_tgs = get_user_allowed_download_talkgroups(
+        Transmission.system, UserUUID=UserUUID
+    )
 
     if Transmission.talkgroup in allowed_tgs:
         return True
-    
 
     return False

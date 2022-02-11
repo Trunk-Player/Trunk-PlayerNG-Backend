@@ -57,7 +57,9 @@ def forward_transmission_to_remote_instance(
     """
     Forwards a single TX to a single system
     """
-    _forward_transmission_to_remote_instance(data, forwarder_name, recorder_key, forwarder_url, tg_uuid)
+    _forward_transmission_to_remote_instance(
+        data, forwarder_name, recorder_key, forwarder_url, tg_uuid
+    )
 
 
 @shared_task()
@@ -146,8 +148,19 @@ def broadcast_user_notification(
 
 
 @shared_task
-def broadcast_web_notification(alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str, *args, **kwargs) -> None:
-    _broadcast_web_notification(alertuser_uuid, TransmissionUUID, emergency, title, body)
+def broadcast_web_notification(
+    alertuser_uuid: str,
+    TransmissionUUID: str,
+    emergency: bool,
+    title: str,
+    body: str,
+    *args,
+    **kwargs
+) -> None:
+    _broadcast_web_notification(
+        alertuser_uuid, TransmissionUUID, emergency, title, body
+    )
+
 
 @shared_task
 def broadcast_transmission(event: str, room: str, data: dict) -> None:

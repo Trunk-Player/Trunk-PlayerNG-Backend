@@ -7,18 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('radio', '0009_auto_20220202_1926'),
+        ("radio", "0009_auto_20220202_1926"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='useralert',
-            name='enabled',
+            model_name="useralert",
+            name="enabled",
             field=models.BooleanField(default=True),
         ),
         migrations.AlterField(
-            model_name='systemreciverate',
-            name='time',
-            field=models.DateTimeField(default=datetime.datetime(2022, 2, 4, 20, 36, 58, 822686)),
+            model_name="systemreciverate",
+            name="time",
+            field=models.DateTimeField(
+                default=datetime.datetime(2022, 2, 4, 20, 36, 58, 822686)
+            ),
         ),
     ]

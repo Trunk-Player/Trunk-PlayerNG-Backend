@@ -5,7 +5,14 @@ from django.core.files.base import ContentFile
 from asgiref.sync import sync_to_async
 
 from .utils import TransmissionDetails
-from radio.models import ScanList, Scanner, System, SystemRecorder, SystemForwarder, TalkGroup
+from radio.models import (
+    ScanList,
+    Scanner,
+    System,
+    SystemRecorder,
+    SystemForwarder,
+    TalkGroup,
+)
 
 
 if settings.SEND_TELEMETRY:
@@ -47,6 +54,7 @@ def new_transmission_handler(data: dict) -> dict:
     forward_transmission.delay(data, Payload["talkgroup"])
     return Payload
 
+
 def _send_transmission_to_web(data: dict) -> None:
     """
     Handles Forwarding New Transmissions
@@ -56,17 +64,17 @@ def _send_transmission_to_web(data: dict) -> None:
     logging.debug(f"[+] GOT NEW TX - {data['UUID']}")
 
     talkgroup = TalkGroup.objects.filter(UUID=data["talkgroup"])
-    broadcast_transmission.delay(f"tx_{data['talkgroup']}",  f'tx_{data["talkgroup"]}', data)
+    broadcast_transmission.delay(
+        f"tx_{data['talkgroup']}", f'tx_{data["talkgroup"]}', data
+    )
 
     scanlists = ScanList.objects.filter(talkgroups__in=talkgroup)
     for scanlist in scanlists:
-        broadcast_transmission.delay(f"tx_{scanlist.UUID}", f'tx_{scanlist.UUID}', data )
-        
+        broadcast_transmission.delay(f"tx_{scanlist.UUID}", f"tx_{scanlist.UUID}", data)
+
     scanners = Scanner.objects.filter(scanlists__in=scanlists)
     for scanner in scanners:
-       broadcast_transmission.delay(f"tx_{scanner.UUID}", f'tx_{scanner.UUID}', data )
-
-
+        broadcast_transmission.delay(f"tx_{scanner.UUID}", f"tx_{scanner.UUID}", data)
 
 
 def _forward_transmission(data, TG_UUID: str) -> None:
@@ -125,7 +133,8 @@ def _forward_transmission_to_remote_instance(
         if settings.SEND_TELEMETRY:
             capture_exception(e)
         raise (e)
-        
+
+
 def _broadcast_transmission(event: str, room: str, data: dict):
     try:
         mgr = socketio.KombuManager(
@@ -139,4 +148,4 @@ def _broadcast_transmission(event: str, room: str, data: dict):
     except Exception as e:
         if settings.SEND_TELEMETRY:
             capture_exception(e)
-        raise(e)
+        raise (e)

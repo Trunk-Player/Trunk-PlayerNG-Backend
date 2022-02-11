@@ -41,10 +41,10 @@ class UserView(APIView):
             raise Http404
 
     @swagger_auto_schema(tags=["User"])
-    def get(self, request, pk, format=None):
+    def get(self, request, uuid, format=None):
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin or request.user.pk == pk:
-            userProfile = self.get_object(pk)
+        if user.siteAdmin or request.uuid == uuid:
+            userProfile = self.get_object(uuid)
         else:
             return Response(status=401)
         serializer = UserSerializer(userProfile)
@@ -68,10 +68,10 @@ class UserView(APIView):
             },
         ),
     )
-    def put(self, request, pk, format=None):
+    def put(self, request, uuid, format=None):
         user = request.user.userProfile
-        if user.siteAdmin or request.user.pk == pk:
-            userProfile = self.get_object(pk)
+        if user.siteAdmin or request.uuid == uuid:
+            userProfile = self.get_object(uuid)
         else:
             return Response(status=401)
         serializer = UserSerializer(userProfile, data=request.data, partial=True)
@@ -81,10 +81,10 @@ class UserView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["UserProfile"])
-    def delete(self, request, pk, format=None):
+    def delete(self, request, uuid, format=None):
         user = request.user.userProfile
-        if user.siteAdmin or request.user.pk == pk:
-            userProfile = self.get_object(pk)
+        if user.siteAdmin or request.uuid == uuid:
+            userProfile = self.get_object(uuid)
         else:
             return Response(status=401)
         userProfile.delete()

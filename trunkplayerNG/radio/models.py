@@ -16,8 +16,6 @@ class UserProfile(models.Model):
     siteAdmin = models.BooleanField(default=False)
     description = models.TextField(blank=True, null=True)
     siteTheme = models.TextField(blank=True, null=True)
-    # feedAllowed = models.BooleanField(default=False)
-    # feedAllowedSystems = models.ManyToManyField()
 
     def __str__(self):
         from users.models import CustomUser
@@ -107,8 +105,6 @@ class TalkGroup(models.Model):
     encrypted = models.BooleanField(default=False, blank=True)
     agency = models.ManyToManyField(Agency, blank=True)
 
- 
-
     def __str__(self):
         return f"[{self.system.name}] {self.alphaTag}"
 
@@ -189,6 +185,7 @@ class Unit(models.Model):
     def __str__(self):
         return f"[{self.system.name}] {str(self.decimalID)}"
 
+
 @receiver(models.signals.post_save, sender=Unit)
 def execute_unit_dedup_check(sender, instance, created, *args, **kwargs):
     system = instance.system
@@ -200,9 +197,9 @@ def execute_unit_dedup_check(sender, instance, created, *args, **kwargs):
             ).exclude(UUID=instance.UUID)
             TGs.delete()
         else:
-            if Unit.objects.filter(
-                system=system, decimalID=instance.decimalID
-            ).exclude(alphaTag=""):
+            if Unit.objects.filter(system=system, decimalID=instance.decimalID).exclude(
+                description=""
+            ):
                 instance.delete()
 
 
@@ -264,7 +261,6 @@ class Transmission(models.Model):
         return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"
 
 
-
 class Incident(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -304,7 +300,7 @@ class TalkGroupACL(models.Model):
     allowedTalkgroups = models.ManyToManyField(TalkGroup)
     defaultNewUsers = models.BooleanField(default=True)
     defaultNewTalkgroups = models.BooleanField(default=True)
-    downloadAllowed =  models.BooleanField(default=True)
+    downloadAllowed = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

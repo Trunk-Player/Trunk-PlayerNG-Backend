@@ -12,6 +12,7 @@ django-allauth
 django-rest-auth
 djangorestframework
 djangorestframework-simplejwt
+django-filter
 drf-yasg
 idna
 inflection
