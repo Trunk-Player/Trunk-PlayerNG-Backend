@@ -2,6 +2,7 @@ import uuid, logging, json
 
 from django.utils import timezone
 from django.conf import settings
+from django.db.models import Q
 
 from uuid import UUID
 
@@ -244,8 +245,7 @@ class TransmissionDetails:
 
 
 def get_user_allowed_systems(UserUUID: str) -> tuple[list, list]:
-    userACLs = SystemACL.objects.filter(users__UUID=UserUUID)
-    ACLs = SystemACL.objects.all()
+    userACLs = SystemACL.objects.filter(Q(users__UUID=UserUUID) | Q(public=True))
     Systems = System.objects.filter(systemACL__in=userACLs)
     systemUUIDs = [system.UUID for system in Systems]
     return systemUUIDs, Systems

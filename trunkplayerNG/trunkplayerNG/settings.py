@@ -329,9 +329,9 @@ CELERY_IMPORTS = ("radio.tasks",)
 # Application definition
 
 
-# CORS_ALLOWED_ORIGINS = [
-#     'https://panik.io',
-#     'https://localhost:3000',
-# ]
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOWED_ORIGINS = [
+    'https://panik.io',
+    'https://localhost:3000',
+]
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True

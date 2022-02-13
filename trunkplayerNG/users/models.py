@@ -12,7 +12,7 @@ from users.managers import CustomUserManager
 
 class CustomUser(AbstractUser):
     UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+        default=uuid.uuid4, db_index=True, unique=True
     )
     username = None
     email = models.EmailField(_("email address"), unique=True)

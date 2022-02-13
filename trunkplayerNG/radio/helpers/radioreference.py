@@ -65,7 +65,7 @@ class RR:
 
         TalkGroups = []
 
-        mode_types = {"D": "digital", "A": "analog", "T": "tdma"}
+        mode_types = {"D": "digital", "A": "analog", "T": "tdma", "M": "mixed"}
 
         for talkgroup in RR_TGs:
             Encrypted = True if talkgroup["enc"] > 0 else False

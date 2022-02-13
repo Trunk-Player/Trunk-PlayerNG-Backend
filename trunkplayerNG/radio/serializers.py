@@ -247,7 +247,8 @@ class IncidentSerializer(serializers.ModelSerializer):
             "system",
             "transmission",
             "name",
-            "active" "description",
+            "active",
+            "description",
             "agency",
             "time",
         ]

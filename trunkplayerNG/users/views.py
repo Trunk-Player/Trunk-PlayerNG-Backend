@@ -30,21 +30,21 @@ class UserList(APIView):
 
 
 class UserView(APIView):
-    queryset = UserProfile.objects.all()
+    queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsSAOrUser]
 
-    def get_object(self, UUID):
+    def get_object(self, id):
         try:
-            return UserProfile.objects.get(UUID=UUID)
+            return CustomUser.objects.get(id=id)
         except UserProfile.DoesNotExist:
             raise Http404
 
     @swagger_auto_schema(tags=["User"])
-    def get(self, request, uuid, format=None):
-        user: UserProfile = request.user.userProfile
-        if user.siteAdmin or request.uuid == uuid:
-            userProfile = self.get_object(uuid)
+    def get(self, request, id, format=None):
+        user: CustomUser = request.user.userProfile
+        if user.siteAdmin or request.user.id == id:
+            userProfile = self.get_object(id)
         else:
             return Response(status=401)
         serializer = UserSerializer(userProfile)
@@ -68,10 +68,10 @@ class UserView(APIView):
             },
         ),
     )
-    def put(self, request, uuid, format=None):
+    def put(self, request, id, format=None):
         user = request.user.userProfile
-        if user.siteAdmin or request.uuid == uuid:
-            userProfile = self.get_object(uuid)
+        if user.siteAdmin or request.user.id == id:
+            userProfile = self.get_object(id)
         else:
             return Response(status=401)
         serializer = UserSerializer(userProfile, data=request.data, partial=True)
@@ -81,10 +81,10 @@ class UserView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["UserProfile"])
-    def delete(self, request, uuid, format=None):
+    def delete(self, request, id, format=None):
         user = request.user.userProfile
-        if user.siteAdmin or request.uuid == uuid:
-            userProfile = self.get_object(uuid)
+        if user.siteAdmin or request.user.id == id:
+            userProfile = self.get_object(id)
         else:
             return Response(status=401)
         userProfile.delete()

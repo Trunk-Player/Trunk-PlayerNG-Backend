@@ -19,10 +19,12 @@ class UserProfile(models.Model):
 
     def __str__(self):
         from users.models import CustomUser
+        try:
+            parent: CustomUser = CustomUser.objects.get(userProfile=self)
 
-        parent: CustomUser = CustomUser.objects.get(userProfile=self)
-
-        return f"{parent.email}"
+            return f"{parent.email}"
+        except:
+            return str(self.UUID)
 
 
 class SystemACL(models.Model):
@@ -92,7 +94,7 @@ class Agency(models.Model):
 
 
 class TalkGroup(models.Model):
-    MODE_OPTS = (("digital", "Digital"), ("analog", "Analog"), ("tdma", "TDMA"))
+    MODE_OPTS = (("digital", "Digital"), ("analog", "Analog"), ("tdma", "TDMA"), ("mixed","Mixed"))
 
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -111,8 +113,6 @@ class TalkGroup(models.Model):
 
 @receiver(models.signals.post_save, sender=TalkGroup)
 def execute_TalkGroup_dedup_check(sender, instance, created, *args, **kwargs):
-    from radio.helpers.notifications import handle_transmission_notification
-
     system = instance.system
 
     if created:
@@ -126,8 +126,6 @@ def execute_TalkGroup_dedup_check(sender, instance, created, *args, **kwargs):
                 system=system, decimalID=instance.decimalID
             ).exclude(alphaTag=""):
                 instance.delete()
-
-    # handle_transmission_notification(instance)
 
 
 class SystemForwarder(models.Model):

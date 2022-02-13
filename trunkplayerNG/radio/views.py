@@ -2273,21 +2273,21 @@ class ScanListTransmissionList(APIView, PaginationMixin):
         Transmissions = Transmission.objects.filter(talkgroup__in=Talkgroups)
         AllowedTransmissions = []
 
-        if not user.siteAdmin:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            for TransmissionX in Transmissions:
-                SystemX: System = TransmissionX.system
-                if not SystemX in systems:
-                    continue
-
-                if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
-                    if TransmissionX.talkgroup in talkgroupsAllowed:
-                        AllowedTransmissions.append(TransmissionX)
-                else:
-                    AllowedTransmissions.append(TransmissionX)
-        else:
+        if user.siteAdmin:
             AllowedTransmissions = Transmissions
+        else:
+            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+            for system in systems:
+                if system.enableTalkGroupACLs:
+                    TGAllowed = get_user_allowed_talkgroups(system, user.UUID)
+                    AllowedTransmissions.extend(Transmissions.filter(
+                            system=system, talkgroup__in=TGAllowed
+                        )
+                    )
+                else:
+                    AllowedTransmissions.extend(
+                        Transmissions.filter(system=system)
+                    )
 
         page = self.paginate_queryset(AllowedTransmissions)
         if page is not None:

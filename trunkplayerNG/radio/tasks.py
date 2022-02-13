@@ -1,6 +1,6 @@
+import os
 import socketio
 import logging
-import os
 
 from celery import shared_task
 from asgiref.sync import sync_to_async
@@ -157,6 +157,9 @@ def broadcast_web_notification(
     *args,
     **kwargs
 ) -> None:
+    """
+    Sends web based user notifications
+    """
     _broadcast_web_notification(
         alertuser_uuid, TransmissionUUID, emergency, title, body
     )
@@ -164,4 +167,7 @@ def broadcast_web_notification(
 
 @shared_task
 def broadcast_transmission(event: str, room: str, data: dict) -> None:
+    """
+    Sends new TX messsage to client
+    """
     _broadcast_transmission(event, room, data)
