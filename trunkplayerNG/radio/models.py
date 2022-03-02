@@ -32,7 +32,7 @@ class SystemACL(models.Model):
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
     name = models.CharField(max_length=100, db_index=True, unique=True)
-    users = models.ManyToManyField(UserProfile)
+    users = models.ManyToManyField(UserProfile, blank=True)
     public = models.BooleanField(default=False)
 
     def __str__(self):
@@ -244,10 +244,10 @@ class Transmission(models.Model):
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
     emergency = models.BooleanField(default=False, db_index=True)
-    units = models.ManyToManyField(TransmissionUnit)
-    frequencys = models.ManyToManyField(TransmissionFreq)
+    units = models.ManyToManyField(TransmissionUnit, blank=True)
+    frequencys = models.ManyToManyField(TransmissionFreq, blank=True)
     frequency = models.FloatField(default=0.0)
-    length = models.FloatField(default=0.0)
+    length = models.FloatField(default=0.0, null=True)
 
     locked = models.BooleanField(default=False, db_index=True)
     transcript = models.TextField(null=True, blank=True)

@@ -1773,7 +1773,6 @@ class TransmissionCreate(APIView):
                     "data": data,
                     "Callback": Callback,
                     "TX": TX,
-                    "TX.data": TX.data,
                     "recorder": recorderX,
                 })
                 sentry_sdk.capture_exception(e)

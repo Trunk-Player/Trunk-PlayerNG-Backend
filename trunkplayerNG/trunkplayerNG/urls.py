@@ -21,6 +21,8 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from allauth.account.views import confirm_email
 
+from users import views as user_views
+
 schema_view = get_schema_view(
     openapi.Info(
         title="TrunkPlayer API",
@@ -40,6 +42,9 @@ urlpatterns = [
     path("api/", include("radio.urls"), name="Radio"),
     path("api/users/", include("users.urls"), name="Radio"),
     path("api/auth/", include("dj_rest_auth.urls")),
+    path('api/auth/login/', user_views.CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/token/', user_views.CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/token/refresh/', user_views.CookieTokenRefreshView.as_view(), name='token_refresh'),
     path("api/registration/", include("dj_rest_auth.registration.urls")),
     url(r"^account/", include("allauth.urls")),
     url(

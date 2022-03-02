@@ -217,6 +217,22 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
         queryset=SystemRecorder.objects.all(),
         slug_field="forwarderWebhookUUID",
     )
+    
+    units = serializers.SlugRelatedField(
+        read_only=False,
+        queryset=TransmissionUnit.objects.all(),
+        slug_field="UUID",
+        many=True,
+        required=False
+    )
+    frequencys = serializers.SlugRelatedField(
+        read_only=False,
+        queryset=TransmissionFreq.objects.all(),
+        slug_field="UUID",
+        many=True,
+        required=False
+    )
+
 
     class Meta:
         model = Transmission
