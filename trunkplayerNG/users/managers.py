@@ -10,7 +10,7 @@ class CustomUserManager(BaseUserManager):
     for authentication instead of usernames.
     """
 
-    def create_user(self, email: str, password: str, **extra_fields) -> EmailAddress:
+    def create_user(self, email: str, password: str, **extra_fields):
         """
         Create and save a User with the given email and password.
         """

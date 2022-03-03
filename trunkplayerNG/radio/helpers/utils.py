@@ -246,7 +246,7 @@ class TransmissionDetails:
 def get_user_allowed_systems(UserUUID: str) -> tuple[list, list]:
     userACLs = SystemACL.objects.filter(Q(users__UUID=UserUUID) | Q(public=True))
     Systems = System.objects.filter(systemACL__in=userACLs)
-    systemUUIDs = [system.UUID for system in Systems]
+    systemUUIDs = list(Systems.values_list("UUID", flat=True))
     return systemUUIDs, Systems
 
 

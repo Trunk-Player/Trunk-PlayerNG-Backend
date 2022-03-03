@@ -56,7 +56,7 @@ def createUserProfile(sender, instance: CustomUser, **kwargs):
 
 @receiver(pre_delete, sender=CustomUser)
 def createUserProfile(sender, instance: CustomUser, **kwargs):
-    if instance.userProfile:
+    from allauth.account.models import EmailAddress
 
-        instance.userProfile.delete()
-        instance.save()
+
+    EmailAddress.objects.delete(user=instance, email=instance.email)

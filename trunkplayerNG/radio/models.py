@@ -18,8 +18,8 @@ class UserProfile(models.Model):
     siteTheme = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        from users.models import CustomUser
         try:
+            from users.models import CustomUser
             parent: CustomUser = CustomUser.objects.get(userProfile=self)
 
             return f"{parent.email}"

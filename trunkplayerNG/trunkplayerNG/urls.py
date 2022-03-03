@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import re_path, path, include
 from django.conf.urls import url
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -39,7 +39,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     # path("", index),
     path("admin/", admin.site.urls),
-    path("api/", include("radio.urls"), name="Radio"),
+    re_path(r"^api/$", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui",),
+    path("api/radio/", include("radio.urls"), name="Radio"),
     path("api/users/", include("users.urls"), name="Radio"),
     path("api/auth/", include("dj_rest_auth.urls")),
     path('api/auth/login/', user_views.CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
