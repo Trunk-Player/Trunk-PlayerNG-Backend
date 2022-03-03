@@ -58,5 +58,6 @@ def createUserProfile(sender, instance: CustomUser, **kwargs):
 def createUserProfile(sender, instance: CustomUser, **kwargs):
     from allauth.account.models import EmailAddress
 
-
-    EmailAddress.objects.delete(user=instance, email=instance.email)
+    try:
+        EmailAddress.objects.get(user=instance, email=instance.email).delete()
+    except EmailAddress.DoesNotExist: pass

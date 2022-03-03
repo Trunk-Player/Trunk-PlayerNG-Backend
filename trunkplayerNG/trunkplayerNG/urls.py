@@ -43,7 +43,7 @@ urlpatterns = [
     path("api/radio/", include("radio.urls"), name="Radio"),
     path("api/users/", include("users.urls"), name="Radio"),
     path("api/auth/", include("dj_rest_auth.urls")),
-    path('api/auth/login/', user_views.CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/login/', user_views.CookieTokenObtainPairView.as_view(), name='login_obtain_pair'),
     path('api/auth/token/', user_views.CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', user_views.CookieTokenRefreshView.as_view(), name='token_refresh'),
     path("api/registration/", include("dj_rest_auth.registration.urls")),

@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "django_filters",
     "dj_rest_auth",
+    #"rest_framework_simplejwt.token_blacklist",
     "storages",
 ]
 
@@ -219,7 +220,7 @@ REST_USE_JWT = True
 JWT_AUTH_HTTPONLY = True
 JWT_AUTH_COOKIE = "TPNG-app-auth"
 JWT_AUTH_REFRESH_COOKIE = "refresh-token"
-
+ACCOUNT_LOGOUT_ON_GET=True
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
