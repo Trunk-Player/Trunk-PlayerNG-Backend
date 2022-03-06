@@ -6,7 +6,7 @@ from django.db.models.fields import NullBooleanField
 from django.dispatch import receiver
 from django.utils import timezone
 
-from trunkplayerNG.storage_backends import PrivateMediaStorage
+from storage_backends import PrivateMediaStorage
 
 
 class UserProfile(models.Model):
