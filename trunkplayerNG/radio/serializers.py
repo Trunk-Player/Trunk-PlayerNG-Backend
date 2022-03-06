@@ -191,11 +191,16 @@ class TransmissionListSerializer(serializers.ModelSerializer):
     units = TransmissionUnitSerializer(read_only=True, many=True)
     frequencys = TransmissionFreqSerializer(read_only=True, many=True)
 
+    system_name = serializers.SerializerMethodField()
+    
+    
+
     class Meta:
         model = Transmission
         fields = [
             "UUID",
             "system",
+            "system_name",
             "recorder",
             "startTime",
             "endTime",
@@ -209,6 +214,9 @@ class TransmissionListSerializer(serializers.ModelSerializer):
             "locked",
             "transcript",
         ]
+
+    def get_system_name(self, obj):
+        return obj.system.name
 
 
 class TransmissionUploadSerializer(serializers.ModelSerializer):
