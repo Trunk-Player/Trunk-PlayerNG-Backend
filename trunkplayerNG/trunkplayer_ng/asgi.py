@@ -1,5 +1,5 @@
 """
-ASGI config for trunkplayerNG project.
+ASGI config for trunkplayer_ng project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "trunkplayerNG.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "trunkplayer_ng.settings")
 
 application = get_asgi_application()
