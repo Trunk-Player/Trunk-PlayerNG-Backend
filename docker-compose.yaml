@@ -38,7 +38,7 @@ services:
     restart: always
     network_mode: "host"
     build: .
-    command: celery -A trunkplayerNG worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,RR_IMPORT,radio_alerts,radio_tx
+    command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,RR_IMPORT,radio_alerts,radio_tx
     environment:
       DEBUG: "True"
       FORCE_SECURE: "False"
@@ -67,7 +67,7 @@ services:
     restart: always
     network_mode: "host"
     build: .
-    command: celery -A trunkplayerNG beat -l info
+    command: celery -A trunkplayer_ng beat -l info
     environment:
       DEBUG: "True"
       FORCE_SECURE: "False"

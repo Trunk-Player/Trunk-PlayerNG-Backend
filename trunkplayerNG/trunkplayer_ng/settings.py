@@ -85,7 +85,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "trunkplayerNG.urls"
+ROOT_URLCONF = "trunkplayer_ng.urls"
 
 TEMPLATES = [
     {
@@ -103,7 +103,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "trunkplayerNG.wsgi.application"
+WSGI_APPLICATION = "trunkplayer_ng.wsgi.application"
 
 
 # Database
@@ -181,16 +181,16 @@ if USE_S3:
     STATIC_URL = (
         f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}/{STATIC_LOCATION}/"
     )
-    STATICFILES_STORAGE = "trunkplayerNG.storage_backends.StaticStorage"
+    STATICFILES_STORAGE = "trunkplayer_ng.storage_backends.StaticStorage"
 
     # s3 public media settings
     PUBLIC_MEDIA_LOCATION = "media"
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_STORAGE_BUCKET_NAME}/{PUBLIC_MEDIA_LOCATION}/"
     # s3 private media settings
     PRIVATE_MEDIA_LOCATION = "private"
-    PRIVATE_FILE_STORAGE = "trunkplayerNG.storage_backends.PrivateMediaStorage"
+    PRIVATE_FILE_STORAGE = "trunkplayer_ng.storage_backends.PrivateMediaStorage"
 
-    DEFAULT_FILE_STORAGE = "trunkplayerNG.storage_backends.PrivateMediaStorage"
+    DEFAULT_FILE_STORAGE = "trunkplayer_ng.storage_backends.PrivateMediaStorage"
 else:
     STATIC_URL = "/static/"
     STATIC_ROOT = os.path.join(BASE_DIR, "static")
@@ -314,7 +314,6 @@ CELERY_TASK_ROUTES = {
     "radio.tasks.send_tx_notifications": {"queue": "radio_alerts"},
     "radio.tasks.publish_user_notification": {"queue": "radio_alerts"},
     "radio.tasks.dispatch_web_notification": {"queue": "radio_alerts"},
-    "radio.tasks.publish_user_notification": {"queue": "radio_alerts"},
     "radio.tasks.broadcast_transmission": {"queue": "radio_tx"},
 }
 CELERY_TASK_DEFAULT_QUEUE = "default"

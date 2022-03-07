@@ -1,5 +1,5 @@
 """
-WSGI config for trunkplayerNG project.
+WSGI config for trunkplayer_ng project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -13,7 +13,7 @@ import socketio
 
 from radio.helpers.socket import sio
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "trunkplayerNG.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "trunkplayer_ng.settings")
 
 django_app = get_wsgi_application()
 
