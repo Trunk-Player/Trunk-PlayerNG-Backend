@@ -1,10 +1,14 @@
-import base64, logging, os, uuid, requests, socketio
+import base64
+import logging
+import os
+import uuid
+import requests
+import socketio
 
 from django.conf import settings
 from django.core.files.base import ContentFile
-from asgiref.sync import sync_to_async
 
-from .utils import TransmissionDetails
+from radio.helpers.utils import TransmissionDetails
 from radio.models import (
     ScanList,
     Scanner,
@@ -27,32 +31,32 @@ def new_transmission_handler(data: dict) -> dict:
     """
     from radio.tasks import forward_transmission
 
-    recorderUUID = data["recorder"]
+    recorder_uuid = data["recorder"]
     jsonx = data["json"]
-    audio = data["audioFile"]
+    audio = data["audio_file"]
 
     recorder: SystemRecorder = SystemRecorder.objects.get(
-        forwarderWebhookUUID=recorderUUID
+        api_key=recorder_uuid
     )
     system: System = recorder.system
     jsonx["system"] = str(system.UUID)
 
-    Payload: TransmissionDetails = TransmissionDetails(jsonx)
+    payload: TransmissionDetails = TransmissionDetails(jsonx)
     audio_bytes: bytes = base64.b64decode(audio)
 
-    if Payload.validate_upload(recorderUUID):
-        Payload = Payload._to_json()
+    if payload.validate_upload(recorder_uuid):
+        payload = payload.to_json()
     else:
         return False
 
-    Payload["recorder"] = recorderUUID
+    payload["recorder"] = recorder_uuid
     name = data["name"].split(".")
-    Payload["audioFile"] = ContentFile(
-        audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).split("-")[-1]}.{name[1]}'
+    payload["audio_file"] = ContentFile(
+        audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).rsplit("-", maxsplit=1)[-1]}.{name[1]}'
     )
 
-    forward_transmission.delay(data, Payload["talkgroup"])
-    return Payload
+    forward_transmission.delay(data, payload["talkgroup"])
+    return payload
 
 
 def _send_transmission_to_web(data: dict) -> None:
@@ -77,62 +81,60 @@ def _send_transmission_to_web(data: dict) -> None:
         broadcast_transmission.delay(f"tx_{scanner.UUID}", f"tx_{scanner.UUID}", data)
 
 
-def _forward_transmission(data, TG_UUID: str) -> None:
+def _forward_transmission(data, talkgroup_uuid: str) -> None:
     """
     Handles Forwarding New Transmissions
     """
     from radio.tasks import forward_transmission_to_remote_instance
 
     recorder: SystemRecorder = SystemRecorder.objects.get(
-        forwarderWebhookUUID=data["recorder"]
+        api_key=data["recorder"]
     )
 
-    talkgroup: TalkGroup = TalkGroup.objects.get(UUID=TG_UUID)
+    talkgroup: TalkGroup = TalkGroup.objects.get(UUID=talkgroup_uuid)
 
-    for Forwarder in SystemForwarder.objects.filter(enabled=True):
-        Forwarder: SystemForwarder
-        if recorder.system in Forwarder.forwardedSystems.all():
-            if len(Forwarder.talkGroupFilter.all()) == 0:
+    for forwarder in SystemForwarder.objects.filter(enabled=True):
+        forwarder: SystemForwarder
+        if recorder.system in forwarder.forwarded_systems.all():
+            if len(forwarder.talkgroup_filter.all()) == 0:
                 forward_transmission_to_remote_instance.delay(
                     data,
-                    Forwarder.name,
-                    Forwarder.recorderKey,
-                    Forwarder.remoteURL,
-                    TG_UUID,
+                    forwarder.name,
+                    forwarder.recorder_key,
+                    forwarder.remote_url,
                 )
-            if not talkgroup in Forwarder.talkGroupFilter.all():
+            if not talkgroup in forwarder.talkgroup_filter.all():
                 forward_transmission_to_remote_instance.delay(
                     data,
-                    Forwarder.name,
-                    Forwarder.recorderKey,
-                    Forwarder.remoteURL,
-                    TG_UUID,
+                    forwarder.name,
+                    forwarder.recorder_key,
+                    forwarder.remote_url,
                 )
 
 
 def _forward_transmission_to_remote_instance(
-    data: dict, ForwarderName: str, recorderKey: str, ForwarderURL: str, TG_UUID: str
+    data: dict, forwarder_name: str, recorder_key: str, forwarder_url: str
 ) -> None:
     """
     Sends a single new transmission via API Call
     """
     try:
-        data["recorder"] = str(recorderKey)
-        Response = requests.post(
-            f"{ForwarderURL}/api/radio/transmission/create", json=data
+        data["recorder"] = str(recorder_key)
+        response = requests.post(
+            f"{forwarder_url}/api/radio/transmission/create", json=data
         )
-        assert Response.ok
+        assert response.ok
         logger.info(
-            f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {ForwarderName} - {Response.text}"
+            f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {forwarder_name} - {response.text}"
         )
 
-        return f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {ForwarderName} - {Response.text}"
-    except Exception as e:
-        logger.warning(f"[!] FAILED FORWARDING TX {data['name']} to {ForwarderName}")
+        return f"[+] SUCCESSFULLY FORWARDED TRANSMISSION {data['name']} to {forwarder_name} - {response.text}"
+    except Exception as error:
+        logger.warning(f"[!] FAILED FORWARDING TX {data['name']} to {forwarder_name}")
 
         if settings.SEND_TELEMETRY:
-            capture_exception(e)
-        raise (e)
+            capture_exception(error)
+        raise error
 
 
 def _broadcast_transmission(event: str, room: str, data: dict):
@@ -145,7 +147,7 @@ def _broadcast_transmission(event: str, room: str, data: dict):
         )
         sio.emit(event, data, room=room)
         logging.debug(f"[+] BROADCASTING TO {room}")
-    except Exception as e:
+    except Exception as error:
         if settings.SEND_TELEMETRY:
-            capture_exception(e)
-        raise (e)
+            capture_exception(error)
+        raise error

@@ -1,18 +1,14 @@
-import base64
-from curses.ascii import US
+import logging
 import json
 import os
-import sentry_sdk
 import socketio
-import logging
+
 
 from django.conf import settings
-from django.http.response import HttpResponse
-from django.contrib.auth import authenticate
 
-from kombu import Queue, Exchange
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.renderers import JSONRenderer
+from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
+
 
 mgr = socketio.KombuManager(
     os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
@@ -30,18 +26,21 @@ logger = logging.getLogger(__name__)
 
 @sio.event
 def tx_request(sid, message):
+    """
+    Answers a Socket request for a Transmisssion based on ACLs
+    """
     from radio.helpers.utils import user_allowed_to_access_transmission, UUIDEncoder
     from radio.models import Transmission
     from radio.serializers import TransmissionListSerializer
 
     try:
         session = sio.get_session(sid)
-        User = session["user"]
-        TX = Transmission.objects.get(UUID=message["UUID"])
+        user = session["user"]
+        transmission = Transmission.objects.get(UUID=message["UUID"])
 
-        if user_allowed_to_access_transmission(TX, User.userProfile.UUID):
-            resp = TransmissionListSerializer(TX)
-            logging.warn(resp.data)
+        if user_allowed_to_access_transmission(transmission, user.userProfile.UUID):
+            resp = TransmissionListSerializer(transmission)
+            logging.warning(resp.data)
             # Clean me up
             data = json.loads(json.dumps(resp.data, cls=UUIDEncoder))
             sio.emit(
@@ -53,18 +52,21 @@ def tx_request(sid, message):
                 {"UUID": message["UUID"], "error": "PERMISSION TO OBJECT DENIED"},
                 room=sid,
             )
-    except Exception as e:
+    except Exception as error:
         if settings.SEND_TELEMETRY:
-            sentry_sdk.capture_exception(e)
+            capture_exception(error)
         sio.emit(
             "tx_response",
-            {"UUID": message["UUID"], "error": f"ERROR: {str(e)}"},
+            {"UUID": message["UUID"], "error": f"ERROR: {str(error)}"},
             room=sid,
         )
 
 
 @sio.event
 def deregister_tx_source(sid, message):
+    """
+    Deregisters a user to a Transmision source room
+    """
     for uuid in message["UUIDs"]:
         sio.leave_room(sid, f"tx_{uuid}")
         sio.emit("debug", {"data": f"disconnected to room tx_{uuid}"}, room=sid)
@@ -72,21 +74,29 @@ def deregister_tx_source(sid, message):
 
 @sio.event
 def register_tx_source(sid, message):
+    """
+    Registers a user to a Transmision source room
+    """
     for uuid in message["UUIDs"]:
         sio.enter_room(sid, f"tx_{uuid}")
         sio.emit("debug", {"data": f"connected to room tx_{uuid}"}, room=sid)
 
-
+# pylint: disable=unused-argument
 @sio.event
 def connect(sid, environ, auth):
-    JWT_authenticator = JWTAuthentication()
+    """
+    On user Connect
+    """
+    jwt_authenticator = JWTAuthentication()
 
     try:
         jwt = environ["HTTP_AUTHORIZATION"]
-        valid_jwt = JWT_authenticator.get_validated_token(jwt)
-        user = JWT_authenticator.get_user(valid_jwt)
-    except:
-        raise ConnectionRefusedError("authentication failed")
+        valid_jwt = jwt_authenticator.get_validated_token(jwt)
+        user = jwt_authenticator.get_user(valid_jwt)
+    except InvalidToken:
+        raise ConnectionRefusedError("authentication failed") from InvalidToken
+    except AuthenticationFailed:
+        raise ConnectionRefusedError("authentication failed") from InvalidToken
 
     sio.save_session(sid, {"user": user})
     logging.debug(f"[+] User {user.email} has connected to the socket")
@@ -97,4 +107,7 @@ def connect(sid, environ, auth):
 
 @sio.event
 def disconnect(sid):
+    """
+    On user Disconnect
+    """
     print("Client disconnected")

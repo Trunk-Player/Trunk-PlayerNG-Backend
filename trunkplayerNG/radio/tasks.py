@@ -1,10 +1,6 @@
-import os
-import socketio
 import logging
 
 from celery import shared_task
-from asgiref.sync import sync_to_async
-from django.conf import settings
 
 from radio.helpers.incident import _send_incident, _forward_incident
 from radio.helpers.cleanup import _prune_transmissions
@@ -22,8 +18,6 @@ from radio.helpers.transmission import (
     _forward_transmission_to_remote_instance,
 )
 
-if settings.SEND_TELEMETRY:
-    from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +44,6 @@ def forward_transmission_to_remote_instance(
     forwarder_name: str,
     recorder_key: str,
     forwarder_url: str,
-    tg_uuid: str,
     *args,
     **kwargs
 ) -> None:
@@ -58,7 +51,7 @@ def forward_transmission_to_remote_instance(
     Forwards a single TX to a single system
     """
     _forward_transmission_to_remote_instance(
-        data, forwarder_name, recorder_key, forwarder_url, tg_uuid
+        data, forwarder_name, recorder_key, forwarder_url
     )
 
 
@@ -95,8 +88,8 @@ def import_radio_refrence(
     """
     from radio.helpers.radioreference import RR
 
-    rr: RR = RR(site_id, username, password)
-    rr.load_system(uuid)
+    radio_refrence: RR = RR(site_id, username, password)
+    radio_refrence.load_system(uuid)
 
 
 @shared_task()
@@ -117,9 +110,9 @@ def send_transmission_notifications(transmission: dict, *args, **kwargs) -> None
 
 @shared_task
 def broadcast_user_notification(
-    type: str,
+    alert_type: str,
     transmission: dict,
-    value: str,
+    alert_value: str,
     alertuser_uuid: str,
     app_rise_urls: str,
     app_rise_notification: bool,
@@ -134,9 +127,9 @@ def broadcast_user_notification(
     Sends the User a notification(s)
     """
     _broadcast_user_notification(
-        type,
+        alert_type,
         transmission,
-        value,
+        alert_value,
         alertuser_uuid,
         app_rise_urls,
         app_rise_notification,
@@ -150,7 +143,7 @@ def broadcast_user_notification(
 @shared_task
 def broadcast_web_notification(
     alertuser_uuid: str,
-    TransmissionUUID: str,
+    transmission_uuid: str,
     emergency: bool,
     title: str,
     body: str,
@@ -161,7 +154,7 @@ def broadcast_web_notification(
     Sends web based user notifications
     """
     _broadcast_web_notification(
-        alertuser_uuid, TransmissionUUID, emergency, title, body
+        alertuser_uuid, transmission_uuid, emergency, title, body
     )
 
 

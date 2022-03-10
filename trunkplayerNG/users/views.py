@@ -19,32 +19,62 @@ from rest_framework_simplejwt.exceptions import InvalidToken
 
 from django.conf import settings
 
+
 class CookieTokenRefreshSerializer(TokenRefreshSerializer):
     refresh = None
+
     def validate(self, attrs):
-        attrs['refresh'] = self.context['request'].COOKIES.get(settings.JWT_AUTH_REFRESH_COOKIE)
-        if attrs['refresh']:
+        attrs["refresh"] = self.context["request"].COOKIES.get(
+            settings.JWT_AUTH_REFRESH_COOKIE
+        )
+        if attrs["refresh"]:
             return super().validate(attrs)
         else:
-            raise InvalidToken('No valid token found in cookie \'refresh-token\'')
+            raise InvalidToken("No valid token found in cookie 'refresh-token'")
+
 
 class CookieTokenObtainPairView(TokenObtainPairView):
-  def finalize_response(self, request, response, *args, **kwargs):
-    if response.data.get('refresh'):
-        cookie_max_age = 3600 * 24 * 14 # 14 days
-        response.set_cookie(settings.JWT_AUTH_COOKIE, response.data['access'], max_age=cookie_max_age, httponly=True, secure=True, samesite='None')
-        response.set_cookie(settings.JWT_AUTH_REFRESH_COOKIE, response.data['refresh'], max_age=cookie_max_age, httponly=True, secure=True, samesite='None', path='/' )
-        del response.data['refresh']
-    return super().finalize_response(request, response, *args, **kwargs)
+    def finalize_response(self, request, response, *args, **kwargs):
+        if response.data.get("refresh"):
+            cookie_max_age = 3600 * 24 * 14  # 14 days
+            response.set_cookie(
+                settings.JWT_AUTH_COOKIE,
+                response.data["access"],
+                max_age=cookie_max_age,
+                httponly=True,
+                secure=True,
+                samesite="None",
+            )
+            response.set_cookie(
+                settings.JWT_AUTH_REFRESH_COOKIE,
+                response.data["refresh"],
+                max_age=cookie_max_age,
+                httponly=True,
+                secure=True,
+                samesite="None",
+                path="/",
+            )
+            del response.data["refresh"]
+        return super().finalize_response(request, response, *args, **kwargs)
+
 
 class CookieTokenRefreshView(TokenRefreshView):
     def finalize_response(self, request, response, *args, **kwargs):
-        if response.data.get('refresh'):
-            cookie_max_age = 3600 * 24 * 14 # 14 days
-            response.set_cookie('refresh-token', response.data['refresh'], max_age=cookie_max_age, httponly=True, secure=True, samesite=None  )
-            del response.data['refresh']
+        if response.data.get("refresh"):
+            cookie_max_age = 3600 * 24 * 14  # 14 days
+            response.set_cookie(
+                "refresh-token",
+                response.data["refresh"],
+                max_age=cookie_max_age,
+                httponly=True,
+                secure=True,
+                samesite=None,
+            )
+            del response.data["refresh"]
         return super().finalize_response(request, response, *args, **kwargs)
+
     serializer_class = CookieTokenRefreshSerializer
+
 
 class UserList(APIView):
     queryset = CustomUser.objects.all()
@@ -54,7 +84,7 @@ class UserList(APIView):
     @swagger_auto_schema(tags=["User"])
     def get(self, request, format=None):
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
+        if user.site_admin:
             userProfile = CustomUser.objects.all()
         else:
             userProfile = CustomUser.objects.filter(pk=request.user.pk)
@@ -76,7 +106,7 @@ class UserView(APIView):
     @swagger_auto_schema(tags=["User"])
     def get(self, request, id, format=None):
         user: CustomUser = request.user.userProfile
-        if user.siteAdmin or request.user.id == id:
+        if user.site_admin or request.user.id == id:
             userProfile = self.get_object(id)
         else:
             return Response(status=401)
@@ -88,13 +118,13 @@ class UserView(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                "siteTheme": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="siteTheme"
+                "site_theme": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="site_theme"
                 ),
                 "description": openapi.Schema(
                     type=openapi.TYPE_STRING, description="description"
                 ),
-                "siteAdmin": openapi.Schema(
+                "site_admin": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Is user authorized to make changes",
                 ),
@@ -103,7 +133,7 @@ class UserView(APIView):
     )
     def put(self, request, id, format=None):
         user = request.user.userProfile
-        if user.siteAdmin or request.user.id == id:
+        if user.site_admin or request.user.id == id:
             userProfile = self.get_object(id)
         else:
             return Response(status=401)
@@ -116,7 +146,7 @@ class UserView(APIView):
     @swagger_auto_schema(tags=["UserProfile"])
     def delete(self, request, id, format=None):
         user = request.user.userProfile
-        if user.siteAdmin or request.user.id == id:
+        if user.site_admin or request.user.id == id:
             userProfile = self.get_object(id)
         else:
             return Response(status=401)

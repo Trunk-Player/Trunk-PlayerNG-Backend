@@ -4,6 +4,11 @@
     "python.linting.pylintArgs": [
         "--load-plugins=pylint_django",
         "--disable=django-not-configured",
+        "--disable=logging-fstring-interpolation",
+        "--disable=line-too-long",
+        "--disable=import-outside-toplevel",
+        "--disable=missing-class-docstring",
+        "--disable=missing-module-docstring",
         "--django-settings-module=trunkplayer_ng.settings"
    ]
 }

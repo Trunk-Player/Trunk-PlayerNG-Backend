@@ -13,12 +13,12 @@ class Command(BaseCommand):
         if CustomUser.objects.filter(email=options["UserEmail"]):
             User: CustomUser = CustomUser.objects.get(email=options["UserEmail"])
 
-            if not User.userProfile.siteAdmin:
+            if not User.userProfile.site_admin:
                 self.stdout.write(
                     self.style.WARNING(f"{options['UserEmail']} is Not a Site Admin")
                 )
             else:
-                User.userProfile.siteAdmin = False
+                User.userProfile.site_admin = False
                 User.userProfile.save()
                 User.save()
 

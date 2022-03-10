@@ -13,7 +13,7 @@ if SEND_TELEMETRY:
     import sentry_sdk
 
     sentry_sdk.init(
-       os.getenv(
+        os.getenv(
             "SENTRY_DSN",
             "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io/2",
         ),
@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "django_filters",
     "dj_rest_auth",
-    #"rest_framework_simplejwt.token_blacklist",
+    # "rest_framework_simplejwt.token_blacklist",
     "storages",
 ]
 
@@ -212,15 +212,13 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_FILTER_BACKENDS': (
-        'django_filters.rest_framework.DjangoFilterBackend',
-    )
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
 }
 REST_USE_JWT = True
 JWT_AUTH_HTTPONLY = True
 JWT_AUTH_COOKIE = "TPNG-app-auth"
 JWT_AUTH_REFRESH_COOKIE = "refresh-token"
-ACCOUNT_LOGOUT_ON_GET=True
+ACCOUNT_LOGOUT_ON_GET = True
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
@@ -338,12 +336,12 @@ CORS_ALLOWED_ORIGINS = [
     "https://localhost:3001",
     "http://127.0.0.1:3001",
     "https://127.0.0.1:3001",
-    "https://trunk-player-frontend.vercel.app"
+    "https://trunk-player-frontend.vercel.app",
 ]
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = None
 SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE=None
-CSRF_COOKIE_SECURE=True
-JWT_AUTH_SAMESITE = 'None'
+CSRF_COOKIE_SAMESITE = None
+CSRF_COOKIE_SECURE = True
+JWT_AUTH_SAMESITE = "None"

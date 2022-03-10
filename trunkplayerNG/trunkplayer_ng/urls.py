@@ -39,13 +39,29 @@ schema_view = get_schema_view(
 urlpatterns = [
     # path("", index),
     path("admin/", admin.site.urls),
-    re_path(r"^api/$", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui",),
+    re_path(
+        r"^api/$",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
     path("api/radio/", include("radio.urls"), name="Radio"),
     path("api/users/", include("users.urls"), name="Radio"),
     path("api/auth/", include("dj_rest_auth.urls")),
-    path('api/auth/login/', user_views.CookieTokenObtainPairView.as_view(), name='login_obtain_pair'),
-    path('api/auth/token/', user_views.CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/token/refresh/', user_views.CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path(
+        "api/auth/login/",
+        user_views.CookieTokenObtainPairView.as_view(),
+        name="login_obtain_pair",
+    ),
+    path(
+        "api/auth/token/",
+        user_views.CookieTokenObtainPairView.as_view(),
+        name="token_obtain_pair",
+    ),
+    path(
+        "api/auth/token/refresh/",
+        user_views.CookieTokenRefreshView.as_view(),
+        name="token_refresh",
+    ),
     path("api/registration/", include("dj_rest_auth.registration.urls")),
     url(r"^account/", include("allauth.urls")),
     url(

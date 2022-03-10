@@ -21,11 +21,11 @@ def _prune_transmissions() -> None:
     for system in System.objects.all():
         system: System
 
-        if system.pruneTransmissions:
+        if system.prune_transmissions:
             prunetime = timezone.now() - timedelta(
-                days=system.pruneTransmissionsAfterDays
+                days=system.prune_transmissions_after_days
             )
-            TXs = Transmission.objects.filter(system=system, startTime__lte=prunetime)
+            TXs = Transmission.objects.filter(system=system, start_time__lte=prunetime)
             for TX in TXs:
                 try:
                     TX: Transmission

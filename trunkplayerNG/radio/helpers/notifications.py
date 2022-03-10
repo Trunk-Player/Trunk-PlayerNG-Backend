@@ -1,4 +1,7 @@
-import logging, apprise, os, socketio
+import os
+import logging
+import apprise
+import socketio
 
 from django.conf import settings
 
@@ -9,18 +12,19 @@ if settings.SEND_TELEMETRY:
 
 logger = logging.getLogger(__name__)
 
+
 def format_message(
-    type: str, value: str, url: str, emergency: bool, title: str, body: str
+    msg_type: str, value: str, url: str, emergency: bool, title: str, body: str
 ) -> tuple[str, str]:
-    '''
+    """
     Takes the alert data and template to produce the fomatted message
-    '''
-    title = title.replace("%T", type)
+    """
+    title = title.replace("%T", msg_type)
     title = title.replace("%I", value)
     title = title.replace("%E", str(emergency))
     title = title.replace("%U", url)
 
-    body = body.replace("%T", type)
+    body = body.replace("%T", msg_type)
     body = body.replace("%I", value)
     body = body.replace("%E", str(emergency))
     body = body.replace("%U", url)
@@ -28,15 +32,15 @@ def format_message(
     return title, body
 
 
-def _send_transmission_notifications(TransmissionX: dict) -> None:
+def _send_transmission_notifications(transmission: dict) -> None:
     """
     Handles Dispatching Transmission Notifications
     """
     from radio.tasks import broadcast_user_notification
 
-    talkgroup = TransmissionX["talkgroup"]
-    units = TransmissionX["units"]
-    logging.debug(f'[+] Handling Notifications for TX:{TransmissionX["UUID"]}')
+    talkgroup = transmission["talkgroup"]
+    units = transmission["units"]
+    logging.debug(f'[+] Handling Notifications for TX:{transmission["UUID"]}')
 
     for alert in UserAlert.objects.all():
         alert: UserAlert
@@ -45,133 +49,131 @@ def _send_transmission_notifications(TransmissionX: dict) -> None:
 
         try:
             if alert.talkgroups.filter(UUID=talkgroup).exists():
-                talkgroupObject = TalkGroup.objects.get(UUID=talkgroup)
+                talkgroup_object = TalkGroup.objects.get(UUID=talkgroup)
                 talkgroup: TalkGroup
                 if alert.emergencyOnly:
-                    if TransmissionX["emergency"]:
+                    if transmission["emergency"]:
                         broadcast_user_notification.delay(
                             "Talkgroup",
-                            TransmissionX["UUID"],
-                            talkgroupObject.alphaTag,
+                            transmission["UUID"],
+                            talkgroup_object.alpha_tag,
                             alert.user.UUID,
-                            alert.appRiseURLs,
-                            alert.appRiseNotification,
-                            alert.webNotification,
-                            TransmissionX["emergency"],
+                            alert.app_rise_urls,
+                            alert.app_rise_notification,
+                            alert.web_notification,
+                            transmission["emergency"],
                             alert.body,
                             alert.title,
                         )
                         logging.debug(
-                            f'[+] Handling Sent notification for TX:{TransmissionX["UUID"]} - {alert.name} - {alert.user}'
+                            f'[+] Handling Sent notification for TX:{transmission["UUID"]} - {alert.name} - {alert.user}'
                         )
                 else:
                     broadcast_user_notification.delay(
                         "Talkgroup",
-                        TransmissionX["UUID"],
-                        talkgroupObject.alphaTag,
+                        transmission["UUID"],
+                        talkgroup_object.alpha_tag,
                         alert.user.UUID,
-                        alert.appRiseURLs,
-                        alert.appRiseNotification,
-                        alert.webNotification,
-                        TransmissionX["emergency"],
+                        alert.app_rise_urls,
+                        alert.app_rise_notification,
+                        alert.web_notification,
+                        transmission["emergency"],
                         alert.body,
                         alert.title,
                     )
                     logging.debug(
-                        f'[+] Handling Sent notification for TX:{TransmissionX["UUID"]} - {alert.name} - {alert.user}'
+                        f'[+] Handling Sent notification for TX:{transmission["UUID"]} - {alert.name} - {alert.user}'
                     )
 
-            AlertUnits = alert.units.all()
-            AlertUnitUUIDs = [str(unit.UUID) for unit in AlertUnits]
+            alert_units = alert.units.all()
+            alert_unit_uuids = [str(unit.UUID) for unit in alert_units]
 
-            ActiveUnits = []
+            active_units = []
             for unit in units:
-                if str(unit) in AlertUnitUUIDs:
-                    ActiveUnits.append(unit)
+                if str(unit) in alert_unit_uuids:
+                    active_units.append(unit)
 
-            if len(ActiveUnits) > 0:
-                AUs = ""
+            if len(active_units) > 0:
+                active_unit_list = ""
 
-                for AU in ActiveUnits:
-                    AU: Unit = Unit.objects.get(UUID=AU)
-                    if AU.description != "" and AU.description != None:
-                        UnitID = AU.description
+                for active_unit in active_units:
+                    active_unit: Unit = Unit.objects.get(UUID=active_unit)
+                    if active_unit.description != "" and active_unit.description is not None:
+                        unit_id = active_unit.description
                     else:
-                        UnitID = str(AU.decimalID)
-                    AUs = AUs + f"; {UnitID}"
+                        unit_id = str(active_unit.decimal_id)
+                    active_unit_list = active_unit_list + f"; {unit_id}"
 
                 if alert.emergencyOnly:
-                    if TransmissionX["emergency"]:
+                    if transmission["emergency"]:
                         broadcast_user_notification.delay(
                             "Unit",
-                            TransmissionX["UUID"],
-                            AUs,
+                            transmission["UUID"],
+                            active_unit_list,
                             alert.user.UUID,
-                            alert.appRiseURLs,
-                            alert.appRiseNotification,
-                            alert.webNotification,
-                            TransmissionX["emergency"],
+                            alert.app_rise_urls,
+                            alert.app_rise_notification,
+                            alert.web_notification,
+                            transmission["emergency"],
                             alert.body,
                             alert.title,
                         )
                         logging.debug(
-                            f'[+] Handling Sent notification for TX:{TransmissionX["UUID"]} - {alert.name} - {alert.user}'
+                            f'[+] Handling Sent notification for TX:{transmission["UUID"]} - {alert.name} - {alert.user}'
                         )
                 else:
                     broadcast_user_notification.delay(
                         "Unit",
-                        TransmissionX["UUID"],
-                        AUs,
+                        transmission["UUID"],
+                        active_unit_list,
                         alert.user.UUID,
-                        alert.appRiseURLs,
-                        alert.appRiseNotification,
-                        alert.webNotification,
-                        TransmissionX["emergency"],
+                        alert.app_rise_urls,
+                        alert.app_rise_notification,
+                        alert.web_notification,
+                        transmission["emergency"],
                         alert.body,
                         alert.title,
                     )
                     logging.debug(
-                        f'[+] Handling Sent notification for TX:{TransmissionX["UUID"]} - {alert.name} - {alert.user}'
+                        f'[+] Handling Sent notification for TX:{transmission["UUID"]} - {alert.name} - {alert.user}'
                     )
-        except Exception as e:
+        except Exception as error:
             if settings.SEND_TELEMETRY:
-                capture_exception(e)
-
-
+                capture_exception(error)
 
 
 def _broadcast_user_notification(
-    type: str,
-    TransmissionUUID: str,
-    value: str,
+    msg_type: str,
+    trannsmission_uuid: str,
+    alert_value: str,
     alertuser_uuid: str,
-    appRiseURLs: str,
-    appRiseNotification: bool,
-    webNotification: bool,
+    app_rise_urls: str,
+    app_rise_notification: bool,
+    web_notification: bool,
     emergency: bool,
-    titleTemplate: str,
-    bodyTemplate: str,
+    title_template: str,
+    body_template: str,
 ) -> None:
 
     body, title = format_message(
-        type, value, TransmissionUUID, emergency, titleTemplate, bodyTemplate
+        msg_type, alert_value, trannsmission_uuid, emergency, title_template, body_template
     )
 
-    if webNotification:
+    if web_notification:
         from radio.tasks import broadcast_web_notification
 
         broadcast_web_notification.delay(
-            alertuser_uuid, TransmissionUUID, emergency, title, body
+            alertuser_uuid, trannsmission_uuid, emergency, title, body
         )
 
-    if appRiseNotification:
-        URLs = appRiseURLs.split(",")
+    if app_rise_notification:
+        urls = app_rise_urls.split(",")
         apobj = apprise.Apprise()
 
-        for URL in URLs:
-            apobj.add(URL)
+        for url in urls:
+            apobj.add(url)
 
-        logging.debug(f"[+] BROADCASTING TO APPRISE {TransmissionUUID}")
+        logging.debug(f"[+] BROADCASTING TO APPRISE {trannsmission_uuid}")
         apobj.notify(
             body=body,
             title=title,
@@ -179,8 +181,8 @@ def _broadcast_user_notification(
 
 
 def _broadcast_web_notification(
-    alertuser_uuid: str, TransmissionUUID: str, emergency: bool, title: str, body: str
-):
+    alertuser_uuid: str, trannsmission_uuid: str, emergency: bool, title: str, body: str
+) -> None:
     mgr = socketio.KombuManager(
         os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
     )
@@ -188,9 +190,9 @@ def _broadcast_web_notification(
         async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
     )
     data = {
-        "TransmissionUUID": TransmissionUUID,
+        "trannsmission_uuid": trannsmission_uuid,
         "emergency": emergency,
         "title": title,
         "body": body,
     }
-    sio.emit(f"alert", data, room=f"alert_{alertuser_uuid}")
+    sio.emit("alert", data, room=f"alert_{alertuser_uuid}")

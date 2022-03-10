@@ -1,29 +1,55 @@
 from django.contrib import admin
 
-from radio.models import *
+from radio.models import (
+    UserProfile,
+    SystemACL,
+    System,
+    City,
+    Agency,
+    TalkGroup,
+    SystemForwarder,
+    SystemRecorder,
+    Unit,
+    TransmissionUnit,
+    TransmissionFreq,
+    Transmission,
+    Incident,
+    TalkGroupACL,
+    ScanList,
+    Scanner,
+    GlobalAnnouncement,
+    GlobalEmailTemplate,
+    UserAlert
+)
 
-
+# pylint: disable=unused-argument
 @admin.action(description="Lock selected Transmissions")
 def lock_transmssions(modeladmin, request, queryset):
+    """
+    Bulk Locks a TX from pruning
+    """
     queryset.update(locked=True)
 
-
+# pylint: disable=unused-argument
 @admin.action(description="Unlock selected Transmissions")
 def unlock_transmssions(modeladmin, request, queryset):
+    """
+    Bulk un-Locks a TX from pruning
+    """
     queryset.update(locked=False)
 
 
 class UserAlertAdmin(admin.ModelAdmin):
     ordering = ("-user",)
-    list_display = ("name", "user", "webNotification", "appRiseNotification")
-    list_filter = ("webNotification", "appRiseNotification")
+    list_display = ("name", "user", "web_notification", "app_rise_notification")
+    list_filter = ("web_notification", "app_rise_notification")
 
 
 class UserProfileAdmin(admin.ModelAdmin):
-    list_filter = ("siteAdmin",)
+    list_filter = ("site_admin",)
 
 
-class systemACLAdmin(admin.ModelAdmin):
+class SystemACLAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = (
         "name",
@@ -32,27 +58,27 @@ class systemACLAdmin(admin.ModelAdmin):
     list_filter = ("public",)
 
 
-class systemAdmin(admin.ModelAdmin):
+class SystemAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = (
         "name",
         "systemACL",
-        "enableTalkGroupACLs",
-        "pruneTransmissions",
-        "pruneTransmissionsAfterDays",
+        "enable_talkgroup_acls",
+        "prune_transmissions",
+        "prune_transmissions_after_days",
     )
     list_filter = (
         "systemACL",
-        "enableTalkGroupACLs",
-        "pruneTransmissions",
-        "pruneTransmissionsAfterDays",
+        "enable_talkgroup_acls",
+        "prune_transmissions",
+        "prune_transmissions_after_days",
     )
 
 
-class systemForwarderAdmin(admin.ModelAdmin):
+class SystemForwarderAdmin(admin.ModelAdmin):
     ordering = ("-name",)
-    list_display = ("name", "enabled", "forwardIncidents", "remoteURL", "recorderKey")
-    list_filter = ("enabled", "forwardIncidents")
+    list_display = ("name", "enabled", "forward_incidents", "remote_url", "recorder_key")
+    list_filter = ("enabled", "forward_incidents")
 
 
 class CityAdmin(admin.ModelAdmin):
@@ -71,18 +97,18 @@ class AgencyAdmin(admin.ModelAdmin):
     )
 
 
-class TalkGroupAdmin(admin.ModelAdmin):
-    ordering = ("-decimalID",)
+class TalkgroupAdmin(admin.ModelAdmin):
+    ordering = ("-decimal_id",)
     list_display = (
-        "decimalID",
-        "alphaTag",
+        "decimal_id",
+        "alpha_tag",
         "encrypted",
         "mode",
         "system",
         "description",
     )
     list_filter = ("system", "mode", "encrypted")
-    search_fields = ("UUID", "alphaTag", "decimalID")
+    search_fields = ("UUID", "alpha_tag", "decimal_id")
 
 
 class SystemRecorderAdmin(admin.ModelAdmin):
@@ -90,7 +116,7 @@ class SystemRecorderAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "system",
-        "siteID",
+        "site_id",
         "enabled",
         "user",
     )
@@ -101,17 +127,17 @@ class SystemRecorderAdmin(admin.ModelAdmin):
 
 
 class UnitAdmin(admin.ModelAdmin):
-    ordering = ("-decimalID",)
+    ordering = ("-decimal_id",)
     list_display = (
-        "decimalID",
+        "decimal_id",
         "system",
         "description",
     )
     list_filter = ("system",)
-    search_fields = ("decimalID", "system", "description")
+    search_fields = ("decimal_id", "system", "description")
 
 
-class transmissionUnitAdmin(admin.ModelAdmin):
+class TransmissionUnitAdmin(admin.ModelAdmin):
     ordering = ("-time",)
     list_display = (
         "UUID",
@@ -126,7 +152,7 @@ class transmissionUnitAdmin(admin.ModelAdmin):
     search_fields = ("UUID",)
 
 
-class transmissionFreqAdmin(admin.ModelAdmin):
+class TransmissionFreqAdmin(admin.ModelAdmin):
     ordering = ("-time",)
     list_display = (
         "UUID",
@@ -140,14 +166,14 @@ class transmissionFreqAdmin(admin.ModelAdmin):
     search_fields = ("UUID",)
 
 
-class transmissionAdmin(admin.ModelAdmin):
-    ordering = ("-startTime",)
+class TransmissionAdmin(admin.ModelAdmin):
+    ordering = ("-start_time",)
     autocomplete_fields = ("units", "frequencys")
     list_display = (
         "UUID",
         "system",
         "recorder",
-        "startTime",
+        "start_time",
         "talkgroup",
         "locked",
         "length",
@@ -168,37 +194,37 @@ class IncidentAdmin(admin.ModelAdmin):
     list_filter = ("system",)
 
 
-class TalkGroupACLAdmin(admin.ModelAdmin):
+class TalkgroupACLAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     # autocomplete_fields = ("transmission",)
     list_display = (
         "name",
-        "defaultNewUsers",
-        "defaultNewTalkgroups",
+        "default_new_users",
+        "default_new_users",
     )
     list_filter = (
-        "defaultNewUsers",
-        "defaultNewTalkgroups",
+        "default_new_users",
+        "default_new_users",
     )
 
 
-class ScanListAdmin(admin.ModelAdmin):
+class ScanlistAdmin(admin.ModelAdmin):
     # ordering = ("-owner",)
     # autocomplete_fields = ("transmission",)
-    list_display = ("UUID", "name", "owner", "public", "communityShared")
+    list_display = ("UUID", "name", "owner", "public", "community_shared")
     list_filter = (
         "public",
-        "communityShared",
+        "community_shared",
     )
 
 
 class ScannerAdmin(admin.ModelAdmin):
     # ordering = ("-owner",)
     # autocomplete_fields = ("transmission",)
-    list_display = ("UUID", "name", "owner", "public", "communityShared")
+    list_display = ("UUID", "name", "owner", "public", "community_shared")
     list_filter = (
         "public",
-        "communityShared",
+        "community_shared",
     )
 
 
@@ -214,7 +240,7 @@ class GlobalEmailTemplateAdmin(admin.ModelAdmin):
     # autocomplete_fields = ("transmission",)
     list_display = (
         "name",
-        "type",
+        "template_type",
         "enabled",
     )
     list_filter = ("enabled",)
@@ -233,14 +259,14 @@ class GlobalEmailTemplateAdmin(admin.ModelAdmin):
 
 
 # class CallAdmin(admin.ModelAdmin):
-#     ordering = ("-startTime",)
+#     ordering = ("-start_time",)
 #     # autocomplete_fields = ("transmission",)
 #     list_display = (
 #         "trunkRecorderID",
 #         "talkgroup",
 #         "recorder",
-#         "startTime",
-#         "endTime",
+#         "start_time",
+#         "end_time",
 #         "active",
 #         "encrypted",
 #         "emergency",
@@ -253,20 +279,20 @@ class GlobalEmailTemplateAdmin(admin.ModelAdmin):
 
 admin.site.register(UserAlert, UserAlertAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
-admin.site.register(SystemACL, systemACLAdmin)
-admin.site.register(System, systemAdmin)
-admin.site.register(SystemForwarder, systemForwarderAdmin)
+admin.site.register(SystemACL, SystemACLAdmin)
+admin.site.register(System, SystemAdmin)
+admin.site.register(SystemForwarder, SystemForwarderAdmin)
 admin.site.register(City, CityAdmin)
 admin.site.register(Agency, AgencyAdmin)
-admin.site.register(TalkGroup, TalkGroupAdmin)
+admin.site.register(TalkGroup, TalkgroupAdmin)
 admin.site.register(SystemRecorder, SystemRecorderAdmin)
 admin.site.register(Unit, UnitAdmin)
-admin.site.register(TransmissionUnit, transmissionUnitAdmin)
-admin.site.register(TransmissionFreq, transmissionFreqAdmin)
-admin.site.register(Transmission, transmissionAdmin)
+admin.site.register(TransmissionUnit, TransmissionUnitAdmin)
+admin.site.register(TransmissionFreq, TransmissionFreqAdmin)
+admin.site.register(Transmission, TransmissionAdmin)
 admin.site.register(Incident, IncidentAdmin)
-admin.site.register(TalkGroupACL, TalkGroupACLAdmin)
-admin.site.register(ScanList, ScanListAdmin)
+admin.site.register(TalkGroupACL, TalkgroupACLAdmin)
+admin.site.register(ScanList, ScanlistAdmin)
 admin.site.register(Scanner, ScannerAdmin)
 admin.site.register(GlobalAnnouncement, GlobalAnnouncementAdmin)
 admin.site.register(GlobalEmailTemplate, GlobalEmailTemplateAdmin)

@@ -1,25 +1,47 @@
-import logging
-from re import T
+# import logging
+import uuid
 
 from django.conf import settings
+from django.http import ( Http404, HttpResponse )
+from django.db.models import Q
+
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-
-from django.http import Http404, HttpResponse
-from django.db.models import Q
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-import sentry_sdk
 
-from radio.models import *
-from radio.serializers import *
+from radio.serializers import (
+    UserAlertSerializer,
+    UserProfileSerializer,
+    SystemACLSerializer,
+    SystemSerializer,
+    SystemForwarderSerializer,
+    CitySerializer,
+    AgencySerializer,
+    AgencyViewListSerializer,
+    TalkGroupSerializer,
+    TalkGroupViewListSerializer,
+    SystemRecorderSerializer,
+    UnitSerializer,
+    TransmissionUnitSerializer,
+    TransmissionFreqSerializer,
+    TransmissionSerializer,
+    TransmissionListSerializer,
+    TransmissionUploadSerializer,
+    IncidentSerializer,
+    IncidentCreateSerializer,
+    TalkGroupACLSerializer,
+    ScanListSerializer,
+    ScannerSerializer,
+    GlobalAnnouncementSerializer,
+    GlobalEmailTemplateSerializer
+)
 from radio.tasks import import_radio_refrence, send_transmission_to_web
-
 from radio.helpers.transmission import new_transmission_handler
 from radio.helpers.utils import (
     user_allowed_to_download_transmission,
@@ -35,35 +57,64 @@ from radio.permission import (
     IsUser,
 )
 
+from radio.models import (
+    UserProfile,
+    SystemACL,
+    System,
+    City,
+    Agency,
+    TalkGroup,
+    SystemForwarder,
+    SystemRecorder,
+    Unit,
+    TransmissionUnit,
+    TransmissionFreq,
+    Transmission,
+    Incident,
+    TalkGroupACL,
+    ScanList,
+    Scanner,
+    GlobalAnnouncement,
+    GlobalEmailTemplate,
+    UserAlert
+)
 
-def transmission_download(request, uuid):
+if settings.SEND_TELEMETRY:
+    import sentry_sdk
+
+def transmission_download(request, transmission_uuid):
+    """
+    Handles Transmission download URL
+    """
     import requests
+
     try:
-        transmission:Transmission = Transmission.objects.get(UUID=uuid)
+        transmission: Transmission = Transmission.objects.get(UUID=transmission_uuid)
     except Transmission.DoesNotExist:
-        raise Http404
+        raise Http404 from Transmission.DoesNotExist
 
     user = request.user.userProfile
-    if not user.siteAdmin:
+    if not user.site_admin:
         if not user_allowed_to_download_transmission(transmission, user.UUID):
             return HttpResponse("UNAUTHORIZED", status=401)
 
-    file_url = transmission.audioFile.url
-    file_size = transmission.audioFile.size
+    file_url = transmission.audio_file.url
+    # file_size = transmission.audio_file.size
 
     if not settings.USE_S3:
         file_url = f"{settings.AUDIO_DOWNLOAD_HOST}{file_url}"
 
     audio_type = f'audio/{file_url.split(".")[-1].strip()}'
-    filename = f'{str(transmission.talkgroup.decimalID)}_{str(transmission.startTime.isoformat())}_{str(transmission.UUID)}.{file_url.split(".")[-1].strip()}'
+    filename = f'{str(transmission.talkgroup.decimal_id)}_{str(transmission.start_time.isoformat())}_{str(transmission.UUID)}.{file_url.split(".")[-1].strip()}'
 
     response = HttpResponse(content_type=audio_type)
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     data = requests.get(file_url, verify=False)
     response.write(data.content)
 
     return response
+
 
 class PaginationMixin(object):
     @property
@@ -103,14 +154,17 @@ class UserAlertList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["UserAlert"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        UserAlert List EP
+        """
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
-            UserAlerts = UserAlert.objects.all()
+        if user.site_admin:
+            user_alerts = UserAlert.objects.all()
         else:
-            UserAlerts = UserAlert.objects.filter(user=user)
+            user_alerts = UserAlert.objects.filter(user=user)
 
-        page = self.paginate_queryset(UserAlerts)
+        page = self.paginate_queryset(user_alerts)
         if page is not None:
             serializer = UserAlertSerializer(page, many=True)
             return Response(serializer.data)
@@ -136,14 +190,14 @@ class UserAlertCreate(APIView):
                 "enabled": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Enable Notification"
                 ),
-                "webNotification": openapi.Schema(
+                "web_notification": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Send Webpage Notification"
                 ),
-                "appRiseNotification": openapi.Schema(
+                "app_rise_notification": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Send AppRise Notification"
                 ),
-                "appRiseURLs": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="appRiseURLs"
+                "app_rise_urls": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Comma seperated list of urls"
                 ),
                 "title": openapi.Schema(
                     type=openapi.TYPE_STRING, description="The title of the alert"
@@ -158,7 +212,10 @@ class UserAlertCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        UserAlert Create EP POST
+        """
         user: UserProfile = request.user.userProfile
         data = JSONParser().parse(request)
 
@@ -179,20 +236,26 @@ class UserAlertView(APIView):
     serializer_class = UserAlertSerializer
     permission_classes = [IsSAOrUser]
 
-    def get_object(self, UUID):
+    def get_object(self, alert_uuid):
+        """
+        Gets User Alert by UUID
+        """
         try:
-            return UserAlert.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return UserAlert.objects.get(UUID=alert_uuid)
+        except UserAlert.DoesNotExist:
+            raise Http404 from UserAlert.DoesNotExist
 
     @swagger_auto_schema(tags=["UserAlert"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        UserAlert Get EP
+        """
         user: UserProfile = request.user.userProfile
-        UserAlertX: UserAlert = self.get_object(UUID)
-        if not UserAlertX.user == user:
+        user_alert: UserAlert = self.get_object(request_uuid)
+        if not user_alert.user == user:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = UserAlertSerializer(UserAlertX)
+        serializer = UserAlertSerializer(user_alert)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -209,14 +272,14 @@ class UserAlertView(APIView):
                 "enabled": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Enable Notification"
                 ),
-                "webNotification": openapi.Schema(
+                "web_notification": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Send Webpage Notification"
                 ),
-                "appRiseNotification": openapi.Schema(
+                "app_rise_notification": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Send AppRise Notification"
                 ),
-                "appRiseURLs": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="appRiseURLs"
+                "app_rise_urls": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="Comma seperated list of urls"
                 ),
                 "title": openapi.Schema(
                     type=openapi.TYPE_STRING, description="The title of the alert"
@@ -231,28 +294,34 @@ class UserAlertView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        user update EP
+        """
         user: UserProfile = request.user.userProfile
-        UserAlertX: UserAlert = self.get_object(UUID)
-        if not UserAlertX.user == user:
+        user_alert: UserAlert = self.get_object(request_uuid)
+        if not user_alert.user == user:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         data = request.data
         if "user" in data:
             del data["user"]
 
-        serializer = UserAlertSerializer(UserAlertX, data=data, partial=True)
+        serializer = UserAlertSerializer(user_alert, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["UserAlert"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        user delete EP
+        """
         user: UserProfile = request.user.userProfile
-        UserAlertX: UserAlert = self.get_object(UUID)
-        if not UserAlertX.user == user:
+        user_alert: UserAlert = self.get_object(request_uuid)
+        if not user_alert.user == user:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        UserAlertX.delete()
+        user_alert.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -263,14 +332,17 @@ class UserProfileList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["UserProfile"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        Userprofile GET EP
+        """
         user = request.user.userProfile
-        if user.siteAdmin:
-            userProfile = UserProfile.objects.all()
+        if user.site_admin:
+            user_profile = UserProfile.objects.all()
         else:
-            userProfile = UserProfile.objects.filter(UUID=user.UUID)
+            user_profile = UserProfile.objects.filter(UUID=user.UUID)
 
-        page = self.paginate_queryset(userProfile)
+        page = self.paginate_queryset(user_profile)
         if page is not None:
             serializer = UserProfileSerializer(page, many=True)
             return Response(serializer.data)
@@ -281,20 +353,26 @@ class UserProfileView(APIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        User profile fetch function
+        """
         try:
-            return UserProfile.objects.get(UUID=UUID)
+            return UserProfile.objects.get(UUID=request_uuid)
         except UserProfile.DoesNotExist:
-            raise Http404
+            raise Http404 from UserProfile.DoesNotExist
 
     @swagger_auto_schema(tags=["UserProfile"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        UserProfile Get EP
+        """
         user = request.user.userProfile
-        if user.siteAdmin or user.UUID == UUID:
-            userProfile = self.get_object(UUID)
+        if user.site_admin or user.UUID == request_uuid:
+            user_profile = self.get_object(request_uuid)
         else:
             return Response(status=401)
-        serializer = UserProfileSerializer(userProfile)
+        serializer = UserProfileSerializer(user_profile)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -302,39 +380,45 @@ class UserProfileView(APIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                "siteTheme": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="siteTheme"
+                "site_theme": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="site_theme"
                 ),
                 "description": openapi.Schema(
                     type=openapi.TYPE_STRING, description="description"
                 ),
-                "siteAdmin": openapi.Schema(
+                "site_admin": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Is user authorized to make changes",
                 ),
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        UserProfile Update EP
+        """
         user = request.user.userProfile
-        if user.siteAdmin or user.UUID == UUID:
-            userProfile = self.get_object(UUID)
+        if user.site_admin or user.UUID == request_uuid:
+            user_profile = self.get_object(request_uuid)
         else:
             return Response(status=401)
-        serializer = UserProfileSerializer(userProfile, data=request.data, partial=True)
+        serializer = UserProfileSerializer(user_profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["UserProfile"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        UserProfile Delete EP
+        """
         user = request.user.userProfile
-        if user.siteAdmin or user.UUID == UUID:
-            userProfile = self.get_object(UUID)
+        if user.site_admin or user.UUID == request_uuid:
+            user_profile = self.get_object(request_uuid)
         else:
             return Response(status=401)
-        userProfile.delete()
+        user_profile.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -345,9 +429,12 @@ class SystemACLList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["SystemACL"])
-    def get(self, request, format=None):
-        SystemACLs = SystemACL.objects.all()
-        page = self.paginate_queryset(SystemACLs)
+    def get(self, request):
+        """
+        System ACL get EP
+        """
+        system_acls = SystemACL.objects.all()
+        page = self.paginate_queryset(system_acls)
         if page is not None:
             serializer = SystemACLSerializer(page, many=True)
             return Response(serializer.data)
@@ -376,7 +463,10 @@ class SystemACLCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        SystemACL Update EP
+        """
         data = JSONParser().parse(request)
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
@@ -392,16 +482,22 @@ class SystemACLView(APIView):
     serializer_class = SystemACLSerializer
     permission_classes = [IsSiteAdmin]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches SystemACL Object
+        """
         try:
-            return SystemACL.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return SystemACL.objects.get(UUID=request_uuid)
+        except SystemACL.DoesNotExist:
+            raise Http404 from SystemACL.DoesNotExist
 
     @swagger_auto_schema(tags=["SystemACL"])
-    def get(self, request, UUID, format=None):
-        SystemACL = self.get_object(UUID)
-        serializer = SystemACLSerializer(SystemACL)
+    def get(self, request, request_uuid):
+        """
+        Get SystemACL View
+        """
+        system_acl = self.get_object(request_uuid)
+        serializer = SystemACLSerializer(system_acl)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -421,18 +517,24 @@ class SystemACLView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
-        SystemACL = self.get_object(UUID)
-        serializer = SystemACLSerializer(SystemACL, data=request.data, partial=True)
+    def put(self, request, request_uuid):
+        """
+        systemACL Update EP
+        """
+        system_acl = self.get_object(request_uuid)
+        serializer = SystemACLSerializer(system_acl, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["SystemACL"])
-    def delete(self, request, UUID, format=None):
-        SystemACL = self.get_object(UUID)
-        SystemACL.delete()
+    def delete(self, request, request_uuid):
+        """
+        SystemACL Delete EP
+        """
+        system_acl = self.get_object(request_uuid)
+        system_acl.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -443,22 +545,25 @@ class SystemList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["System"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        System List EP
+        """
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
-            Systems = System.objects.all()
+        if user.site_admin:
+            systems = System.objects.all()
         else:
-            userACLs = []
-            ACLs = SystemACL.objects.all()
-            for ACL in ACLs:
-                ACL: SystemACL
-                if ACL.users.filter(UUID=user.UUID):
-                    userACLs.append(ACL)
-                elif ACL.public:
-                    userACLs.append(ACL)
-            Systems = System.objects.filter(systemACL__in=userACLs)
+            user_acls = []
+            acls = SystemACL.objects.all()
+            for acl in acls:
+                acl: SystemACL
+                if acl.users.filter(UUID=user.UUID):
+                    user_acls.append(acl)
+                elif acl.public:
+                    user_acls.append(acl)
+            systems = System.objects.filter(systemACL__in=user_acls)
 
-        page = self.paginate_queryset(Systems)
+        page = self.paginate_queryset(systems)
         if page is not None:
             serializer = SystemSerializer(page, many=True)
             return Response(serializer.data)
@@ -481,22 +586,25 @@ class SystemCreate(APIView):
                 "systemACL": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System ACL UUID"
                 ),
-                "enableTalkGroupACLs": openapi.Schema(
+                "enable_talkgroup_acls": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Talkgroup ACLs on system",
                 ),
-                "pruneTransmissions": openapi.Schema(
+                "prune_transmissions": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Pruneing Transmissions on system",
                 ),
-                "pruneTransmissionsAfterDays": openapi.Schema(
+                "prune_transmissions_after_days": openapi.Schema(
                     type=openapi.TYPE_INTEGER,
                     description="Days to keep Transmissions (Prune)",
                 ),
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        System Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -514,37 +622,46 @@ class SystemView(APIView):
     serializer_class = SystemSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches System ORM object
+        """
         try:
-            return System.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return System.objects.get(UUID=request_uuid)
+        except System.DoesNotExist:
+            raise Http404 from System.DoesNotExist
 
-    def get_ACL(self, UUID):
+    def get_acl(self, request_uuid):
+        """
+        fetches SystemACL ORM OBJECT
+        """
         try:
-            return SystemACL.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return SystemACL.objects.get(UUID=request_uuid)
+        except SystemACL.DoesNotExist:
+            raise Http404 from SystemACL.DoesNotExist
 
     @swagger_auto_schema(tags=["System"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        System Get EP
+        """
         user: UserProfile = request.user.userProfile
-        userACLs = []
-        ACLs = SystemACL.objects.all()
-        for ACL in ACLs:
-            ACL: SystemACL
-            if ACL.users.filter(UUID=user.UUID):
-                userACLs.append(ACL)
-            elif ACL.public:
-                userACLs.append(ACL)
+        user_acls = []
+        acls = SystemACL.objects.all()
+        for acl in acls:
+            acl: SystemACL
+            if acl.users.filter(UUID=user.UUID):
+                user_acls.append(acl)
+            elif acl.public:
+                user_acls.append(acl)
 
-        system: System = self.get_object(UUID)
+        system: System = self.get_object(request_uuid)
 
-        if user.siteAdmin:
+        if user.site_admin:
             serializer = SystemSerializer(system)
             return Response(serializer.data)
 
-        if system.systemACL.UUID in userACLs:
+        if system.systemACL.UUID in user_acls:
             serializer = SystemSerializer(system)
             return Response(serializer.data)
         else:
@@ -559,27 +676,30 @@ class SystemView(APIView):
                 "systemACL": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System ACL UUID"
                 ),
-                "enableTalkGroupACLs": openapi.Schema(
+                "enable_talkgroup_acls": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Talkgroup ACLs on system",
                 ),
-                "pruneTransmissions": openapi.Schema(
+                "prune_transmissions": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Pruneing Transmissions on system",
                 ),
-                "pruneTransmissionsAfterDays": openapi.Schema(
+                "prune_transmissions_after_days": openapi.Schema(
                     type=openapi.TYPE_INTEGER,
                     description="Days to keep Transmissions (Prune)",
                 ),
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        Put Request for Updating User Profile
+        """
         user: UserProfile = request.user.userProfile
         data = JSONParser().parse(request)
-        System = self.get_object(UUID)
-        serializer = SystemSerializer(System, data=data, partial=True)
-        if user.siteAdmin:
+        system = self.get_object(request_uuid)
+        serializer = SystemSerializer(system, data=data, partial=True)
+        if user.site_admin:
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -588,11 +708,14 @@ class SystemView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["System"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        UserProfile Delete EP
+        """
         user: UserProfile = request.user.userProfile
-        System = self.get_object(UUID)
-        if user.siteAdmin:
-            System.delete()
+        system = self.get_object(request_uuid)
+        if user.site_admin:
+            system.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -622,11 +745,14 @@ class SystemRRImportView(APIView):
             },
         ),
     )
-    def post(self, request, UUID, format=None):
+    def post(self, request, request_uuid):
+        """
+        RR import EP
+        """
         data = JSONParser().parse(request)
 
         import_radio_refrence.delay(
-            UUID, data["siteid"], data["username"], data["password"]
+            request_uuid, data["siteid"], data["username"], data["password"]
         )
 
         return Response({"message": "System Import from Radio Refrence Qued"})
@@ -641,10 +767,13 @@ class SystemForwarderList(APIView, PaginationMixin):
     @swagger_auto_schema(
         tags=["SystemForwarder"],
     )
-    def get(self, request, format=None):
-        SystemForwarders = SystemForwarder.objects.all()
+    def get(self, request):
+        """
+        System Forwarder List EP
+        """
+        system_forwarders = SystemForwarder.objects.all()
 
-        page = self.paginate_queryset(SystemForwarders)
+        page = self.paginate_queryset(system_forwarders)
         if page is not None:
             serializer = SystemForwarderSerializer(page, many=True)
             return Response(serializer.data)
@@ -662,9 +791,9 @@ class SystemForwarderCreate(APIView):
             required=[
                 "name",
                 "enabled",
-                "recorderKey",
-                "remoteURL",
-                "forwardedSystems",
+                "recorder_key",
+                "remote_url",
+                "forwarded_systems",
             ],
             properties={
                 "name": openapi.Schema(
@@ -673,22 +802,22 @@ class SystemForwarderCreate(APIView):
                 "enabled": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="enabled"
                 ),
-                "recorderKey": openapi.Schema(
+                "recorder_key": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Forwarder Key"
                 ),
-                "remoteURL": openapi.Schema(
+                "remote_url": openapi.Schema(
                     type=openapi.TYPE_STRING,
                     description="Remote URL of the TP-NG to forward to",
                 ),
-                "forwardIncidents": openapi.Schema(
+                "forward_incidents": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Forward Incidents"
                 ),
-                "forwardedSystems": openapi.Schema(
+                "forwarded_systems": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="System UUIDs",
                 ),
-                "talkGroupFilter": openapi.Schema(
+                "talkgroup_filter": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Filtered TG UUIDs",
@@ -696,7 +825,10 @@ class SystemForwarderCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        SystemForwarder Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -714,16 +846,22 @@ class SystemForwarderView(APIView):
     serializer_class = SystemForwarderSerializer
     permission_classes = [IsSiteAdmin]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Gets SystemForwarder ORM Object
+        """
         try:
-            return SystemForwarder.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return SystemForwarder.objects.get(UUID=request_uuid)
+        except SystemForwarder.DoesNotExist:
+            raise Http404 from SystemForwarder.DoesNotExist
 
     @swagger_auto_schema(tags=["SystemForwarder"])
-    def get(self, request, UUID, format=None):
-        SystemForwarder = self.get_object(UUID)
-        serializer = SystemForwarderSerializer(SystemForwarder)
+    def get(self, request, request_uuid):
+        """
+        SystemForwarder GET EP
+        """
+        system_forwarder = self.get_object(request_uuid)
+        serializer = SystemForwarderSerializer(system_forwarder)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -740,21 +878,27 @@ class SystemForwarderView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        SystemForwarder Update EP
+        """
         data = JSONParser().parse(request)
-        SystemForwarder = self.get_object(UUID)
+        system_forwarder = self.get_object(request_uuid)
         if "feedKey" in data:
             del data["feedKey"]
-        serializer = SystemForwarderSerializer(SystemForwarder, data=data, partial=True)
+        serializer = SystemForwarderSerializer(system_forwarder, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["SystemForwarder"])
-    def delete(self, request, UUID, format=None):
-        SystemForwarder = self.get_object(UUID)
-        SystemForwarder.delete()
+    def delete(self, request, request_uuid):
+        """
+        SystemForwarder Delete EP
+        """
+        system_forwarder = self.get_object(request_uuid)
+        system_forwarder.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -765,9 +909,12 @@ class CityList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["City"])
-    def get(self, request, format=None):
-        Citys = City.objects.all()
-        page = self.paginate_queryset(Citys)
+    def get(self, request):
+        """
+        City List EP
+        """
+        citys = City.objects.all()
+        page = self.paginate_queryset(citys)
         if page is not None:
             serializer = CitySerializer(page, many=True)
             return Response(serializer.data)
@@ -793,7 +940,10 @@ class CityCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        City Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -811,16 +961,22 @@ class CityView(APIView):
     serializer_class = CitySerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches City ORM Object
+        """
         try:
-            return City.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return City.objects.get(UUID=request_uuid)
+        except City.DoesNotExist:
+            raise Http404 from City.DoesNotExist
 
     @swagger_auto_schema(tags=["City"])
-    def get(self, request, UUID, format=None):
-        City = self.get_object(UUID)
-        serializer = CitySerializer(City)
+    def get(self, request, request_uuid):
+        """
+        City Get EP
+        """
+        city = self.get_object(request_uuid)
+        serializer = CitySerializer(city)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -837,25 +993,31 @@ class CityView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        City Update EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             raise PermissionDenied
         data = JSONParser().parse(request)
-        City = self.get_object(UUID)
-        serializer = CitySerializer(City, data=data, partial=True)
+        city = self.get_object(request_uuid)
+        serializer = CitySerializer(city, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["City"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        City Delete EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             raise PermissionDenied
-        City = self.get_object(UUID)
-        City.delete()
+        city = self.get_object(request_uuid)
+        city.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -866,9 +1028,12 @@ class AgencyList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["Agency"])
-    def get(self, request, format=None):
-        Agencys = Agency.objects.all()
-        page = self.paginate_queryset(Agencys)
+    def get(self, request):
+        """
+        Agency List EP
+        """
+        agencys = Agency.objects.all()
+        page = self.paginate_queryset(agencys)
         if page is not None:
             serializer = AgencyViewListSerializer(page, many=True)
             return Response(serializer.data)
@@ -897,7 +1062,10 @@ class AgencyCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        Agency Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -915,16 +1083,22 @@ class AgencyView(APIView):
     serializer_class = AgencySerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches Agency ORM object
+        """
         try:
-            return Agency.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return Agency.objects.get(UUID=request_uuid)
+        except Agency.DoesNotExist:
+            raise Http404 from Agency.DoesNotExist
 
     @swagger_auto_schema(tags=["Agency"])
-    def get(self, request, UUID, format=None):
-        Agency = self.get_object(UUID)
-        serializer = AgencyViewListSerializer(Agency)
+    def get(self, request, request_uuid):
+        """
+        Agency get EP
+        """
+        agency = self.get_object(request_uuid)
+        serializer = AgencyViewListSerializer(agency)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -944,25 +1118,31 @@ class AgencyView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        Agency update EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             raise PermissionDenied
         data = JSONParser().parse(request)
-        Agency = self.get_object(UUID)
-        serializer = AgencySerializer(Agency, data=data, partial=True)
+        agency = self.get_object(request_uuid)
+        serializer = AgencySerializer(agency, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["Agency"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        Agency Delete EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             raise PermissionDenied
-        Agency = self.get_object(UUID)
-        Agency.delete()
+        agency = self.get_object(request_uuid)
+        agency.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -973,18 +1153,22 @@ class TalkGroupList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["TalkGroup"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        Talkgroup List EP
+        """
+        # pylint: disable=unused-argument
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
-            AllowedTalkgroups = TalkGroup.objects.all()
+        if user.site_admin:
+            allowed_talkgroups = TalkGroup.objects.all()
         else:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
 
-            AllowedTalkgroups = []
+            allowed_talkgroups = []
             for system in systems:
-                AllowedTalkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
+                allowed_talkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
 
-        page = self.paginate_queryset(AllowedTalkgroups)
+        page = self.paginate_queryset(allowed_talkgroups)
         if page is not None:
             serializer = TalkGroupViewListSerializer(page, many=True)
             return Response(serializer.data)
@@ -999,19 +1183,19 @@ class TalkGroupCreate(APIView):
         tags=["TalkGroup"],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=["system", "decimalID"],
+            required=["system", "decimal_id"],
             properties={
                 "system": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System UUID"
                 ),
-                "decimalID": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="decimalID"
+                "decimal_id": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="decimal_id"
                 ),
                 "description": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="decimalID"
+                    type=openapi.TYPE_STRING, description="decimal_id"
                 ),
-                "alphaTag": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="alphaTag"
+                "alpha_tag": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="alpha_tag"
                 ),
                 "encrypted": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="encrypted"
@@ -1024,14 +1208,17 @@ class TalkGroupCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        Talkgroup Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
             data["UUID"] = (
                 uuid.uuid5(
                     uuid.NAMESPACE_DNS,
-                    f"{str(data['system'])}+{str(data['decimalID'])}",
+                    f"{str(data['system'])}+{str(data['decimal_id'])}",
                 ),
             )
 
@@ -1047,30 +1234,37 @@ class TalkGroupView(APIView):
     serializer_class = TalkGroupSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetch Talkgroup ORM Object
+        """
         try:
-            return TalkGroup.objects.get(UUID=UUID)
+            return TalkGroup.objects.get(UUID=request_uuid)
         except UserProfile.DoesNotExist:
-            raise Http404
+            raise Http404 from UserProfile.DoesNotExist
 
     @swagger_auto_schema(tags=["TalkGroup"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        Talkgroup Get EP
+        """
         user: UserProfile = request.user.userProfile
-        talkGroup: TalkGroup = self.get_object(UUID)
-        if user.siteAdmin:
-            serializer = TalkGroupViewListSerializer(talkGroup)
+        talkgroup: TalkGroup = self.get_object(request_uuid)
+        if user.site_admin:
+            serializer = TalkGroupViewListSerializer(talkgroup)
             return Response(serializer.data)
         else:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
 
-            AllowedTalkgroups = []
+            allowed_talkgroups = []
             for system in systems:
-                AllowedTalkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
+                allowed_talkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
 
-            if not talkGroup in AllowedTalkgroups:
+            if not talkgroup in allowed_talkgroups:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TalkGroupViewListSerializer(talkGroup)
+        serializer = TalkGroupViewListSerializer(talkgroup)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -1079,12 +1273,12 @@ class TalkGroupView(APIView):
             type=openapi.TYPE_OBJECT,
             properties={
                 #'system': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
-                #'decimalID': openapi.Schema(type=openapi.TYPE_STRING, description='decimalID'),
+                #'decimal_id': openapi.Schema(type=openapi.TYPE_STRING, description='decimal_id'),
                 "description": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="decimalID"
+                    type=openapi.TYPE_STRING, description="decimal_id"
                 ),
-                "alphaTag": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="alphaTag"
+                "alpha_tag": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="alpha_tag"
                 ),
                 "encrypted": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="encrypted"
@@ -1097,15 +1291,18 @@ class TalkGroupView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        Talkgroup Update EP
+        """
         data = JSONParser().parse(request)
-        TalkGroup = self.get_object(UUID)
+        talkgroup = self.get_object(request_uuid)
 
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TalkGroupSerializer(TalkGroup, data=data, partial=True)
+        serializer = TalkGroupSerializer(talkgroup, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -1113,13 +1310,16 @@ class TalkGroupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["TalkGroup"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        Talkgroup Delete EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        TalkGroup = self.get_object(UUID)
-        TalkGroup.delete()
+        talkgroup = self.get_object(request_uuid)
+        talkgroup.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1129,31 +1329,38 @@ class TalkGroupTransmissionList(APIView, PaginationMixin):
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetch Talkgroup ORM Object
+        """
         try:
-            return TalkGroup.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return TalkGroup.objects.get(UUID=request_uuid)
+        except TalkGroup.DoesNotExist:
+            raise Http404 from TalkGroup.DoesNotExist
 
     @swagger_auto_schema(tags=["Transmission"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        Talkgroup Transmission list EP
+        """
         user: UserProfile = request.user.userProfile
-        TalkGroupX: TalkGroup = self.get_object(UUID)
+        talkgroup: TalkGroup = self.get_object(request_uuid)
 
-        Transmissions = Transmission.objects.filter(talkgroup=TalkGroupX)
+        transmissions = Transmission.objects.filter(talkgroup=talkgroup)
 
-        if not user.siteAdmin:
-            SystemX: System = TalkGroupX.system
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
+        if not user.site_admin:
+            system: System = talkgroup.system
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
 
-            if not SystemX in systems:
+            if not system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-            if not TalkGroupX in talkgroupsAllowed:
+            if not talkgroup in talkgroups_allowed:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        page = self.paginate_queryset(Transmissions)
+        page = self.paginate_queryset(transmissions)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -1165,9 +1372,12 @@ class TalkGroupACLList(APIView):
     permission_classes = [IsSiteAdmin]
 
     @swagger_auto_schema(tags=["TalkGroupACL"])
-    def get(self, request, format=None):
-        TalkGroupACLs = TalkGroupACL.objects.all()
-        serializer = TalkGroupACLSerializer(TalkGroupACLs, many=True)
+    def get(self, request):
+        """
+        Talkgroup ACL List EP
+        """
+        talkgroup_acls = TalkGroupACL.objects.all()
+        serializer = TalkGroupACLSerializer(talkgroup_acls, many=True)
         return Response(serializer.data)
 
 
@@ -1180,7 +1390,7 @@ class TalkGroupACLCreate(APIView):
         tags=["TalkGroupACL"],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=["name", "users", "defaultNewUsers", "defaultNewTalkgroups"],
+            required=["name", "users", "default_new_users", "default_new_users"],
             properties={
                 "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
                 "users": openapi.Schema(
@@ -1188,24 +1398,24 @@ class TalkGroupACLCreate(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup Allowed UUIDs",
                 ),
-                "defaultNewUsers": openapi.Schema(
+                "default_new_users": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Add New Users to ACL"
                 ),
-                "defaultNewTalkgroups": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Add New Talkgroups to ACL"
-                ),
-                "allowedTalkgroups": openapi.Schema(
+                "allowed_talkgroups": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup Allowed UUIDs",
                 ),
-                "downloadAllowed":  openapi.Schema(
+                "download_allowed": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Display Download Option"
                 ),
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        Talkgroup ACL Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1223,16 +1433,22 @@ class TalkGroupACLView(APIView):
     serializer_class = TalkGroupACLSerializer
     permission_classes = [IsSiteAdmin]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetch Talkgroup ORM Object
+        """
         try:
-            return TalkGroupACL.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return TalkGroupACL.objects.get(UUID=request_uuid)
+        except TalkGroupACL.DoesNotExist:
+            raise Http404 from TalkGroupACL.DoesNotExist
 
     @swagger_auto_schema(tags=["TalkGroupACL"])
-    def get(self, request, UUID, format=None):
-        TalkGroupACL = self.get_object(UUID)
-        serializer = TalkGroupACLSerializer(TalkGroupACL)
+    def get(self, request, request_uuid):
+        """
+        Talkgroup ACL get EP
+        """
+        talkgroup_acl = self.get_object(request_uuid)
+        serializer = TalkGroupACLSerializer(talkgroup_acl)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -1246,36 +1462,39 @@ class TalkGroupACLView(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup Allowed UUIDs",
                 ),
-                "defaultNewUsers": openapi.Schema(
+                "default_new_users": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Add New Users to ACL"
                 ),
-                "defaultNewTalkgroups": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN, description="Add New Talkgroups to ACL"
-                ),
-                "allowedTalkgroups": openapi.Schema(
+                "allowed_talkgroups": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup Allowed UUIDs",
                 ),
-                "downloadAllowed":  openapi.Schema(
+                "download_allowed": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Display Download Option"
                 ),
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        Talkgroup ACL Update EP
+        """
         data = JSONParser().parse(request)
-        TalkGroupACL = self.get_object(UUID)
-        serializer = TalkGroupACLSerializer(TalkGroupACL, data=data, partial=True)
+        talkgroup_acl = self.get_object(request_uuid)
+        serializer = TalkGroupACLSerializer(talkgroup_acl, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["TalkGroupACL"])
-    def delete(self, request, UUID, format=None):
-        TalkGroupACL = self.get_object(UUID)
-        TalkGroupACL.delete()
+    def delete(self, request, request_uuid):
+        """
+        Talkgroup ACL Delete EP
+        """
+        talkgroup_acl = self.get_object(request_uuid)
+        talkgroup_acl.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1286,10 +1505,13 @@ class SystemRecorderList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["SystemRecorder"])
-    def get(self, request, format=None):
-        SystemRecorders = SystemRecorder.objects.all()
+    def get(self, request):
+        """
+        System Recorder list EP
+        """
+        system_recorders = SystemRecorder.objects.all()
 
-        page = self.paginate_queryset(SystemRecorders)
+        page = self.paginate_queryset(system_recorders)
         if page is not None:
             serializer = SystemRecorderSerializer(page, many=True)
             return Response(serializer.data)
@@ -1304,12 +1526,12 @@ class SystemRecorderCreate(APIView):
         tags=["SystemRecorder"],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=["system", "siteID", "name", "user"],
+            required=["system", "site_id", "name", "user"],
             properties={
                 "system": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System UUID"
                 ),
-                "siteID": openapi.Schema(
+                "site_id": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Site ID"
                 ),
                 "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
@@ -1319,12 +1541,12 @@ class SystemRecorderCreate(APIView):
                 "user": openapi.Schema(
                     type=openapi.TYPE_STRING, description="User UUID"
                 ),  # Replace me with resuestuser
-                "talkgroupsAllowed": openapi.Schema(
+                "talkgroups_allowed": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroups Allowed UUIDs",
                 ),
-                "talkgroupsDenyed": openapi.Schema(
+                "talkgroups_denyed": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroups Allowed UUIDs",
@@ -1332,13 +1554,16 @@ class SystemRecorderCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        System Recorder Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
 
-        data["forwarderWebhookUUID"] = uuid.uuid4()
+        data["api_key"] = uuid.uuid4()
 
         serializer = SystemRecorderSerializer(data=data, partial=True)
         if serializer.is_valid():
@@ -1352,16 +1577,22 @@ class SystemRecorderView(APIView):
     serializer_class = SystemRecorderSerializer
     permission_classes = [IsSiteAdmin]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetch System Recorder ORM Object
+        """
         try:
-            return SystemRecorder.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return SystemRecorder.objects.get(UUID=request_uuid)
+        except SystemRecorder.DoesNotExist:
+            raise Http404 from SystemRecorder.DoesNotExist
 
     @swagger_auto_schema(tags=["SystemRecorder"])
-    def get(self, request, UUID, format=None):
-        SystemRecorder = self.get_object(UUID)
-        serializer = SystemRecorderSerializer(SystemRecorder)
+    def get(self, request, request_uuid):
+        """
+        System Recorder Get EP
+        """
+        system_recorder = self.get_object(request_uuid)
+        serializer = SystemRecorderSerializer(system_recorder)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -1370,7 +1601,7 @@ class SystemRecorderView(APIView):
             type=openapi.TYPE_OBJECT,
             properties={
                 #'system': openapi.Schema(type=openapi.TYPE_STRING, description='System UUID'),
-                "siteID": openapi.Schema(
+                "site_id": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Site ID"
                 ),
                 "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
@@ -1378,12 +1609,12 @@ class SystemRecorderView(APIView):
                     type=openapi.TYPE_BOOLEAN, description="Enabled"
                 ),
                 #'user': openapi.Schema(type=openapi.TYPE_STRING, description='User UUID'),
-                "talkgroupsAllowed": openapi.Schema(
+                "talkgroups_allowed": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroups Allowed UUIDs",
                 ),
-                "talkgroupsDenyed": openapi.Schema(
+                "talkgroups_denyed": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroups Allowed UUIDs",
@@ -1391,19 +1622,25 @@ class SystemRecorderView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        System Recorder update EP
+        """
         data = JSONParser().parse(request)
-        SystemRecorder = self.get_object(UUID)
-        serializer = SystemRecorderSerializer(SystemRecorder, data=data, partial=True)
+        system_recorder = self.get_object(request_uuid)
+        serializer = SystemRecorderSerializer(system_recorder, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["SystemRecorder"])
-    def delete(self, request, UUID, format=None):
-        SystemRecorder = self.get_object(UUID)
-        SystemRecorder.delete()
+    def delete(self, request, request_uuid):
+        """
+        System Recorder delete EP
+        """
+        system_recorder = self.get_object(request_uuid)
+        system_recorder.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1414,15 +1651,19 @@ class UnitList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["Unit"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        Unit List EP
+        """
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
-            Units = Unit.objects.all()
+        if user.site_admin:
+            units = Unit.objects.all()
         else:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            Units = Unit.objects.filter(system__in=systemUUIDs)
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            units = Unit.objects.filter(system__in=system_uuids)
 
-        page = self.paginate_queryset(Units)
+        page = self.paginate_queryset(units)
         if page is not None:
             serializer = UnitSerializer(page, many=True)
             return Response(serializer.data)
@@ -1437,12 +1678,12 @@ class UnitCreate(APIView):
         tags=["Unit"],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=["system", "decimalID"],
+            required=["system", "decimal_id"],
             properties={
                 "system": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System UUID"
                 ),
-                "decimalID": openapi.Schema(
+                "decimal_id": openapi.Schema(
                     type=openapi.TYPE_STRING, description="System UUID"
                 ),
                 "description": openapi.Schema(
@@ -1451,7 +1692,10 @@ class UnitCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        Unit Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1469,20 +1713,27 @@ class UnitView(APIView):
     serializer_class = UnitSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        UFetches Unit ORM Object
+        """
         try:
-            return Unit.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return Unit.objects.get(UUID=request_uuid)
+        except Unit.DoesNotExist:
+            raise Http404 from Unit.DoesNotExist
 
     @swagger_auto_schema(tags=["Unit"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        Unit get EP
+        """
         user: UserProfile = request.user.userProfile
-        unit: Unit = self.get_object(UUID)
-        if user.siteAdmin:
+        unit: Unit = self.get_object(request_uuid)
+        if user.site_admin:
             serializer = UnitSerializer(unit)
         else:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
             if not unit.system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1500,27 +1751,33 @@ class UnitView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        Unit update EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         data = JSONParser().parse(request)
-        Unit = self.get_object(UUID)
-        serializer = UnitSerializer(Unit, data=data, partial=True)
+        unit = self.get_object(request_uuid)
+        serializer = UnitSerializer(unit, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["Unit"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        Unit delete EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        Unit = self.get_object(UUID)
-        Unit.delete()
+        unit = self.get_object(request_uuid)
+        unit.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1530,28 +1787,32 @@ class TransmissionUnitList(APIView):
     permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["TransmissionUnit"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        TransmissionUnit List EP
+        """
         user: UserProfile = request.user.userProfile
 
-        TransmissionX: Transmission = Transmission.objects.get(UUID=UUID)
-        Units = TransmissionX.units.all()
+        transmission: Transmission = Transmission.objects.get(UUID=request_uuid)
+        units = transmission.units.all()
 
-        if not user.siteAdmin:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            if TransmissionX.system in systems:
-                SystemX: System = TransmissionX.system
+        if not user.site_admin:
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            if transmission.system in systems:
+                system: System = transmission.system
 
-                if not SystemX in systems:
+                if not system in systems:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-                if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
-                    if not TransmissionX.talkgroup in talkgroupsAllowed:
+                if system.enable_talkgroup_acls:
+                    talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
+                    if not transmission.talkgroup in talkgroups_allowed:
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TransmissionUnitSerializer(Units, many=True)
+        serializer = TransmissionUnitSerializer(units, many=True)
         return Response(serializer.data)
 
 
@@ -1560,35 +1821,42 @@ class TransmissionUnitView(APIView):
     serializer_class = TransmissionUnitSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches TransmissionUnit ORM Object
+        """
         try:
-            return TransmissionUnit.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return TransmissionUnit.objects.get(UUID=request_uuid)
+        except TransmissionUnit.DoesNotExist:
+            raise Http404 from TransmissionUnit.DoesNotExist
 
     @swagger_auto_schema(tags=["TransmissionUnit"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        TransmissionUnit get EP
+        """
         user: UserProfile = request.user.userProfile
-        TransmissionUnitX: TransmissionUnit = self.get_object(UUID)
+        transmission_unit: TransmissionUnit = self.get_object(request_uuid)
 
-        TransmissionX: Transmission = Transmission.objects.filter(
-            units__in=TransmissionUnitX
+        transmission: Transmission = Transmission.objects.filter(
+            units__in=transmission_unit
         )
 
-        if not user.siteAdmin:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            if TransmissionX.system in systems:
-                SystemX: System = TransmissionX.system
-                if not SystemX in systems:
+        if not user.site_admin:
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            if transmission.system in systems:
+                system: System = transmission.system
+                if not system in systems:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
-                if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
-                    if not TransmissionX.talkgroup in talkgroupsAllowed:
+                if system.enable_talkgroup_acls:
+                    talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
+                    if not transmission.talkgroup in talkgroups_allowed:
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TransmissionUnitSerializer(TransmissionX)
+        serializer = TransmissionUnitSerializer(transmission)
         return Response(serializer.data)
 
     # @swagger_auto_schema(tags=['TransmissionUnit'], request_body=openapi.Schema(
@@ -1597,7 +1865,7 @@ class TransmissionUnitView(APIView):
     #         'description': openapi.Schema(type=openapi.TYPE_STRING, description='Description'),
     #     }
     # ))
-    # def put(self, request, UUID, format=None):
+    # def put(self, request, UUID):
     #     data = JSONParser().parse(request)
     #     TransmissionUnit = self.get_object(UUID)
     #     serializer = TransmissionUnitSerializer(TransmissionUnit, data=data, partial=True)
@@ -1606,12 +1874,15 @@ class TransmissionUnitView(APIView):
     #         return Response(serializer.data)
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(tags=['TransmissionUnit'])
-    def delete(self, request, UUID, format=None):
+    @swagger_auto_schema(tags=["TransmissionUnit"])
+    def delete(self, request, request_uuid):
+        """
+        TransmissionUnit delete EP
+        """
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
-            TransmissionUnit = self.get_object(UUID)
-            TransmissionUnit.delete()
+        if user.site_admin:
+            transmission_unit = self.get_object(request_uuid)
+            transmission_unit.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1622,26 +1893,30 @@ class TransmissionFreqList(APIView):
     permission_classes = [IsSAOrReadOnly]
 
     @swagger_auto_schema(tags=["TransmissionFreq"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        TransmissionFreq List EP
+        """
         user: UserProfile = request.user.userProfile
 
-        TransmissionX: Transmission = Transmission.objects.get(UUID=UUID)
-        Freqs = TransmissionX.frequencys.all()
+        transmission: Transmission = Transmission.objects.get(UUID=request_uuid)
+        freqs = transmission.frequencys.all()
 
-        if not user.siteAdmin:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            if TransmissionX.system in systems:
-                SystemX: System = TransmissionX.system
-                if not SystemX in systems:
+        if not user.site_admin:
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            if transmission.system in systems:
+                system: System = transmission.system
+                if not system in systems:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
-                if SystemX.enableTalkGroupACLs:
-                    talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
-                    if not TransmissionX.talkgroup in talkgroupsAllowed:
+                if system.enable_talkgroup_acls:
+                    talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
+                    if not transmission.talkgroup in talkgroups_allowed:
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TransmissionFreqSerializer(Freqs, many=True)
+        serializer = TransmissionFreqSerializer(freqs, many=True)
         return Response(serializer.data)
 
 
@@ -1650,17 +1925,22 @@ class TransmissionFreqView(APIView):
     serializer_class = TransmissionFreqSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches TransmissionFreq ORM Object
+        """
         try:
-            return TransmissionFreq.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return TransmissionFreq.objects.get(UUID=request_uuid)
+        except TransmissionFreq.DoesNotExist:
+            raise Http404 from TransmissionFreq.DoesNotExist
 
     @swagger_auto_schema(tags=["TransmissionFreq"])
-    def get(self, request, UUID, format=None):
-        user: UserProfile = request.user.userProfile
-        TransmissionFreqX: TransmissionFreq = self.get_object(UUID)
-        serializer = TransmissionFreqSerializer(TransmissionFreqX)
+    def get(self, request, request_uuid):
+        """
+        TransmissionFreq get EP
+        """
+        transmission_freq: TransmissionFreq = self.get_object(request_uuid)
+        serializer = TransmissionFreqSerializer(transmission_freq)
         return Response(serializer.data)
 
 
@@ -1670,34 +1950,39 @@ class TransmissionList(APIView, PaginationMixin):
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_backends = []
+
     @swagger_auto_schema(tags=["Transmission"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        Transmission List EP
+        """
         user: UserProfile = request.user.userProfile
 
-        if user.siteAdmin:
-            AllowedTransmissions = Transmission.objects.all()
+        if user.site_admin:
+            allowed_transmissions = Transmission.objects.all()
         else:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            AllowedTransmissions = []
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            allowed_transmissions = []
 
             for system in systems:
-                if system.enableTalkGroupACLs:
-                    TGAllowed = get_user_allowed_talkgroups(system, user.UUID)
-                    AllowedTransmissions.extend(
+                if system.enable_talkgroup_acls:
+                    talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
+                    allowed_transmissions.extend(
                         Transmission.objects.filter(
-                            system=system, talkgroup__in=TGAllowed
+                            system=system, talkgroup__in=talkgroups_allowed
                         )
                     )
                 else:
-                    AllowedTransmissions.extend(
+                    allowed_transmissions.extend(
                         Transmission.objects.filter(system=system)
                     )
 
-        # AllowedTransmissions = sorted(
-        #     AllowedTransmissions, key=lambda instance: instance.startTime, reverse=True
+        # allowed_transmissions = sorted(
+        #     allowed_transmissions, key=lambda instance: instance.start_time, reverse=True
         # )
 
-        page = self.paginate_queryset(AllowedTransmissions)
+        page = self.paginate_queryset(allowed_transmissions)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -1721,7 +2006,7 @@ class TransmissionCreate(APIView):
                 "json": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Trunk-Recorder JSON"
                 ),
-                "audioFile": openapi.Schema(
+                "audio_file": openapi.Schema(
                     type=openapi.TYPE_STRING, description="M4A Base64"
                 ),
                 "name": openapi.Schema(
@@ -1730,91 +2015,110 @@ class TransmissionCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        Transmission Create EP
+        """
         from radio.tasks import send_transmission_notifications
 
         data = JSONParser().parse(request)
 
-        if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+        if not SystemRecorder.objects.filter(api_key=data["recorder"]):
             return Response(
                 "Not allowed to post this talkgroup",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         try:
-            Callback = new_transmission_handler(data)
+            cleaned_data = new_transmission_handler(data)
 
-            if not Callback:
+            if not cleaned_data:
                 return Response(
                     "Not allowed to post this talkgroup",
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
-            Callback["UUID"] = uuid.uuid4()
+            cleaned_data["UUID"] = uuid.uuid4()
 
-            recorderX: SystemRecorder = SystemRecorder.objects.get(
-                forwarderWebhookUUID=Callback["recorder"]
+            recorder: SystemRecorder = SystemRecorder.objects.get(
+                api_key=cleaned_data["recorder"]
             )
-            Callback["system"] = str(recorderX.system.UUID)
+            cleaned_data["system"] = str(recorder.system.UUID)
 
-            TX = TransmissionUploadSerializer(data=Callback, partial=True)
+            transmission = TransmissionUploadSerializer(data=cleaned_data, partial=True)
 
-            if TX.is_valid(raise_exception=True):
-                TX.save()
-                socket_data = {"UUID":TX.data["UUID"], "talkgroup": TX.data["talkgroup"]}
-                send_transmission_to_web.delay(socket_data, Callback["talkgroup"])
-                send_transmission_notifications.delay(TX.data)
-                return Response({"success": True, "UUID": Callback["UUID"]})
+            if transmission.is_valid(raise_exception=True):
+                transmission.save()
+                socket_data = {
+                    "UUID": transmission.data["UUID"],
+                    "talkgroup": transmission.data["talkgroup"],
+                }
+                send_transmission_to_web.delay(socket_data, cleaned_data["talkgroup"])
+                send_transmission_notifications.delay(transmission.data)
+                return Response({"success": True, "UUID": cleaned_data["UUID"]})
             else:
-                Response(TX.errors)
-        except Exception as e:
+                Response(transmission.errors)
+        except Exception as error:
             if settings.SEND_TELEMETRY:
-                sentry_sdk.set_context("add_tx_data", {
-                    "data": data,
-                    "Callback": Callback,
-                    "TX": TX,
-                    "recorder": recorderX,
-                })
-                sentry_sdk.capture_exception(e)
-            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+                sentry_sdk.set_context(
+                    "add_tx_data",
+                    {
+                        "data": data,
+                        "cleaned_data": cleaned_data,
+                        "TX": transmission,
+                        "recorder": recorder,
+                    },
+                )
+                sentry_sdk.capture_exception(error)
+            return Response(str(error), status=status.HTTP_400_BAD_REQUEST)
 
 
 class TransmissionView(APIView):
     queryset = Transmission.objects.all()
     serializer_class = TransmissionSerializer
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches Transmission ORM Object
+        """
         try:
-            return Transmission.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return Transmission.objects.get(UUID=request_uuid)
+        except Transmission.DoesNotExist:
+            raise Http404 from Transmission.DoesNotExist
 
     @swagger_auto_schema(tags=["Transmission"])
-    def get(self, request, UUID, format=None):
-        TransmissionX: Transmission = self.get_object(UUID)
+    def get(self, request, request_uuid):
+        """
+        Transmission get EP
+        """
+        transmission: Transmission = self.get_object(request_uuid)
         user: UserProfile = request.user.userProfile
 
-        if not user.siteAdmin:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            if not TransmissionX.system in systems:
+        if not user.site_admin:
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            if not transmission.system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-            SystemX: System = TransmissionX.system
-            if SystemX.enableTalkGroupACLs:
-                talkgroupsAllowed = get_user_allowed_talkgroups(SystemX, user.UUID)
-                if not TransmissionX.talkgroup in talkgroupsAllowed:
+            system: System = transmission.system
+            if system.enable_talkgroup_acls:
+                talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
+                if not transmission.talkgroup in talkgroups_allowed:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TransmissionSerializer(TransmissionX)
+        serializer = TransmissionSerializer(transmission)
         return Response(serializer.data)
 
     @swagger_auto_schema(tags=["Transmission"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        Transmission Delete EP
+        """
         user: UserProfile = request.user.userProfile
 
-        if not user.siteAdmin:
+        if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        Transmission = self.get_object(UUID)
-        Transmission.delete()
+        transmission = self.get_object(request_uuid)
+        transmission.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1825,16 +2129,20 @@ class IncidentList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["Incident"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        Incident List EP
+        """
         user: UserProfile = request.user.userProfile
 
-        if user.siteAdmin:
-            Incidents = Incident.objects.all()
+        if user.site_admin:
+            incidents = Incident.objects.all()
         else:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            Incidents = Incident.objects.filter(system__in=systems)
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            incidents = Incident.objects.filter(system__in=systems)
 
-        page = self.paginate_queryset(Incidents)
+        page = self.paginate_queryset(incidents)
         if page is not None:
             serializer = IncidentSerializer(page, many=True)
             return Response(serializer.data)
@@ -1875,7 +2183,10 @@ class IncidentCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        Incident Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1892,6 +2203,15 @@ class IncidentForward(APIView):
     queryset = Incident.objects.all()
     serializer_class = IncidentCreateSerializer
     permission_classes = [FeederFree]
+
+    def get_object(self, request_uuid):
+        """
+        Fetches Incident ORM Object
+        """
+        try:
+            return Incident.objects.get(UUID=request_uuid)
+        except Incident.DoesNotExist:
+            raise Http404 from Incident.DoesNotExist
 
     @swagger_auto_schema(
         tags=["Incident"],
@@ -1923,12 +2243,15 @@ class IncidentForward(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        Incident Forward EP
+        """
         data = JSONParser().parse(request)
 
         # try:
-        SR: SystemRecorder = SystemRecorder.objects.get(
-            forwarderWebhookUUID=data["recorder"]
+        system_recorder: SystemRecorder = SystemRecorder.objects.get(
+            api_key=data["recorder"]
         )
         # except:
         #     return Response(
@@ -1936,13 +2259,13 @@ class IncidentForward(APIView):
         #         status=status.HTTP_401_UNAUTHORIZED,
         #     )
 
-        if not SR:
+        if not system_recorder:
             return Response(
                 "Not allowed to post this talkgroup",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        data["system"] = str(SR.system.UUID)
+        data["system"] = str(system_recorder.system.UUID)
         del data["recorder"]
 
         serializer = IncidentCreateSerializer(data=data, partial=True)
@@ -1951,12 +2274,15 @@ class IncidentForward(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        Incident Update EP
+        """
         data = JSONParser().parse(request)
 
         # try:
-        SR: SystemRecorder = SystemRecorder.objects.get(
-            forwarderWebhookUUID=data["recorder"]
+        system_recorder: SystemRecorder = SystemRecorder.objects.get(
+            api_key=data["recorder"]
         )
         # except:
         #     return Response(
@@ -1964,18 +2290,18 @@ class IncidentForward(APIView):
         #         status=status.HTTP_401_UNAUTHORIZED,
         #     )
 
-        if not SR:
+        if not system_recorder:
             return Response(
                 "Not allowed to post this talkgroup",
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        data["system"] = str(SR.system.UUID)
+        data["system"] = str(system_recorder.system.UUID)
 
         del data["recorder"]
 
-        Incident = self.get_object(UUID)
-        serializer = IncidentCreateSerializer(Incident, data=data, partial=True)
+        incident = self.get_object(request_uuid)
+        serializer = IncidentCreateSerializer(incident, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -1987,11 +2313,14 @@ class IncidentUpdate(APIView):
     serializer_class = IncidentCreateSerializer
     permission_classes = [IsSiteAdmin]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches Incident ORM Object
+        """
         try:
-            return Incident.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return Incident.objects.get(UUID=request_uuid)
+        except Incident.DoesNotExist:
+            raise Http404 from Incident.DoesNotExist
 
     @swagger_auto_schema(
         tags=["Incident"],
@@ -2020,10 +2349,13 @@ class IncidentUpdate(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        Incident Update EP
+        """
         data = JSONParser().parse(request)
-        Incident = self.get_object(UUID)
-        serializer = IncidentCreateSerializer(Incident, data=data, partial=True)
+        incident = self.get_object(request_uuid)
+        serializer = IncidentCreateSerializer(incident, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -2035,33 +2367,43 @@ class IncidentView(APIView):
     serializer_class = IncidentSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches Incident ORM Object
+        """
         try:
-            return Incident.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return Incident.objects.get(UUID=request_uuid)
+        except Incident.DoesNotExist:
+            raise Http404 from Incident.DoesNotExist
 
     @swagger_auto_schema(tags=["Incident"])
-    def get(self, request, UUID, format=None):
-        IncidentX: Incident = self.get_object(UUID)
+    def get(self, request, request_uuid):
+        """
+        Incident Get EP
+        """
+        incident: Incident = self.get_object(request_uuid)
         user: UserProfile = request.user.userProfile
 
-        if not user.siteAdmin:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
-            if not IncidentX.system in systems:
+        if not user.site_admin:
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
+            if not incident.system in systems:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = IncidentSerializer(IncidentX)
+        serializer = IncidentSerializer(incident)
         return Response(serializer.data)
 
     @swagger_auto_schema(tags=["Incident"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        Incident Delete EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        IncidentX: Incident = self.get_object(UUID)
-        IncidentX.delete()
+        incident: Incident = self.get_object(request_uuid)
+        incident.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2072,16 +2414,19 @@ class ScanListList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["ScanList"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        ScanList List EP
+        """
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
-            ScanLists = ScanList.objects.all()
+        if user.site_admin:
+            scanlists = ScanList.objects.all()
         else:
-            ScanLists = ScanList.objects.filter(
-                Q(owner=user) | Q(communityShared=True) | Q(public=True)
+            scanlists = ScanList.objects.filter(
+                Q(owner=user) | Q(community_shared=True) | Q(public=True)
             )
 
-        page = self.paginate_queryset(ScanLists)
+        page = self.paginate_queryset(scanlists)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2094,11 +2439,14 @@ class ScanListPersonalList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["ScanList"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        ScanList personal List EP
+        """
         user: UserProfile = request.user.userProfile
-        ScanLists = ScanList.objects.filter(owner=user)
+        scanlists = ScanList.objects.filter(owner=user)
 
-        page = self.paginate_queryset(ScanLists)
+        page = self.paginate_queryset(scanlists)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2111,17 +2459,20 @@ class ScanListUserList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["ScanList"])
-    def get(self, request, USER_UUID, format=None):
+    def get(self, request, user_uuid):
+        """
+        ScanList User List EP
+        """
         user: UserProfile = request.user.userProfile
-        userScan: UserProfile = UserProfile.objects.get(UUID=USER_UUID)
-        if user.siteAdmin:
-            ScanLists = ScanList.objects.filter(owner=userScan)
+        user_scan: UserProfile = UserProfile.objects.get(UUID=user_uuid)
+        if user.site_admin:
+            scanlists = ScanList.objects.filter(owner=user_scan)
         else:
-            ScanLists = ScanList.objects.filter(owner=userScan).filter(
-                Q(public=True) | Q(communityShared=True)
+            scanlists = ScanList.objects.filter(owner=user_scan).filter(
+                Q(public=True) | Q(community_shared=True)
             )
 
-        page = self.paginate_queryset(ScanLists)
+        page = self.paginate_queryset(scanlists)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2142,7 +2493,7 @@ class ScanListCreate(APIView):
                 "description": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Description"
                 ),
-                "communityShared": openapi.Schema(
+                "community_shared": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Wether it is shared or user-only",
                 ),
@@ -2154,7 +2505,10 @@ class ScanListCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        ScanList Create EP
+        """
         data = JSONParser().parse(request)
         user: UserProfile = request.user.userProfile
 
@@ -2163,7 +2517,7 @@ class ScanListCreate(APIView):
 
         data["owner"] = user.UUID
 
-        if not user.siteAdmin:
+        if not user.site_admin:
             data["public"] = False
 
         if not "public" in data:
@@ -2181,22 +2535,28 @@ class ScanListView(APIView):
     serializer_class = ScanListSerializer
     permission_classes = [IsUser]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches ScanList ORM Object
+        """
         try:
-            return ScanList.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return ScanList.objects.get(UUID=request_uuid)
+        except ScanList.DoesNotExist:
+            raise Http404 from ScanList.DoesNotExist
 
     @swagger_auto_schema(tags=["ScanList"])
-    def get(self, request, UUID, format=None):
-        ScanListX: ScanList = self.get_object(UUID)
+    def get(self, request, request_uuid):
+        """
+        ScanList Get EP
+        """
+        scanlist: ScanList = self.get_object(request_uuid)
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
-            if not ScanListX.owner == user:
-                if not ScanListX.public and not ScanListX.communityShared:
+        if not user.site_admin:
+            if not scanlist.owner == user:
+                if not scanlist.public and not scanlist.community_shared:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = ScanListSerializer(ScanListX)
+        serializer = ScanListSerializer(scanlist)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -2223,14 +2583,17 @@ class ScanListView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        ScanList Update EP
+        """
         data = JSONParser().parse(request)
-        ScanListX: ScanList = self.get_object(UUID)
-        serializer = ScanListSerializer(ScanListX, data=data, partial=True)
+        scanlist: ScanList = self.get_object(request_uuid)
+        serializer = ScanListSerializer(scanlist, data=data, partial=True)
 
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
-            if not ScanListX.owner == user:
+        if not user.site_admin:
+            if not scanlist.owner == user:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         if serializer.is_valid():
@@ -2239,15 +2602,18 @@ class ScanListView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["ScanList"])
-    def delete(self, request, UUID, format=None):
-        ScanListX: ScanList = self.get_object(UUID)
+    def delete(self, request, request_uuid):
+        """
+        ScanList Delete EP
+        """
+        scanlist: ScanList = self.get_object(request_uuid)
 
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
-            if not ScanListX.owner == user:
+        if not user.site_admin:
+            if not scanlist.owner == user:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        ScanListX.delete()
+        scanlist.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2257,38 +2623,42 @@ class ScanListTransmissionList(APIView, PaginationMixin):
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches ScanList ORM Object
+        """
         try:
-            return ScanList.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return ScanList.objects.get(UUID=request_uuid)
+        except ScanList.DoesNotExist:
+            raise Http404 from ScanList.DoesNotExist
 
     @swagger_auto_schema(tags=["Transmission"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        ScanList Transmission List EP
+        """
         user: UserProfile = request.user.userProfile
-        ScanListX: ScanList = self.get_object(UUID)
+        scanlist: ScanList = self.get_object(request_uuid)
 
-        Talkgroups = ScanListX.talkgroups.all()
-        Transmissions = Transmission.objects.filter(talkgroup__in=Talkgroups)
-        AllowedTransmissions = []
+        talkgroups = scanlist.talkgroups.all()
+        transmissions = Transmission.objects.filter(talkgroup__in=talkgroups)
+        allowed_transmissions = []
 
-        if user.siteAdmin:
-            AllowedTransmissions = Transmissions
+        if user.site_admin:
+            allowed_transmissions = transmissions
         else:
-            systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+            # pylint: disable=unused-variable
+            system_uuids, systems = get_user_allowed_systems(user.UUID)
             for system in systems:
-                if system.enableTalkGroupACLs:
-                    TGAllowed = get_user_allowed_talkgroups(system, user.UUID)
-                    AllowedTransmissions.extend(Transmissions.filter(
-                            system=system, talkgroup__in=TGAllowed
-                        )
+                if system.enable_talkgroup_acls:
+                    talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
+                    allowed_transmissions.extend(
+                        transmissions.filter(system=system, talkgroup__in=talkgroups_allowed)
                     )
                 else:
-                    AllowedTransmissions.extend(
-                        Transmissions.filter(system=system)
-                    )
+                    allowed_transmissions.extend(transmissions.filter(system=system))
 
-        page = self.paginate_queryset(AllowedTransmissions)
+        page = self.paginate_queryset(allowed_transmissions)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2301,13 +2671,16 @@ class ScannerList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["Scanner"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        Scanner List EP
+        """
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
+        if user.site_admin:
             scanner = Scanner.objects.all()
         else:
             scanner = Scanner.objects.filter(
-                Q(owner=user) | Q(communityShared=True) | Q(public=True)
+                Q(owner=user) | Q(community_shared=True) | Q(public=True)
             )
 
         page = self.paginate_queryset(scanner)
@@ -2331,7 +2704,7 @@ class ScannerCreate(APIView):
                 "description": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Description"
                 ),
-                "communityShared": openapi.Schema(
+                "community_shared": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Wether it is shared or user-only",
                 ),
@@ -2343,7 +2716,10 @@ class ScannerCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        Scanner Update EP
+        """
         data = JSONParser().parse(request)
         user: UserProfile = request.user.userProfile
 
@@ -2352,7 +2728,7 @@ class ScannerCreate(APIView):
 
         data["owner"] = user.UUID
 
-        if not user.siteAdmin:
+        if not user.site_admin:
             data["public"] = False
 
         if not "public" in data:
@@ -2370,19 +2746,25 @@ class ScannerView(APIView):
     serializer_class = ScannerSerializer
     permission_classes = [IsUser]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches Scanner ORM Object
+        """
         try:
-            return Scanner.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return Scanner.objects.get(UUID=request_uuid)
+        except Scanner.DoesNotExist:
+            raise Http404 from Scanner.DoesNotExist
 
     @swagger_auto_schema(tags=["Scanner"])
-    def get(self, request, UUID, format=None):
-        ScannerX: Scanner = self.get_object(UUID)
+    def get(self, request, request_uuid):
+        """
+        Scanner Get EP
+        """
+        scanner: Scanner = self.get_object(request_uuid)
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
-            if not ScannerX.owner == user:
-                if not ScannerX.public and not ScannerX.communityShared:
+        if not user.site_admin:
+            if not scanner.owner == user:
+                if not scanner.public and not scanner.community_shared:
                     return Response(status=status.HTTP_401_UNAUTHORIZED)
         serializer = ScannerSerializer(Scanner)
         return Response(serializer.data)
@@ -2411,31 +2793,37 @@ class ScannerView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        Scanner Update EP
+        """
         data = JSONParser().parse(request)
-        ScannerX: Scanner = self.get_object(UUID)
+        scanner: Scanner = self.get_object(request_uuid)
 
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
-            if not ScannerX.owner == user:
+        if not user.site_admin:
+            if not scanner.owner == user:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = ScannerSerializer(ScannerX, data=data, partial=True)
+        serializer = ScannerSerializer(scanner, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["Scanner"])
-    def delete(self, request, UUID, format=None):
-        ScannerX: Scanner = self.get_object(UUID)
+    def delete(self, request, request_uuid):
+        """
+        Scanner Delete EP
+        """
+        scanner: Scanner = self.get_object(request_uuid)
         user: UserProfile = request.user.userProfile
 
-        if not user.siteAdmin:
-            if not ScannerX.owner == user:
+        if not user.site_admin:
+            if not scanner.owner == user:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        ScannerX.delete()
+        scanner.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2445,46 +2833,63 @@ class ScannerTransmissionList(APIView, PaginationMixin):
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches Scanner ORM Object
+        """
         try:
-            return Scanner.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return Scanner.objects.get(UUID=request_uuid)
+        except Scanner.DoesNotExist:
+            raise Http404 from Scanner.DoesNotExist
 
     @swagger_auto_schema(tags=["Transmission"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        Scanner Transmission List EP
+        """
         user: UserProfile = request.user.userProfile
-        ScannerX: Scanner = self.get_object(UUID)
-        systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+        scanner: Scanner = self.get_object(request_uuid)
+        # pylint: disable=unused-variable
+        system_uuids, systems = get_user_allowed_systems(user.UUID)
 
-        AllowedTransmissions = []
-        ScanListTalkgroups = []
-        Transmissions = []
+        allowed_transmisssions = []
+        scanlist_talkgroups = []
+        transmissions = []
 
-        ScanListTalkgroups = ScannerX.scanlists.all().values_list('talkgroups',flat=True)
-        ScanListTalkgroups = list(dict.fromkeys(ScanListTalkgroups))
-        Transmissions = Transmission.objects.filter(talkgroup__in=ScanListTalkgroups)
+        scanlist_talkgroups = scanner.scanlists.all().values_list(
+            "talkgroups", flat=True
+        )
+        scanlist_talkgroups = list(dict.fromkeys(scanlist_talkgroups))
+        transmissions = Transmission.objects.filter(talkgroup__in=scanlist_talkgroups)
 
-        if not user.siteAdmin:
-            acl_systems = Transmissions.filter(system__enableTalkGroupACLs=True, system__in=systems).values_list('system', flat=True)
-            non_acl_systems = Transmissions.filter(system__enableTalkGroupACLs=False, system__in=systems).values_list('system', flat=True)
+        if not user.site_admin:
+            acl_systems = transmissions.filter(
+                system__enable_talkgroup_acls=True, system__in=systems
+            ).values_list("system", flat=True)
+            non_acl_systems = transmissions.filter(
+                system__enable_talkgroup_acls=False, system__in=systems
+            ).values_list("system", flat=True)
 
             non_acl_systems = list(dict.fromkeys(non_acl_systems))
             acl_systems = list(dict.fromkeys(acl_systems))
 
-            talkgroupsAllowed = [] 
-            talkgroupsAllowed.extend(TalkGroup.objects.filter(system__UUID__in=non_acl_systems))
+            talkgroups_allowed = []
+            talkgroups_allowed.extend(
+                TalkGroup.objects.filter(system__UUID__in=non_acl_systems)
+            )
 
-            for system in acl_systems:            
+            for system in acl_systems:
                 system_object = System.objects.get(UUID=system)
-                user_allowed_talkgroups = get_user_allowed_talkgroups(system_object, user.UUID)
-                talkgroupsAllowed.extend(user_allowed_talkgroups)
+                user_allowed_talkgroups = get_user_allowed_talkgroups(
+                    system_object, user.UUID
+                )
+                talkgroups_allowed.extend(user_allowed_talkgroups)
 
-            AllowedTransmissions = Transmissions.filter(talkgroup__in=talkgroupsAllowed)
+            allowed_transmisssions = transmissions.filter(talkgroup__in=talkgroups_allowed)
         else:
-            AllowedTransmissions = Transmissions
+            allowed_transmisssions = transmissions
 
-        page = self.paginate_queryset(AllowedTransmissions)
+        page = self.paginate_queryset(allowed_transmisssions)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2497,14 +2902,17 @@ class GlobalAnnouncementList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["GlobalAnnouncement"])
-    def get(self, request, format=None):
+    def get(self, request):
+        """
+        GlobalAnnouncement List EP
+        """
         user: UserProfile = request.user.userProfile
-        if user.siteAdmin:
-            GlobalAnnouncements = GlobalAnnouncement.objects.all()
+        if user.site_admin:
+            global_announcements = GlobalAnnouncement.objects.all()
         else:
-            GlobalAnnouncements = GlobalAnnouncement.objects.filter(enabled=True)
+            global_announcements = GlobalAnnouncement.objects.filter(enabled=True)
 
-        page = self.paginate_queryset(GlobalAnnouncements)
+        page = self.paginate_queryset(global_announcements)
         if page is not None:
             serializer = GlobalAnnouncementSerializer(page, many=True)
             return Response(serializer.data)
@@ -2531,7 +2939,10 @@ class GlobalAnnouncementCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        GlobalAnnouncement Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -2549,20 +2960,26 @@ class GlobalAnnouncementView(APIView):
     serializer_class = GlobalAnnouncementSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches GlobalAnnouncement ORM Object
+        """
         try:
-            return GlobalAnnouncement.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return GlobalAnnouncement.objects.get(UUID=request_uuid)
+        except GlobalAnnouncement.DoesNotExist:
+            raise Http404 from GlobalAnnouncement.DoesNotExist
 
     @swagger_auto_schema(tags=["GlobalAnnouncement"])
-    def get(self, request, UUID, format=None):
+    def get(self, request, request_uuid):
+        """
+        GlobalAnnouncement Get EP
+        """
         user: UserProfile = request.user.userProfile
-        GlobalAnnouncementX: GlobalAnnouncement = self.get_object(UUID)
-        if not user.siteAdmin:
-            if not GlobalAnnouncementX.enabled:
+        global_announcement: GlobalAnnouncement = self.get_object(request_uuid)
+        if not user.site_admin:
+            if not global_announcement.enabled:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-        serializer = GlobalAnnouncementSerializer(GlobalAnnouncementX)
+        serializer = GlobalAnnouncementSerializer(global_announcement)
         return Response(serializer.data)
 
     @swagger_auto_schema(
@@ -2580,14 +2997,17 @@ class GlobalAnnouncementView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        GlobalAnnouncement Update EP
+        """
         data = JSONParser().parse(request)
         user: UserProfile = request.user.userProfile
 
-        if user.siteAdmin:
-            GlobalAnnouncementX: GlobalAnnouncement = self.get_object(UUID)
+        if user.site_admin:
+            global_announcement: GlobalAnnouncement = self.get_object(request_uuid)
             serializer = GlobalAnnouncementSerializer(
-                GlobalAnnouncementX, data=data, partial=True
+                global_announcement, data=data, partial=True
             )
             if serializer.is_valid():
                 serializer.save()
@@ -2597,12 +3017,15 @@ class GlobalAnnouncementView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["GlobalAnnouncement"])
-    def delete(self, request, UUID, format=None):
+    def delete(self, request, request_uuid):
+        """
+        GlobalAnnouncement Delete EP
+        """
         user: UserProfile = request.user.userProfile
-        if not user.siteAdmin:
+        if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        GlobalAnnouncementX: GlobalAnnouncement = self.get_object(UUID)
-        GlobalAnnouncementX.delete()
+        global_announcement: GlobalAnnouncement = self.get_object(request_uuid)
+        global_announcement.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2613,12 +3036,15 @@ class GlobalEmailTemplateList(APIView, PaginationMixin):
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["GlobalEmailTemplate"])
-    def get(self, request, format=None):
-        GlobalEmailTemplates = GlobalEmailTemplate.objects.all()
+    def get(self, request):
+        """
+        GlobalEmailTemplate List EP
+        """
+        global_email_templates = GlobalEmailTemplate.objects.all()
 
-        page = self.paginate_queryset(GlobalEmailTemplates)
+        page = self.paginate_queryset(global_email_templates)
         if page is not None:
-            serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplates, many=True)
+            serializer = GlobalEmailTemplateSerializer(global_email_templates, many=True)
             return Response(serializer.data)
 
 
@@ -2633,7 +3059,7 @@ class GlobalEmailTemplateCreate(APIView):
             type=openapi.TYPE_OBJECT,
             properties={
                 "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
-                "type": openapi.Schema(
+                "template_type": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Email type"
                 ),
                 "HTML": openapi.Schema(type=openapi.TYPE_STRING, description="HTML"),
@@ -2643,7 +3069,10 @@ class GlobalEmailTemplateCreate(APIView):
             },
         ),
     )
-    def post(self, request, format=None):
+    def post(self, request):
+        """
+        GlobalEmailTemplate Create EP
+        """
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -2661,15 +3090,22 @@ class GlobalEmailTemplateView(APIView):
     serializer_class = GlobalEmailTemplateSerializer
     permission_classes = [IsSiteAdmin]
 
-    def get_object(self, UUID):
+    def get_object(self, request_uuid):
+        """
+        Fetches GlobalEmailTemplate ORM Object
+        """
         try:
-            return GlobalEmailTemplate.objects.get(UUID=UUID)
-        except UserProfile.DoesNotExist:
-            raise Http404
+            return GlobalEmailTemplate.objects.get(UUID=request_uuid)
+        except GlobalEmailTemplate.DoesNotExist:
+            raise Http404 from GlobalEmailTemplate.DoesNotExist
 
     @swagger_auto_schema(tags=["GlobalEmailTemplate"])
-    def get(self, request, UUID, format=None):
-        GlobalEmailTemplate = self.get_object(UUID)
+    def get(self, request, request_uuid):
+        """
+        GlobalEmailTemplate Get EP
+        """
+        # pylint: disable=unused-variable
+        global_email_template = self.get_object(request_uuid)
         serializer = GlobalEmailTemplateSerializer(GlobalEmailTemplate)
         return Response(serializer.data)
 
@@ -2679,7 +3115,7 @@ class GlobalEmailTemplateView(APIView):
             type=openapi.TYPE_OBJECT,
             properties={
                 "name": openapi.Schema(type=openapi.TYPE_STRING, description="Name"),
-                "type": openapi.Schema(
+                "template_type": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Email type"
                 ),
                 "HTML": openapi.Schema(type=openapi.TYPE_STRING, description="HTML"),
@@ -2689,11 +3125,14 @@ class GlobalEmailTemplateView(APIView):
             },
         ),
     )
-    def put(self, request, UUID, format=None):
+    def put(self, request, request_uuid):
+        """
+        GlobalEmailTemplate Update EP
+        """
         data = JSONParser().parse(request)
-        GlobalEmailTemplate = self.get_object(UUID)
+        global_email_template = self.get_object(request_uuid)
         serializer = GlobalEmailTemplateSerializer(
-            GlobalEmailTemplate, data=data, partial=True
+            global_email_template, data=data, partial=True
         )
         if serializer.is_valid():
             serializer.save()
@@ -2701,9 +3140,12 @@ class GlobalEmailTemplateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["GlobalEmailTemplate"])
-    def delete(self, request, UUID, format=None):
-        GlobalEmailTemplate = self.get_object(UUID)
-        GlobalEmailTemplate.delete()
+    def delete(self, request, request_uuid):
+        """
+        GlobalEmailTemplate delete EP
+        """
+        global_email_template = self.get_object(request_uuid)
+        global_email_template.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2714,7 +3156,7 @@ class GlobalEmailTemplateView(APIView):
 #     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
 #     @swagger_auto_schema(tags=["SystemReciveRate"])
-#     def get(self, request, format=None):
+#     def get(self, request):
 #         SystemReciveRates = SystemReciveRate.objects.all()
 
 #         page = self.paginate_queryset(SystemReciveRates)
@@ -2744,10 +3186,10 @@ class GlobalEmailTemplateView(APIView):
 #             },
 #         ),
 #     )
-#     def post(self, request, format=None):
+#     def post(self, request):
 #         data = JSONParser().parse(request)
 
-#         if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+#         if not SystemRecorder.objects.filter(api_key=data["recorder"]):
 #             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 #         data["UUID"] = uuid.uuid4()
@@ -2774,15 +3216,15 @@ class GlobalEmailTemplateView(APIView):
 #             raise Http404
 
 #     @swagger_auto_schema(tags=["SystemReciveRate"])
-#     def get(self, request, UUID, format=None):
+#     def get(self, request, UUID):
 #         SystemReciveRateX: SystemReciveRate = self.get_object(UUID)
 #         serializer = SystemReciveRateSerializer(SystemReciveRateX)
 #         return Response(serializer.data)
 
 #     @swagger_auto_schema(tags=["SystemReciveRate"])
-#     def delete(self, request, UUID, format=None):
+#     def delete(self, request, UUID):
 #         user: UserProfile = request.user.userProfile
-#         if not user.siteAdmin:
+#         if not user.site_admin:
 #             return Response(status=status.HTTP_401_UNAUTHORIZED)
 #         SystemReciveRateX: SystemReciveRate = self.get_object(UUID)
 #         SystemReciveRateX.delete()
@@ -2796,13 +3238,13 @@ class GlobalEmailTemplateView(APIView):
 #     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
 #     @swagger_auto_schema(tags=["Call"])
-#     def get(self, request, format=None):
+#     def get(self, request):
 #         user: UserProfile = request.user.userProfile
 
-#         if user.siteAdmin:
+#         if user.site_admin:
 #             Calls = Call.objects.all()
 #         else:
-#             systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+#             system_uuids, systems = get_user_allowed_systems(user.UUID)
 #             TalkGroups = TalkGroup.objects.filter(system__in=systems)
 #             Calls = Call.objects.filter(talkgroup__in=TalkGroups)
 
@@ -2823,8 +3265,8 @@ class GlobalEmailTemplateView(APIView):
 #             type=openapi.TYPE_OBJECT,
 #             required=[
 #                 "trunkRecorderID",
-#                 "startTime",
-#                 "endTime",
+#                 "start_time",
+#                 "end_time",
 #                 "units",
 #                 "emergency",
 #                 "encrypted",
@@ -2837,10 +3279,10 @@ class GlobalEmailTemplateView(APIView):
 #                 "trunkRecorderID": openapi.Schema(
 #                     type=openapi.TYPE_STRING, description="Trunk Recorder ID"
 #                 ),
-#                 "startTime": openapi.Schema(
+#                 "start_time": openapi.Schema(
 #                     type=openapi.TYPE_STRING, description="Start Time"
 #                 ),
-#                 "endTime": openapi.Schema(
+#                 "end_time": openapi.Schema(
 #                     type=openapi.TYPE_STRING, description="End Time"
 #                 ),
 #                 "units": openapi.Schema(
@@ -2872,10 +3314,10 @@ class GlobalEmailTemplateView(APIView):
 #             },
 #         ),
 #     )
-#     def post(self, request, format=None):
+#     def post(self, request):
 #         data = JSONParser().parse(request)
 
-#         if not SystemRecorder.objects.filter(forwarderWebhookUUID=data["recorder"]):
+#         if not SystemRecorder.objects.filter(api_key=data["recorder"]):
 #             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 #         if not "UUID" in data:
@@ -2901,12 +3343,12 @@ class GlobalEmailTemplateView(APIView):
 #             raise Http404
 
 #     @swagger_auto_schema(tags=["Call"])
-#     def get(self, request, UUID, format=None):
+#     def get(self, request, UUID):
 #         user: UserProfile = request.user.userProfile
 #         CallX: Call = self.get_object(UUID)
 
-#         if not user.siteAdmin:
-#             systemUUIDs, systems = get_user_allowed_systems(user.UUID)
+#         if not user.site_admin:
+#             system_uuids, systems = get_user_allowed_systems(user.UUID)
 #             TalkGroups = TalkGroup.objects.filter(system__in=systems)
 #             if not CallX.talkgroup in TalkGroups:
 #                 return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -2915,9 +3357,9 @@ class GlobalEmailTemplateView(APIView):
 #         return Response(serializer.data)
 
 #     @swagger_auto_schema(tags=["Call"])
-#     def delete(self, request, UUID, format=None):
+#     def delete(self, request, UUID):
 #         user: UserProfile = request.user.userProfile
-#         if not user.siteAdmin:
+#         if not user.site_admin:
 #             return Response(status=status.HTTP_401_UNAUTHORIZED)
 #         CallX: Call = self.get_object(UUID)
 #         CallX.delete()

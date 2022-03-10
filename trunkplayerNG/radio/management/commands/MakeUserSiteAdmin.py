@@ -13,14 +13,14 @@ class Command(BaseCommand):
         if CustomUser.objects.filter(email=options["UserEmail"]):
             User: CustomUser = CustomUser.objects.get(email=options["UserEmail"])
 
-            if User.userProfile.siteAdmin:
+            if User.userProfile.site_admin:
                 self.stdout.write(
                     self.style.WARNING(
                         f"{options['UserEmail']} is Already a Site Admin"
                     )
                 )
             else:
-                User.userProfile.siteAdmin = True
+                User.userProfile.site_admin = True
                 User.userProfile.save()
                 User.save()
 

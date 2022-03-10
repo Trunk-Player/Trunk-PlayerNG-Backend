@@ -25,7 +25,7 @@ class IsSAOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        return request.user.userProfile.siteAdmin and request.user.is_authenticated
+        return request.user.userProfile.site_admin and request.user.is_authenticated
 
 
 class IsSAOrUser(permissions.BasePermission):
@@ -43,7 +43,7 @@ class IsSAOrUser(permissions.BasePermission):
             return False
 
         if (
-            request.user.userProfile.siteAdmin
+            request.user.userProfile.site_admin
             or request.user.userProfile.UUID == obj.UUID
         ):
             return True
@@ -76,7 +76,7 @@ class IsSiteAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.is_anonymous:
             return False
-        return request.user.userProfile.siteAdmin
+        return request.user.userProfile.site_admin
 
 
 class Feeder(permissions.BasePermission):

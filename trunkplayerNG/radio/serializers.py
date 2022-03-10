@@ -1,6 +1,27 @@
 from rest_framework import serializers
 
-from radio.models import *
+from radio.models import (
+    UserProfile,
+    SystemACL,
+    System,
+    City,
+    Agency,
+    TalkGroup,
+    SystemForwarder,
+    SystemRecorder,
+    Unit,
+    TransmissionUnit,
+    TransmissionFreq,
+    Transmission,
+    Incident,
+    TalkGroupACL,
+    ScanList,
+    Scanner,
+    GlobalAnnouncement,
+    GlobalEmailTemplate,
+    UserAlert
+)
+
 
 
 class UserAlertSerializer(serializers.ModelSerializer):
@@ -10,10 +31,11 @@ class UserAlertSerializer(serializers.ModelSerializer):
             "UUID",
             "name",
             "user",
-            "enabled" "description",
-            "webNotification",
-            "appRiseNotification",
-            "appRiseURLs",
+            "enabled",
+            "description",
+            "web_notification",
+            "app_rise_otification",
+            "app_rise_urls",
             "title",
             "body",
             "emergencyOnly",
@@ -23,7 +45,7 @@ class UserAlertSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ["UUID", "siteAdmin", "description", "siteTheme"]
+        fields = ["UUID", "site_admin", "description", "site_theme"]
 
 
 class SystemACLSerializer(serializers.ModelSerializer):
@@ -39,9 +61,9 @@ class SystemSerializer(serializers.ModelSerializer):
             "UUID",
             "name",
             "systemACL",
-            "enableTalkGroupACLs",
-            "pruneTransmissions",
-            "pruneTransmissionsAfterDays",
+            "enable_talkgroup_acls",
+            "prune_transmissions",
+            "prune_transmissions_after_days",
         ]
 
 
@@ -52,11 +74,11 @@ class SystemForwarderSerializer(serializers.ModelSerializer):
             "UUID",
             "name",
             "enabled",
-            "recorderKey",
-            "remoteURL",
-            "forwardIncidents",
-            "forwardedSystems",
-            "talkGroupFilter",
+            "recorder_key",
+            "remote_url",
+            "forward_incidents",
+            "forwarded_systems",
+            "talkgroup_filter",
         ]
 
 
@@ -86,8 +108,8 @@ class TalkGroupSerializer(serializers.ModelSerializer):
         fields = [
             "UUID",
             "system",
-            "decimalID",
-            "alphaTag",
+            "decimal_id",
+            "alpha_tag",
             "description",
             "encrypted",
             "agency",
@@ -102,8 +124,8 @@ class TalkGroupViewListSerializer(serializers.ModelSerializer):
         fields = [
             "UUID",
             "system",
-            "decimalID",
-            "alphaTag",
+            "decimal_id",
+            "alpha_tag",
             "description",
             "encrypted",
             "agency",
@@ -117,24 +139,24 @@ class SystemRecorderSerializer(serializers.ModelSerializer):
             "UUID",
             "system",
             "name",
-            "siteID",
+            "site_id",
             "enabled",
             "user",
-            "talkgroupsAllowed",
-            "talkgroupsDenyed",
-            "forwarderWebhookUUID",
+            "talkgroups_allowed",
+            "talkgroups_denyed",
+            "api_key",
         ]
 
 
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Unit
-        fields = ["UUID", "system", "decimalID", "description"]
+        fields = ["UUID", "system", "decimal_id", "description"]
 
 
 class TransmissionUnitSerializer(serializers.ModelSerializer):
     unit = serializers.SlugRelatedField(
-        read_only=False, queryset=Unit.objects.all(), slug_field="decimalID"
+        read_only=False, queryset=Unit.objects.all(), slug_field="decimal_id"
     )
 
     class Meta:
@@ -152,9 +174,9 @@ class TransmissionUnitSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         unit = validated_data.pop("unit")
-        UTX, created = Unit.objects.get_or_create(decimalID=int(unit))
-
-        return Transmission.objects.create(unit=UTX, **validated_data)
+        # pylint: disable=unused-variable
+        unit_object, created = Unit.objects.get_or_create(decimal_id=int(unit))
+        return Transmission.objects.create(unit=unit_object, **validated_data)
 
 
 class TransmissionFreqSerializer(serializers.ModelSerializer):
@@ -172,9 +194,9 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "UUID",
             "system",
             "recorder",
-            "startTime",
-            "endTime",
-            "audioFile",
+            "start_time",
+            "end_time",
+            "audio_file",
             "talkgroup",
             "encrypted",
             "units",
@@ -192,8 +214,6 @@ class TransmissionListSerializer(serializers.ModelSerializer):
     frequencys = TransmissionFreqSerializer(read_only=True, many=True)
 
     system_name = serializers.SerializerMethodField()
-    
-    
 
     class Meta:
         model = Transmission
@@ -202,9 +222,9 @@ class TransmissionListSerializer(serializers.ModelSerializer):
             "system",
             "system_name",
             "recorder",
-            "startTime",
-            "endTime",
-            "audioFile",
+            "start_time",
+            "end_time",
+            "audio_file",
             "talkgroup",
             "encrypted",
             "units",
@@ -216,6 +236,9 @@ class TransmissionListSerializer(serializers.ModelSerializer):
         ]
 
     def get_system_name(self, obj):
+        """
+        Gets the name of a system
+        """
         return obj.system.name
 
 
@@ -223,24 +246,23 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
     recorder = serializers.SlugRelatedField(
         read_only=False,
         queryset=SystemRecorder.objects.all(),
-        slug_field="forwarderWebhookUUID",
+        slug_field="api_key",
     )
-    
+
     units = serializers.SlugRelatedField(
         read_only=False,
         queryset=TransmissionUnit.objects.all(),
         slug_field="UUID",
         many=True,
-        required=False
+        required=False,
     )
     frequencys = serializers.SlugRelatedField(
         read_only=False,
         queryset=TransmissionFreq.objects.all(),
         slug_field="UUID",
         many=True,
-        required=False
+        required=False,
     )
-
 
     class Meta:
         model = Transmission
@@ -248,9 +270,9 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "UUID",
             "system",
             "recorder",
-            "startTime",
-            "endTime",
-            "audioFile",
+            "start_time",
+            "end_time",
+            "audio_file",
             "talkgroup",
             "encrypted",
             "emergency",
@@ -300,10 +322,10 @@ class TalkGroupACLSerializer(serializers.ModelSerializer):
             "UUID",
             "name",
             "users",
-            "allowedTalkgroups",
-            "defaultNewUsers",
-            "defaultNewTalkgroups",
-            "downloadAllowed",
+            "allowed_talkgroups",
+            "default_new_users",
+            "default_new_users",
+            "download_allowed",
         ]
 
 
@@ -318,7 +340,7 @@ class ScanListSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "public",
-            "communityShared",
+            "community_shared",
             "talkgroups",
         ]
 
@@ -334,7 +356,7 @@ class ScannerSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "public",
-            "communityShared",
+            "community_shared",
             "scanlists",
         ]
 
@@ -348,7 +370,7 @@ class GlobalAnnouncementSerializer(serializers.ModelSerializer):
 class GlobalEmailTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalEmailTemplate
-        fields = ["UUID", "name", "type", "enabled", "HTML"]
+        fields = ["UUID", "name", "template_type", "enabled", "HTML"]
 
 
 # class SystemReciveRateSerializer(serializers.ModelSerializer):
@@ -361,7 +383,7 @@ class GlobalEmailTemplateSerializer(serializers.ModelSerializer):
 #     recorder = serializers.SlugRelatedField(
 #         read_only=False,
 #         queryset=SystemRecorder.objects.all(),
-#         slug_field="forwarderWebhookUUID",
+#         slug_field="api_key",
 #     )
 
 #     class Meta:
@@ -377,8 +399,8 @@ class GlobalEmailTemplateSerializer(serializers.ModelSerializer):
 #         fields = [
 #             "UUID",
 #             "trunkRecorderID",
-#             "startTime",
-#             "endTime",
+#             "start_time",
+#             "end_time",
 #             "units",
 #             "active",
 #             "emergency",
@@ -391,15 +413,15 @@ class GlobalEmailTemplateSerializer(serializers.ModelSerializer):
 
 # class CallUpdateCreateSerializer(serializers.ModelSerializer):
 #     # talkgroup = serializers.SlugRelatedField(
-#     #     read_only=False, queryset=TalkGroup.objects.all(), slug_field="decimalID"
+#     #     read_only=False, queryset=TalkGroup.objects.all(), slug_field="decimal_id"
 #     # )
 #     units = serializers.SlugRelatedField(
-#         many=True, read_only=False, queryset=Unit.objects.all(), slug_field="decimalID"
+#         many=True, read_only=False, queryset=Unit.objects.all(), slug_field="decimal_id"
 #     )
 #     recorder = serializers.SlugRelatedField(
 #         read_only=False,
 #         queryset=SystemRecorder.objects.all(),
-#         slug_field="forwarderWebhookUUID",
+#         slug_field="api_key",
 #     )
 
 #     class Meta:
@@ -407,8 +429,8 @@ class GlobalEmailTemplateSerializer(serializers.ModelSerializer):
 #         fields = [
 #             "UUID",
 #             "trunkRecorderID",
-#             "startTime",
-#             "endTime",
+#             "start_time",
+#             "end_time",
 #             "units",
 #             "active",
 #             "emergency",

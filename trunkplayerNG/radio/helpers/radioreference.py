@@ -14,13 +14,16 @@ logger = logging.getLogger(__name__)
 
 
 class RR:
-    def __init__(self, rrSystemId: str, User: str, Pass: str) -> None:
+    """
+    Radio Refrence interface library
+    """
+    def __init__(self, rr_system_id: str, username: str, password: str) -> None:
         """
         Radio Refrence interface library
         """
-        self.rrSystemId = rrSystemId
-        self.rrUser = User
-        self.rrPass = Pass
+        self.rr_system_id = rr_system_id
+        self.rr_user = username
+        self.rr_pass = password
 
     def fetch_system_talkgroups(self) -> list[dict]:
         """
@@ -29,68 +32,73 @@ class RR:
         # radio reference authentication
         client = Client("http://api.radioreference.com/soap2/?wsdl&v=15&s=rpc")
         auth_type = client.get_type("ns0:authInfo")
-        myAuthInfo = auth_type(
-            username=self.rrUser,
-            password=self.rrPass,
+        my_auth_info = auth_type(
+            username=self.rr_user,
+            password=self.rr_pass,
             appKey="c820a9fd-7488-11ec-ba68-0ecc8ab9ccec",
             version="15",
             style="rpc",
         )
 
         # prompt user for system ID
-        sysName = client.service.getTrsDetails(self.rrSystemId, myAuthInfo).sName
-        sysresult = client.service.getTrsDetails(self.rrSystemId, myAuthInfo).sysid
-        sysid = sysresult[0].sysid
+        # sysName = client.service.getTrsDetails(self.rr_system_id, my_auth_info).sName
+        # sysresult = client.service.getTrsDetails(self.rr_system_id, my_auth_info).sysid
+        # sysid = sysresult[0].sysid
 
         # Read Talkgroup Data for given System ID
-        Talkgroups_type = client.get_type("ns0:Talkgroups")
-        result = Talkgroups_type(
-            client.service.getTrsTalkgroups(self.rrSystemId, 0, 0, 0, myAuthInfo)
+        talkgroups_type = client.get_type("ns0:talkgroups")
+        result = talkgroups_type(
+            client.service.getTrstalkgroups(self.rr_system_id, 0, 0, 0, my_auth_info)
         )
         return result
 
-    def get_system(self, UUID) -> System:
+    def get_system(self, system_uuid) -> System:
         """
         Gets System ORM Object via UUID
         """
-        systemX = System.objects.get(UUID=UUID)
-        return systemX
+        system = System.objects.get(UUID=system_uuid)
+        return system
 
-    def load_system(self, SystemUUID: str) -> list[TalkGroup]:
+    def load_system(self, system_uuid: str) -> list[TalkGroup]:
         """
         Downloads and stores RR talkgroups
         """
-        RR_TGs = self.fetch_system_talkgroups()
-        system: System = self.get_system(SystemUUID)
+        rr_tg_ids = self.fetch_system_talkgroups()
+        system: System = self.get_system(system_uuid)
 
-        TalkGroups = []
+        talkgroups = []
 
         mode_types = {"D": "digital", "A": "analog", "T": "tdma", "M": "mixed"}
 
-        for talkgroup in RR_TGs:
-            Encrypted = True if talkgroup["enc"] > 0 else False
-            Mode = mode_types[talkgroup["tgMode"].upper()]
+        for talkgroup in rr_tg_ids:
+            encrypted = True if talkgroup["enc"] > 0 else False
+            mode = mode_types[talkgroup["tgMode"].upper()]
             try:
-                UUID = uuid.uuid5(
-                    uuid.NAMESPACE_DNS, f"{SystemUUID}+{str(talkgroup['tgDec'])}"
+                tg_uuid = uuid.uuid5(
+                    uuid.NAMESPACE_DNS, f"{system_uuid}+{str(talkgroup['tgDec'])}"
                 )
-                tgX, created = TalkGroup.objects.get_or_create(
-                    UUID=UUID,
+                tg_object, created = TalkGroup.objects.get_or_create(
+                    UUID=tg_uuid,
                     system=system,
-                    decimalID=int(talkgroup["tgDec"]),
-                    alphaTag=talkgroup["tgAlpha"],
+                    decimal_id=int(talkgroup["tgDec"]),
+                    alpha_tag=talkgroup["tgAlpha"],
                     description=talkgroup["tgDescr"][:250],
-                    encrypted=Encrypted,
-                    mode=Mode,
+                    encrypted=encrypted,
+                    mode=mode,
                 )
 
-                tgX.save()
-                TalkGroups.append(tgX)
-                logger.info(
-                    f"[+] IMPORTED TALKGROUP - [{str(talkgroup['tgDec'])}] {str(talkgroup['tgAlpha'])}"
-                )
-            except IntegrityError as e:
+                tg_object.save()
+                talkgroups.append(tg_object)
+                if created:
+                    logger.info(
+                        f"[+] IMPORTED TALKGROUP - [{str(talkgroup['tgDec'])}] {talkgroup['tgAlpha']}"
+                    )
+                else:
+                    logger.info(
+                        f"[+] UPDATED TALKGROUP - [{str(talkgroup['tgDec'])}] {talkgroup['tgAlpha']}"
+                    )
+            except IntegrityError as error:
                 if settings.SEND_TELEMETRY:
-                    capture_exception(e)
+                    capture_exception(error)
                 continue
-        return TalkGroups
+        return talkgroups

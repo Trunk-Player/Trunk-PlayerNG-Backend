@@ -1,10 +1,10 @@
-import uuid, logging, json
+import uuid
+import logging
+import json
 
 from django.utils import timezone
-from django.conf import settings
 from django.db.models import Q
 
-from uuid import UUID
 
 from radio.models import (
     System,
@@ -16,20 +16,16 @@ from radio.models import (
     TransmissionFreq,
     Unit,
     TransmissionUnit,
-    UserProfile,
 )
-
-if settings.SEND_TELEMETRY:
-    from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
 
 
 class UUIDEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, UUID):
-            return str(obj)
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if isinstance(o, uuid.UUID):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
 
 
 class TransmissionSrc:
@@ -44,7 +40,7 @@ class TransmissionSrc:
         self.tag = payload.get("tag")
         self.time = timezone.datetime.fromtimestamp(payload.get("time")).isoformat()
 
-    def _to_json(self) -> dict:
+    def to_json(self) -> dict:
         """
         Return Transission Unit as a dict
         """
@@ -58,15 +54,16 @@ class TransmissionSrc:
         }
         return payload
 
-    def _create(self, system) -> str:
+    def create(self, system) -> str:
         """
         Creates a new Transmission Unit
         """
         unit, created = Unit.objects.get_or_create(
-            system=system, decimalID=int(self.src)
+            system=system, decimal_id=int(self.src)
         )
+        del created
         unit.save()
-        TXS = TransmissionUnit(
+        transmission = TransmissionUnit(
             UUID=uuid.uuid4(),
             unit=unit,
             time=self.time,
@@ -75,8 +72,8 @@ class TransmissionSrc:
             signal_system=self.signal_system,
             tag=self.tag,
         )
-        TXS.save()
-        return str(TXS.UUID)
+        transmission.save()
+        return str(transmission.UUID)
 
 
 class TransmissionFrequency:
@@ -91,7 +88,7 @@ class TransmissionFrequency:
         self.spike_count = payload.get("spike_count")
         self.time = timezone.datetime.fromtimestamp(payload.get("time"))
 
-    def _to_json(self) -> dict:
+    def to_json(self) -> dict:
         """
         Return Transission Freq as a dict
         """
@@ -107,11 +104,11 @@ class TransmissionFrequency:
 
         return payload
 
-    def _create(self) -> str:
+    def create(self) -> str:
         """
         Create a Transission Freq
         """
-        TF = TransmissionFreq(
+        transmission_freq = TransmissionFreq(
             UUID=uuid.uuid4(),
             time=self.time,
             freq=self.freq,
@@ -120,8 +117,8 @@ class TransmissionFrequency:
             error_count=self.error_count,
             spike_count=self.spike_count,
         )
-        TF.save()
-        return str(TF.UUID)
+        transmission_freq.save()
+        return str(transmission_freq.UUID)
 
 
 class TransmissionDetails:
@@ -146,15 +143,15 @@ class TransmissionDetails:
         self.emergency = payload.get("emergency") in ("true", "1", "t")
         self.encrypted = payload.get("encrypted") in ("true", "1", "t")
 
-        if "freqList" in payload:
-            self.freqList = [
-                TransmissionFrequency(freq) for freq in payload["freqList"]
+        if "freq_list" in payload:
+            self.freq_list = [
+                TransmissionFrequency(freq) for freq in payload["freq_list"]
             ]
 
-        if "srcList" in payload:
-            self.srcList = [TransmissionSrc(src) for src in payload["srcList"]]
+        if "src_list" in payload:
+            self.src_list = [TransmissionSrc(src) for src in payload["src_list"]]
 
-    def _to_json(self) -> dict:
+    def to_json(self) -> dict:
         """
         Convert Transmission Details object to dict
         """
@@ -165,25 +162,25 @@ class TransmissionDetails:
         else:
             alphatag = self.talkgroup_tag
 
-        if TalkGroup.objects.filter(decimalID=self.talkgroup, system=system):
-            Talkgroup = TalkGroup.objects.get(decimalID=self.talkgroup, system=system)
+        if TalkGroup.objects.filter(decimal_id=self.talkgroup, system=system):
+            talkgroup = TalkGroup.objects.get(decimal_id=self.talkgroup, system=system)
             created = False
         else:
-            Talkgroup, created = TalkGroup.objects.get_or_create(
-                decimalID=self.talkgroup, system=system, alphaTag=alphatag
+            talkgroup, created = TalkGroup.objects.get_or_create(
+                decimal_id=self.talkgroup, system=system, alpha_tag=alphatag
             )
-            Talkgroup.save()
+            talkgroup.save()
 
         if created:
-            for acl in TalkGroupACL.objects.filter(defaultNewTalkgroups=True):
+            for acl in TalkGroupACL.objects.filter(default_new_users=True):
                 acl: TalkGroupACL
-                acl.allowedTalkgroups.add(Talkgroup)
+                acl.allowed_talkgroups.add(talkgroup)
                 acl.save()
 
         payload = {
-            "startTime": self.start_time,
-            "endTime": self.stop_time,
-            "talkgroup": str(Talkgroup.UUID),
+            "start_time": self.start_time,
+            "end_time": self.stop_time,
+            "talkgroup": str(talkgroup.UUID),
             "encrypted": self.encrypted,
             "emergency": self.emergency,
             "units": [],
@@ -192,105 +189,119 @@ class TransmissionDetails:
             "length": self.call_length,
         }
 
-        payload["units"] = [unit._create(system) for unit in self.srcList]
-        payload["frequencys"] = [Freq._create() for Freq in self.freqList]
+        payload["units"] = [unit.create(system) for unit in self.src_list]
+        payload["frequencys"] = [Freq.create() for Freq in self.freq_list]
 
         return payload
 
-    def validate_upload(self, recorderUUID: str) -> bool:
+    def validate_upload(self, recorder_uuid: str) -> bool:
         """
         Validate that user is allowed to post TG
         """
-        system: System = System.objects.get(UUID=self.system)
         recorder: SystemRecorder = SystemRecorder.objects.get(
-            forwarderWebhookUUID=recorderUUID
+            api_key=recorder_uuid
         )
 
         if (
-            len(recorder.talkgroupsAllowed.all()) > 0
-            and len(recorder.talkgroupsDenyed.all()) == 0
+            len(recorder.talkgroups_allowed.all()) > 0
+            and len(recorder.talkgroups_denyed.all()) == 0
         ):
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroupsAllowed.all():
+            if talkgroup in recorder.talkgroups_allowed.all():
                 return True
             else:
                 return False
         elif (
-            len(recorder.talkgroupsAllowed.all()) == 0
-            and len(recorder.talkgroupsDenyed.all()) > 0
+            len(recorder.talkgroups_allowed.all()) == 0
+            and len(recorder.talkgroups_denyed.all()) > 0
         ):
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroupsDenyed.all():
+            if talkgroup in recorder.talkgroups_denyed.all():
                 return False
             else:
                 return True
         elif (
-            len(recorder.talkgroupsAllowed.all()) > 0
-            and len(recorder.talkgroupsDenyed.all()) > 0
+            len(recorder.talkgroups_allowed.all()) > 0
+            and len(recorder.talkgroups_denyed.all()) > 0
         ):
             talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroupsDenyed.all():
+            if talkgroup in recorder.talkgroups_denyed.all():
                 return False
             else:
-                if talkgroup in recorder.talkgroupsAllowed.all():
+                if talkgroup in recorder.talkgroups_allowed.all():
                     return True
                 else:
                     return False
         elif (
-            len(recorder.talkgroupsAllowed.all()) == 0
-            and len(recorder.talkgroupsDenyed.all()) == 0
+            len(recorder.talkgroups_allowed.all()) == 0
+            and len(recorder.talkgroups_denyed.all()) == 0
         ):
             return True
 
 
-def get_user_allowed_systems(UserUUID: str) -> tuple[list, list]:
-    userACLs = SystemACL.objects.filter(Q(users__UUID=UserUUID) | Q(public=True))
-    Systems = System.objects.filter(systemACL__in=userACLs)
-    systemUUIDs = list(Systems.values_list("UUID", flat=True))
-    return systemUUIDs, Systems
+def get_user_allowed_systems(user_uuid: str) -> tuple[list, list]:
+    """
+    Gets the systems that the user is allowed to access
+    """
+    user_acls = SystemACL.objects.filter(Q(users__UUID=user_uuid) | Q(public=True))
+    systems = System.objects.filter(systemACL__in=user_acls)
+    system_uuids = list(systems.values_list("UUID", flat=True))
+    return system_uuids, systems
 
 
-def get_user_allowed_talkgroups(System: System, UserUUID: str) -> list:
-    if not System.enableTalkGroupACLs:
-        return TalkGroup.objects.filter(system=System)
+def get_user_allowed_talkgroups(system: System, user_uuid: str) -> list:
+    """
+    Gets the talkgroups that the user is allowed to access
+    """
+    if not system.enable_talkgroup_acls:
+        return TalkGroup.objects.filter(system=system)
 
-    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID)
-    Allowed = list(ACLs.values_list("allowedTalkgroups__UUID", flat=True))
-    AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=Allowed)
+    acls = TalkGroupACL.objects.filter(users__UUID=user_uuid)
+    allowed = list(acls.values_list("allowed_talkgroups__UUID", flat=True))
+    allowed_talkgropups = TalkGroup.objects.filter(UUID__in=allowed)
 
-    return AllowedTalkgropups
+    return allowed_talkgropups
 
 
 def user_allowed_to_access_transmission(
-    Transmission: Transmission, UserUUID: str
+    transmission: Transmission, user_uuid: str
 ) -> list:
-    allowed_tgs = get_user_allowed_talkgroups(Transmission.system, UserUUID=UserUUID)
+    """
+    Returs bool if user can access Transmission
+    """
+    allowed_tgs = get_user_allowed_talkgroups(transmission.system, user_uuid=user_uuid)
 
-    if Transmission.talkgroup in allowed_tgs:
+    if transmission.talkgroup in allowed_tgs:
         return True
 
     return False
 
 
-def get_user_allowed_download_talkgroups(System: System, UserUUID: str) -> list:
-    if not System.enableTalkGroupACLs:
-        return TalkGroup.objects.filter(system=System)
+def get_user_allowed_download_talkgroups(system: System, user_uuid: str) -> list:
+    """
+    Returns talkgroups user can download
+    """
+    if not system.enable_talkgroup_acls:
+        return TalkGroup.objects.filter(system=system)
 
-    ACLs = TalkGroupACL.objects.filter(users__UUID=UserUUID, downloadAllowed=True)
-    Allowed = list(ACLs.values_list("allowedTalkgroups__UUID", flat=True))
-    AllowedTalkgropups = TalkGroup.objects.filter(UUID__in=Allowed)
+    acls = TalkGroupACL.objects.filter(users__UUID=user_uuid, download_allowed=True)
+    allowed = list(acls.values_list("allowed_talkgroups__UUID", flat=True))
+    allowed_talkgropups = TalkGroup.objects.filter(UUID__in=allowed)
 
-    return AllowedTalkgropups
+    return allowed_talkgropups
 
 
 def user_allowed_to_download_transmission(
-    Transmission: Transmission, UserUUID: str
+    transmission: Transmission, user_uuid: str
 ) -> list:
+    """
+    Returns whether a user can download a transmission
+    """
     allowed_tgs = get_user_allowed_download_talkgroups(
-        Transmission.system, UserUUID=UserUUID
+        transmission.system, user_uuid=user_uuid
     )
 
-    if Transmission.talkgroup in allowed_tgs:
+    if transmission.talkgroup in allowed_tgs:
         return True
 
     return False

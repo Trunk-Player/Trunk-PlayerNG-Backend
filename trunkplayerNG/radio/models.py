@@ -1,29 +1,27 @@
 import uuid
 
 from django.db import models
-from django.db import models
-from django.db.models.fields import NullBooleanField
 from django.dispatch import receiver
 from django.utils import timezone
 
-from trunkplayer_ng.storage_backends import PrivateMediaStorage
 
 
 class UserProfile(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
-    siteAdmin = models.BooleanField(default=False)
+    site_admin = models.BooleanField(default=False)
     description = models.TextField(blank=True, null=True)
-    siteTheme = models.TextField(blank=True, null=True)
+    site_theme = models.TextField(blank=True, null=True)
 
     def __str__(self):
         try:
             from users.models import CustomUser
+
             parent: CustomUser = CustomUser.objects.get(userProfile=self)
 
             return f"{parent.email}"
-        except:
+        except Exception:
             return str(self.UUID)
 
 
@@ -39,6 +37,9 @@ class SystemACL(models.Model):
         return self.name
 
     def to_json(self):
+        """
+        Converts to json
+        """
         data = {
             "UUID": str(self.UUID),
             "name": str(self.name),
@@ -58,11 +59,11 @@ class System(models.Model):
     )
     name = models.CharField(max_length=100, db_index=True, unique=True)
     systemACL = models.ForeignKey(SystemACL, on_delete=models.CASCADE)
-    enableTalkGroupACLs = models.BooleanField("Enable Talkgroup ACLs", default=False)
-    pruneTransmissions = models.BooleanField(
+    enable_talkgroup_acls = models.BooleanField("Enable Talkgroup ACLs", default=False)
+    prune_transmissions = models.BooleanField(
         "Enable Pruneing Transmissions", default=False
     )
-    pruneTransmissionsAfterDays = models.IntegerField(
+    prune_transmissions_after_days = models.IntegerField(
         "Days to keep Transmissions (Prune)", default=365
     )
 
@@ -94,37 +95,46 @@ class Agency(models.Model):
 
 
 class TalkGroup(models.Model):
-    MODE_OPTS = (("digital", "Digital"), ("analog", "Analog"), ("tdma", "TDMA"), ("mixed","Mixed"))
+    MODE_OPTS = (
+        ("digital", "Digital"),
+        ("analog", "Analog"),
+        ("tdma", "TDMA"),
+        ("mixed", "Mixed"),
+    )
 
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE)
-    decimalID = models.IntegerField(db_index=True)
-    alphaTag = models.CharField(max_length=30, blank=True, default="")
+    decimal_id = models.IntegerField(db_index=True)
+    alpha_tag = models.CharField(max_length=30, blank=True, default="")
     description = models.CharField(max_length=250, blank=True, null=True)
     mode = models.CharField(max_length=250, default="digital", choices=MODE_OPTS)
     encrypted = models.BooleanField(default=False, blank=True)
     agency = models.ManyToManyField(Agency, blank=True)
 
     def __str__(self):
-        return f"[{self.system.name}] {self.alphaTag}"
+        return f"[{self.system.name}] {self.alpha_tag}"
 
 
+ # pylint: disable=unused-argument
 @receiver(models.signals.post_save, sender=TalkGroup)
-def execute_TalkGroup_dedup_check(sender, instance, created, *args, **kwargs):
+def execute_talkgroup_dedup_check(sender, instance, created, *args, **kwargs):
+    """
+    Removes Duplicate talkgroups
+    """
     system = instance.system
 
     if created:
-        if instance.alphaTag != "":
-            TGs = TalkGroup.objects.filter(
-                system=system, decimalID=instance.decimalID
+        if instance.alpha_tag != "":
+            talkgroups = TalkGroup.objects.filter(
+                system=system, decimal_id=instance.decimal_id
             ).exclude(UUID=instance.UUID)
-            TGs.delete()
+            talkgroups.delete()
         else:
             if TalkGroup.objects.filter(
-                system=system, decimalID=instance.decimalID
-            ).exclude(alphaTag=""):
+                system=system, decimal_id=instance.decimal_id
+            ).exclude(alpha_tag=""):
                 instance.delete()
 
 
@@ -134,19 +144,15 @@ class SystemForwarder(models.Model):
     )
     name = models.CharField(max_length=100, unique=True)
     enabled = models.BooleanField(default=False)
-    recorderKey = models.UUIDField()
-    remoteURL = models.CharField(max_length=250)
+    recorder_key = models.UUIDField()
+    remote_url = models.CharField(max_length=250)
 
-    forwardIncidents = models.BooleanField(default=False)
-    forwardedSystems = models.ManyToManyField(System)
-    talkGroupFilter = models.ManyToManyField(TalkGroup, blank=True)
+    forward_incidents = models.BooleanField(default=False)
+    forwarded_systems = models.ManyToManyField(System)
+    talkgroup_filter = models.ManyToManyField(TalkGroup, blank=True)
 
     def __str__(self):
         return self.name
-
-    def webhook(self):
-        pass
-        # add forward logic
 
 
 class SystemRecorder(models.Model):
@@ -155,18 +161,18 @@ class SystemRecorder(models.Model):
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
-    siteID = models.CharField(max_length=100, blank=True, null=True)
+    site_id = models.CharField(max_length=100, blank=True, null=True)
     enabled = models.BooleanField(default=False)
     user = models.ForeignKey(
         UserProfile, null=True, blank=True, on_delete=models.CASCADE
     )
-    talkgroupsAllowed = models.ManyToManyField(
+    talkgroups_allowed = models.ManyToManyField(
         TalkGroup, blank=True, related_name="SRTGAllow"
     )
-    talkgroupsDenyed = models.ManyToManyField(
+    talkgroups_denyed = models.ManyToManyField(
         TalkGroup, blank=True, related_name="SRTGDeny"
     )
-    forwarderWebhookUUID = models.UUIDField(default=uuid.uuid4, db_index=True)
+    api_key = models.UUIDField(default=uuid.uuid4, db_index=True)
 
     def __str__(self):
         return f"[{self.system.name}] {self.name}"
@@ -177,25 +183,29 @@ class Unit(models.Model):
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE)
-    decimalID = models.IntegerField(db_index=True)
+    decimal_id = models.IntegerField(db_index=True)
     description = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
-        return f"[{self.system.name}] {str(self.decimalID)}"
+        return f"[{self.system.name}] {str(self.decimal_id)}"
 
-
+# pylint: disable=unused-argument
 @receiver(models.signals.post_save, sender=Unit)
 def execute_unit_dedup_check(sender, instance, created, *args, **kwargs):
+    """
+    Makes sure Units are deduped on save hook
+    """
+
     system = instance.system
 
     if created:
         if instance.description != "":
-            TGs = Unit.objects.filter(
-                system=system, decimalID=instance.decimalID
+            talkgroups = Unit.objects.filter(
+                system=system, decimal_id=instance.decimal_id
             ).exclude(UUID=instance.UUID)
-            TGs.delete()
+            talkgroups.delete()
         else:
-            if Unit.objects.filter(system=system, decimalID=instance.decimalID).exclude(
+            if Unit.objects.filter(system=system, decimal_id=instance.decimal_id).exclude(
                 description=""
             ):
                 instance.delete()
@@ -238,9 +248,9 @@ class Transmission(models.Model):
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE, db_index=True)
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
-    startTime = models.DateTimeField()
-    endTime = models.DateTimeField(null=True, blank=True)
-    audioFile = models.FileField(upload_to="audio/%Y/%m/%d/")
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
+    audio_file = models.FileField(upload_to="audio/%Y/%m/%d/")
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
     emergency = models.BooleanField(default=False, db_index=True)
@@ -253,10 +263,10 @@ class Transmission(models.Model):
     transcript = models.TextField(null=True, blank=True)
 
     class Meta:
-        ordering = ["-startTime"]
+        ordering = ["-start_time"]
 
     def __str__(self):
-        return f"[{self.system.name}][{self.talkgroup.alphaTag}][{self.startTime}] {self.UUID}"
+        return f"[{self.system.name}][{self.talkgroup.alpha_tag}][{self.start_time}] {self.UUID}"
 
 
 class Incident(models.Model):
@@ -277,16 +287,19 @@ class Incident(models.Model):
     def __str__(self):
         return f"[{self.system.name}] {self.name}"
 
-
+# pylint: disable=unused-argument
 @receiver(models.signals.post_save, sender=Incident)
 def execute_after_save(sender, instance, created, *args, **kwargs):
+    """
+    Handles Incident Forwarding
+    """
     from radio.tasks import forward_incidents
     from radio.serializers import IncidentSerializer
 
     # Used for Incident forwarding
 
-    IncidentData = IncidentSerializer(instance)
-    forward_incidents.delay(IncidentData.data, created)
+    incident_data = IncidentSerializer(instance)
+    forward_incidents.delay(incident_data.data, created)
 
 
 class TalkGroupACL(models.Model):
@@ -295,10 +308,10 @@ class TalkGroupACL(models.Model):
     )
     name = models.CharField(max_length=30)
     users = models.ManyToManyField(UserProfile)
-    allowedTalkgroups = models.ManyToManyField(TalkGroup)
-    defaultNewUsers = models.BooleanField(default=True)
-    defaultNewTalkgroups = models.BooleanField(default=True)
-    downloadAllowed = models.BooleanField(default=True)
+    allowed_talkgroups = models.ManyToManyField(TalkGroup)
+    default_new_users = models.BooleanField(default=True)
+    default_new_users = models.BooleanField(default=True)
+    download_allowed = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -312,7 +325,7 @@ class ScanList(models.Model):
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)
     public = models.BooleanField(default=False)
-    communityShared = models.BooleanField(default=True)
+    community_shared = models.BooleanField(default=True)
     talkgroups = models.ManyToManyField(TalkGroup)
 
     def __str__(self):
@@ -327,7 +340,7 @@ class Scanner(models.Model):
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100, blank=True, null=True)
     public = models.BooleanField(default=True)
-    communityShared = models.BooleanField(default=True)
+    community_shared = models.BooleanField(default=True)
     scanlists = models.ManyToManyField(ScanList)
 
     def __str__(self):
@@ -356,7 +369,7 @@ class GlobalEmailTemplate(models.Model):
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
     name = models.CharField(max_length=30)
-    type = models.CharField(max_length=30, unique=True, choices=mailTypes)
+    template_type = models.CharField(max_length=30, unique=True, choices=mailTypes)
     enabled = models.BooleanField(default=False)
     HTML = models.TextField()
 
@@ -372,9 +385,9 @@ class UserAlert(models.Model):
     name = models.CharField(max_length=250)
     enabled = models.BooleanField(default=True)
     description = models.TextField(blank=True, null=True)
-    webNotification = models.BooleanField(default=False)
-    appRiseNotification = models.BooleanField(default=False)
-    appRiseURLs = models.TextField(", Seperated AppriseURL(s)", default="")
+    web_notification = models.BooleanField(default=False)
+    app_rise_notification = models.BooleanField(default=False)
+    app_rise_urls = models.TextField(", Seperated AppriseURL(s)", default="")
     talkgroups = models.ManyToManyField(TalkGroup, blank=True)
     emergencyOnly = models.BooleanField(default=False)
     units = models.ManyToManyField(Unit, blank=True)
@@ -403,8 +416,8 @@ class UserAlert(models.Model):
 #         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
 #     )
 #     trunkRecorderID = models.CharField(max_length=30, unique=True)
-#     startTime = models.DateTimeField(db_index=True)
-#     endTime = models.DateTimeField(null=True, blank=True)
+#     start_time = models.DateTimeField(db_index=True)
+#     end_time = models.DateTimeField(null=True, blank=True)
 #     units = models.ForeignKey(
 #         Unit,
 #         related_name="TG_UNITS",

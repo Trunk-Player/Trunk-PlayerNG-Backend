@@ -11,9 +11,7 @@ from users.managers import CustomUserManager
 
 
 class CustomUser(AbstractUser):
-    UUID = models.UUIDField(
-        default=uuid.uuid4, db_index=True, unique=True
-    )
+    UUID = models.UUIDField(default=uuid.uuid4, db_index=True, unique=True)
     username = None
     email = models.EmailField(_("email address"), unique=True)
 
@@ -28,36 +26,43 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email
 
-
+# pylint: disable=unused-argument
 @receiver(post_save, sender=CustomUser)
-def createUserProfile(sender, instance: CustomUser, **kwargs):
+def create_user_profile(sender, instance: CustomUser, **kwargs):
+    """
+    Creates User Profile on user create
+    """
     if instance.userProfile:
         return True
 
-    siteAdmin = False
+    site_admin = False
 
     if instance.is_superuser and instance.is_active:
-        siteAdmin = True
+        site_admin = True
 
-    UP = UserProfile(
-        UUID=uuid.uuid4(), siteAdmin=siteAdmin, description="", siteTheme=""
+    user_profile = UserProfile(
+        UUID=uuid.uuid4(), site_admin=site_admin, description="", site_theme=""
     )
 
-    UP.save()
+    user_profile.save()
 
-    for acl in TalkGroupACL.objects.filter(defaultNewUsers=True):
+    for acl in TalkGroupACL.objects.filter(default_new_users=True):
         acl: TalkGroupACL
-        acl.users.add(UP)
+        acl.users.add(user_profile)
         acl.save()
 
-    instance.userProfile = UP
+    instance.userProfile = user_profile
     instance.save()
 
 
 @receiver(pre_delete, sender=CustomUser)
-def createUserProfile(sender, instance: CustomUser, **kwargs):
+def delete_user_profile(sender, instance: CustomUser, **kwargs):
+    """
+    Deletes Allauth User Profile on user delete
+    """
     from allauth.account.models import EmailAddress
 
     try:
         EmailAddress.objects.get(user=instance, email=instance.email).delete()
-    except EmailAddress.DoesNotExist: pass
+    except EmailAddress.DoesNotExist:
+        pass

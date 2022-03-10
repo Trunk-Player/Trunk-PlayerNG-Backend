@@ -1,4 +1,5 @@
-import logging, requests
+import logging
+import requests
 
 from django.conf import settings
 from radio.models import System, SystemForwarder
@@ -15,48 +16,48 @@ def _forward_incident(data: dict, created: bool) -> None:
     """
     from radio.tasks import send_incident
 
-    SystemX = System.objects.get(UUID=data["system"])
+    system = System.objects.get(UUID=data["system"])
 
-    for Forwarder in SystemForwarder.objects.filter(
-        enabled=True, forwardIncidents=True
+    for forwarder in SystemForwarder.objects.filter(
+        enabled=True, forward_incidents=True
     ):
-        Forwarder: SystemForwarder
-        if SystemX in Forwarder.forwardedSystems.all():
+        forwarder: SystemForwarder
+        if system in forwarder.forwarded_systems.all():
             send_incident.delay(
                 data,
-                Forwarder.name,
-                Forwarder.recorderKey,
-                Forwarder.remoteURL,
+                forwarder.name,
+                forwarder.recorder_key,
+                forwarder.remote_url,
                 created,
             )
 
 
 def _send_incident(
-    data: dict, ForwarderName: str, recorderKey: str, ForwarderURL: str, created: bool
+    data: dict, forwarder_name: str, recorder_key: str, forwarder_url: str, created: bool
 ) -> None:
     """
     Forwards a single Incident via API Call
     """
     try:
-        data["recorder"] = str(recorderKey)
+        data["recorder"] = str(recorder_key)
         del data["system"]
 
         if created:
-            Response = requests.post(
-                f"{ForwarderURL}/api/radio/incident/forward", json=data
+            response = requests.post(
+                f"{forwarder_url}/api/radio/incident/forward", json=data
             )
         else:
-            Response = requests.put(
-                f"{ForwarderURL}/api/radio/incident/forward", json=data
+            response = requests.put(
+                f"{forwarder_url}/api/radio/incident/forward", json=data
             )
-        assert Response.ok
+        assert response.ok
         logger.info(
-            f"[+] SUCCESSFULLY FORWARDED INCIDENT {data['name']} to {ForwarderName} - {Response.text}"
+            f"[+] SUCCESSFULLY FORWARDED INCIDENT {data['name']} to {forwarder_name} - {response.text}"
         )
-    except Exception as e:
+    except Exception as error:
         logger.error(
-            f"[!] FAILED FORWARDING INCIDENT {data['name']} to {ForwarderName}"
+            f"[!] FAILED FORWARDING INCIDENT {data['name']} to {forwarder_name}"
         )
         if settings.SEND_TELEMETRY:
-            capture_exception(e)
-        raise (e)
+            capture_exception(error)
+        raise error
