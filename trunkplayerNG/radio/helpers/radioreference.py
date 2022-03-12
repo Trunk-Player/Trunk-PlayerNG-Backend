@@ -41,14 +41,14 @@ class RR:
         )
 
         # prompt user for system ID
-        # sysName = client.service.getTrsDetails(self.rr_system_id, my_auth_info).sName
-        # sysresult = client.service.getTrsDetails(self.rr_system_id, my_auth_info).sysid
-        # sysid = sysresult[0].sysid
+        sysName = client.service.getTrsDetails(self.rr_system_id, my_auth_info).sName
+        sysresult = client.service.getTrsDetails(self.rr_system_id, my_auth_info).sysid
+        sysid = sysresult[0].sysid
 
         # Read Talkgroup Data for given System ID
-        talkgroups_type = client.get_type("ns0:talkgroups")
+        talkgroups_type = client.get_type("ns0:Talkgroups")
         result = talkgroups_type(
-            client.service.getTrstalkgroups(self.rr_system_id, 0, 0, 0, my_auth_info)
+            client.service.getTrsTalkgroups(self.rr_system_id, 0, 0, 0, my_auth_info)
         )
         return result
 

@@ -1,5 +1,6 @@
 # import logging
 import uuid
+import traceback
 
 from django.conf import settings
 from django.http import ( Http404, HttpResponse )
@@ -2064,12 +2065,10 @@ class TransmissionCreate(APIView):
                     "add_tx_data",
                     {
                         "data": data,
-                        "cleaned_data": cleaned_data,
-                        "TX": transmission,
-                        "recorder": recorder,
                     },
                 )
                 sentry_sdk.capture_exception(error)
+            raise error
             return Response(str(error), status=status.HTTP_400_BAD_REQUEST)
 
 
