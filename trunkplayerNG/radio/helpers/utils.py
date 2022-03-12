@@ -143,13 +143,15 @@ class TransmissionDetails:
         self.emergency = payload.get("emergency") in ("true", "1", "t")
         self.encrypted = payload.get("encrypted") in ("true", "1", "t")
 
-        if "freq_list" in payload:
+        self.freq_list = []
+        if "freqList" in payload:
             self.freq_list = [
-                TransmissionFrequency(freq) for freq in payload["freq_list"]
+                TransmissionFrequency(freq) for freq in payload["freqList"]
             ]
 
-        if "src_list" in payload:
-            self.src_list = [TransmissionSrc(src) for src in payload["src_list"]]
+        self.src_list = []
+        if "srcList" in payload:
+            self.src_list = [TransmissionSrc(src) for src in payload["srcList"]]
 
     def to_json(self) -> dict:
         """
