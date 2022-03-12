@@ -51,3 +51,4 @@ python-engineio
 python-socketio
 kombu
 apprise
+django-filter

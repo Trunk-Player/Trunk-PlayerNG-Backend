@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "drf_yasg",
-    "django_filters",
+    'django_filters',
     "dj_rest_auth",
     # "rest_framework_simplejwt.token_blacklist",
     "storages",
@@ -213,7 +213,9 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "trunkplayer_ng.auth.TokenAuthSupportCookie",
     ),
-    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ]
 }
 REST_USE_JWT = True
 JWT_AUTH_HTTPONLY = True

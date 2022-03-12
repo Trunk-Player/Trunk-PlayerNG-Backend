@@ -13,9 +13,12 @@ from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 
+from django_filters import rest_framework as filters
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
+from radio.filters import SystemFilter, TransmissionFilter
 from radio.serializers import (
     UserAlertSerializer,
     UserProfileSerializer,
@@ -428,6 +431,8 @@ class SystemACLList(APIView, PaginationMixin):
     serializer_class = SystemACLSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ["UUID", "name", "users", "public"]
 
     @swagger_auto_schema(tags=["SystemACL"])
     def get(self, request):
@@ -552,7 +557,7 @@ class SystemList(APIView, PaginationMixin):
         """
         user: UserProfile = request.user.userProfile
         if user.site_admin:
-            systems = System.objects.all()
+            systems = self.queryset
         else:
             user_acls = []
             acls = SystemACL.objects.all()
@@ -562,9 +567,10 @@ class SystemList(APIView, PaginationMixin):
                     user_acls.append(acl)
                 elif acl.public:
                     user_acls.append(acl)
-            systems = System.objects.filter(systemACL__in=user_acls)
+            systems = self.queryset.filter(systemACL__in=user_acls)
 
-        page = self.paginate_queryset(systems)
+        systems_fs = SystemFilter(self.request.GET, queryset=systems)
+        page = self.paginate_queryset(systems_fs.qs)
         if page is not None:
             serializer = SystemSerializer(page, many=True)
             return Response(serializer.data)
@@ -764,6 +770,8 @@ class SystemForwarderList(APIView, PaginationMixin):
     serializer_class = SystemForwarderSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_fields = ["UUID", "name", "enabled", "recorder_key", "remote_url", "forward_incidents", "forwarded_systems", "talkgroup_filter"]
 
     @swagger_auto_schema(
         tags=["SystemForwarder"],
@@ -1360,8 +1368,8 @@ class TalkGroupTransmissionList(APIView, PaginationMixin):
 
             if not talkgroup in talkgroups_allowed:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        page = self.paginate_queryset(transmissions)
+        transmissions_fs = TransmissionFilter(self.request.GET, queryset=transmissions)
+        page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -1983,7 +1991,8 @@ class TransmissionList(APIView, PaginationMixin):
         #     allowed_transmissions, key=lambda instance: instance.start_time, reverse=True
         # )
 
-        page = self.paginate_queryset(allowed_transmissions)
+        transmissions_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmissions)
+        page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2657,7 +2666,8 @@ class ScanListTransmissionList(APIView, PaginationMixin):
                 else:
                     allowed_transmissions.extend(transmissions.filter(system=system))
 
-        page = self.paginate_queryset(allowed_transmissions)
+        transmissions_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmissions)
+        page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2888,7 +2898,8 @@ class ScannerTransmissionList(APIView, PaginationMixin):
         else:
             allowed_transmisssions = transmissions
 
-        page = self.paginate_queryset(allowed_transmisssions)
+        transmissions_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmisssions)
+        page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
