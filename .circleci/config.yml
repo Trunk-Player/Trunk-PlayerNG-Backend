@@ -18,6 +18,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            apk update && \
             apk add --no-cache \
               py-pip=9.0.0-r1 \
               jq
