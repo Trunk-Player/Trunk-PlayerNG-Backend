@@ -199,11 +199,11 @@ class TalkgroupACLAdmin(admin.ModelAdmin):
     # autocomplete_fields = ("transmission",)
     list_display = (
         "name",
-        "default_new_users",
+        "default_new_talkgroups",
         "default_new_users",
     )
     list_filter = (
-        "default_new_users",
+        "default_new_talkgroups",
         "default_new_users",
     )
 

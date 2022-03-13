@@ -18,7 +18,27 @@ from django_filters import rest_framework as filters
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
-from radio.filters import SystemFilter, TransmissionFilter
+from radio.filters import (
+    AgencyFilter,
+    CityFilter,
+    GlobalAnnouncementFilter,
+    GlobalEmailTemplateFilter,
+    IncidentFilter,
+    ScanListFilter,
+    ScannerFilter,
+    SystemACLFilter,
+    SystemFilter,
+    SystemForwarderFilter,
+    SystemRecorderFilter,
+    TalkGroupACLFilter,
+    TalkGroupFilter,
+    TransmissionFilter,
+    TransmissionFreqFilter,
+    TransmissionUnitFilter,
+    UnitFilter,
+    UserAlertFilter,
+    UserProfileFilter
+)
 from radio.serializers import (
     UserAlertSerializer,
     UserProfileSerializer,
@@ -168,7 +188,8 @@ class UserAlertList(APIView, PaginationMixin):
         else:
             user_alerts = UserAlert.objects.filter(user=user)
 
-        page = self.paginate_queryset(user_alerts)
+        filtered_result = UserAlertFilter(self.request.GET, queryset=user_alerts)
+        page = self.paginate_queryset(filtered_result.qs)
         if page is not None:
             serializer = UserAlertSerializer(page, many=True)
             return Response(serializer.data)
@@ -209,7 +230,7 @@ class UserAlertCreate(APIView):
                 "body": openapi.Schema(
                     type=openapi.TYPE_STRING, description="The body of the alert"
                 ),
-                "emergencyOnly": openapi.Schema(
+                "emergency_only": openapi.Schema(
                     type=openapi.TYPE_STRING,
                     description="Only alert on Emergency Transmissions",
                 ),
@@ -291,7 +312,7 @@ class UserAlertView(APIView):
                 "body": openapi.Schema(
                     type=openapi.TYPE_STRING, description="The body of the alert"
                 ),
-                "emergencyOnly": openapi.Schema(
+                "emergency_only": openapi.Schema(
                     type=openapi.TYPE_STRING,
                     description="Only alert on Emergency Transmissions",
                 ),
@@ -346,7 +367,8 @@ class UserProfileList(APIView, PaginationMixin):
         else:
             user_profile = UserProfile.objects.filter(UUID=user.UUID)
 
-        page = self.paginate_queryset(user_profile)
+        filtered_result = UserProfileFilter(self.request.GET, queryset=user_profile)
+        page = self.paginate_queryset(filtered_result.qs)
         if page is not None:
             serializer = UserProfileSerializer(page, many=True)
             return Response(serializer.data)
@@ -431,8 +453,6 @@ class SystemACLList(APIView, PaginationMixin):
     serializer_class = SystemACLSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ["UUID", "name", "users", "public"]
 
     @swagger_auto_schema(tags=["SystemACL"])
     def get(self, request):
@@ -440,7 +460,8 @@ class SystemACLList(APIView, PaginationMixin):
         System ACL get EP
         """
         system_acls = SystemACL.objects.all()
-        page = self.paginate_queryset(system_acls)
+        filtered_result = SystemACLFilter(self.request.GET, queryset=system_acls)
+        page = self.paginate_queryset(filtered_result.qs)
         if page is not None:
             serializer = SystemACLSerializer(page, many=True)
             return Response(serializer.data)
@@ -770,8 +791,6 @@ class SystemForwarderList(APIView, PaginationMixin):
     serializer_class = SystemForwarderSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ["UUID", "name", "enabled", "recorder_key", "remote_url", "forward_incidents", "forwarded_systems", "talkgroup_filter"]
 
     @swagger_auto_schema(
         tags=["SystemForwarder"],
@@ -782,7 +801,8 @@ class SystemForwarderList(APIView, PaginationMixin):
         """
         system_forwarders = SystemForwarder.objects.all()
 
-        page = self.paginate_queryset(system_forwarders)
+        filterobject_fs = SystemForwarderFilter(self.request.GET, queryset=system_forwarders)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = SystemForwarderSerializer(page, many=True)
             return Response(serializer.data)
@@ -923,7 +943,8 @@ class CityList(APIView, PaginationMixin):
         City List EP
         """
         citys = City.objects.all()
-        page = self.paginate_queryset(citys)
+        filterobject_fs = CityFilter(self.request.GET, queryset=citys)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = CitySerializer(page, many=True)
             return Response(serializer.data)
@@ -1042,7 +1063,8 @@ class AgencyList(APIView, PaginationMixin):
         Agency List EP
         """
         agencys = Agency.objects.all()
-        page = self.paginate_queryset(agencys)
+        filterobject_fs = AgencyFilter(self.request.GET, queryset=agencys)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = AgencyViewListSerializer(page, many=True)
             return Response(serializer.data)
@@ -1177,7 +1199,8 @@ class TalkGroupList(APIView, PaginationMixin):
             for system in systems:
                 allowed_talkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
 
-        page = self.paginate_queryset(allowed_talkgroups)
+        filterobject_fs = TalkGroupFilter(self.request.GET, queryset=allowed_talkgroups)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = TalkGroupViewListSerializer(page, many=True)
             return Response(serializer.data)
@@ -1375,10 +1398,11 @@ class TalkGroupTransmissionList(APIView, PaginationMixin):
             return Response(serializer.data)
 
 
-class TalkGroupACLList(APIView):
+class TalkGroupACLList(APIView, PaginationMixin):
     queryset = TalkGroupACL.objects.all()
     serializer_class = TalkGroupACLSerializer
     permission_classes = [IsSiteAdmin]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["TalkGroupACL"])
     def get(self, request):
@@ -1386,8 +1410,12 @@ class TalkGroupACLList(APIView):
         Talkgroup ACL List EP
         """
         talkgroup_acls = TalkGroupACL.objects.all()
-        serializer = TalkGroupACLSerializer(talkgroup_acls, many=True)
-        return Response(serializer.data)
+        filterobject_fs = TalkGroupACLFilter(self.request.GET, queryset=talkgroup_acls)
+        page = self.paginate_queryset(filterobject_fs.qs)
+        if page is not None:
+            serializer = TalkGroupACLSerializer(page, many=True)
+            return Response(serializer.data)
+
 
 
 class TalkGroupACLCreate(APIView):
@@ -1519,8 +1547,8 @@ class SystemRecorderList(APIView, PaginationMixin):
         System Recorder list EP
         """
         system_recorders = SystemRecorder.objects.all()
-
-        page = self.paginate_queryset(system_recorders)
+        filterobject_fs = SystemRecorderFilter(self.request.GET, queryset=system_recorders)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = SystemRecorderSerializer(page, many=True)
             return Response(serializer.data)
@@ -1670,9 +1698,11 @@ class UnitList(APIView, PaginationMixin):
         else:
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
+            del systems
             units = Unit.objects.filter(system__in=system_uuids)
 
-        page = self.paginate_queryset(units)
+        filterobject_fs = UnitFilter(self.request.GET, queryset=units)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = UnitSerializer(page, many=True)
             return Response(serializer.data)
@@ -1790,10 +1820,11 @@ class UnitView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TransmissionUnitList(APIView):
+class TransmissionUnitList(APIView, PaginationMixin):
     queryset = TransmissionUnit.objects.all()
     serializer_class = TransmissionUnitSerializer
     permission_classes = [IsSAOrReadOnly]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @swagger_auto_schema(tags=["TransmissionUnit"])
     def get(self, request, request_uuid):
@@ -1821,8 +1852,11 @@ class TransmissionUnitList(APIView):
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        serializer = TransmissionUnitSerializer(units, many=True)
-        return Response(serializer.data)
+        filterobject_fs = TransmissionUnitFilter(self.request.GET, queryset=units)
+        page = self.paginate_queryset(filterobject_fs.qs)
+        if page is not None:
+            serializer = TransmissionUnitSerializer(page, many=True)
+            return Response(serializer.data)
 
 
 class TransmissionUnitView(APIView):
@@ -1924,8 +1958,8 @@ class TransmissionFreqList(APIView):
                         return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        serializer = TransmissionFreqSerializer(freqs, many=True)
+        filterobject_fs = TransmissionFreqFilter(self.request.GET, queryset=freqs)
+        serializer = TransmissionFreqSerializer(filterobject_fs.qs, many=True)
         return Response(serializer.data)
 
 
@@ -1987,12 +2021,8 @@ class TransmissionList(APIView, PaginationMixin):
                         Transmission.objects.filter(system=system)
                     )
 
-        # allowed_transmissions = sorted(
-        #     allowed_transmissions, key=lambda instance: instance.start_time, reverse=True
-        # )
-
-        transmissions_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmissions)
-        page = self.paginate_queryset(transmissions_fs.qs)
+        filterobject_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmissions)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2148,9 +2178,11 @@ class IncidentList(APIView, PaginationMixin):
         else:
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
+            del system_uuids
             incidents = Incident.objects.filter(system__in=systems)
 
-        page = self.paginate_queryset(incidents)
+        filterobject_fs = IncidentFilter(self.request.GET, queryset=incidents)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = IncidentSerializer(page, many=True)
             return Response(serializer.data)
@@ -2434,7 +2466,8 @@ class ScanListList(APIView, PaginationMixin):
                 Q(owner=user) | Q(community_shared=True) | Q(public=True)
             )
 
-        page = self.paginate_queryset(scanlists)
+        filterobject_fs = ScanListFilter(self.request.GET, queryset=scanlists)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2480,7 +2513,8 @@ class ScanListUserList(APIView, PaginationMixin):
                 Q(public=True) | Q(community_shared=True)
             )
 
-        page = self.paginate_queryset(scanlists)
+        filterobject_fs = ScanListFilter(self.request.GET, queryset=scanlists)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2692,7 +2726,8 @@ class ScannerList(APIView, PaginationMixin):
                 Q(owner=user) | Q(community_shared=True) | Q(public=True)
             )
 
-        page = self.paginate_queryset(scanner)
+        filterobject_fs = ScannerFilter(self.request.GET, queryset=scanner)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = ScannerSerializer(page, many=True)
             return Response(serializer.data)
@@ -2898,8 +2933,8 @@ class ScannerTransmissionList(APIView, PaginationMixin):
         else:
             allowed_transmisssions = transmissions
 
-        transmissions_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmisssions)
-        page = self.paginate_queryset(transmissions_fs.qs)
+        filterobject_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmisssions)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2922,7 +2957,8 @@ class GlobalAnnouncementList(APIView, PaginationMixin):
         else:
             global_announcements = GlobalAnnouncement.objects.filter(enabled=True)
 
-        page = self.paginate_queryset(global_announcements)
+        filterobject_fs = GlobalAnnouncementFilter(self.request.GET, queryset=global_announcements)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = GlobalAnnouncementSerializer(page, many=True)
             return Response(serializer.data)
@@ -3052,7 +3088,8 @@ class GlobalEmailTemplateList(APIView, PaginationMixin):
         """
         global_email_templates = GlobalEmailTemplate.objects.all()
 
-        page = self.paginate_queryset(global_email_templates)
+        filterobject_fs = GlobalEmailTemplateFilter(self.request.GET, queryset=global_email_templates)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = GlobalEmailTemplateSerializer(global_email_templates, many=True)
             return Response(serializer.data)

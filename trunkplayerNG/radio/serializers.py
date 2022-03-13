@@ -34,11 +34,11 @@ class UserAlertSerializer(serializers.ModelSerializer):
             "enabled",
             "description",
             "web_notification",
-            "app_rise_otification",
+            "app_rise_notification",
             "app_rise_urls",
             "title",
             "body",
-            "emergencyOnly",
+            "emergency_only",
         ]
 
 
@@ -323,7 +323,7 @@ class TalkGroupACLSerializer(serializers.ModelSerializer):
             "name",
             "users",
             "allowed_talkgroups",
-            "default_new_users",
+            "default_new_talkgroups",
             "default_new_users",
             "download_allowed",
         ]
