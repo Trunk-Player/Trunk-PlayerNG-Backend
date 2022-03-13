@@ -21,6 +21,8 @@ from drf_yasg.utils import swagger_auto_schema
 from radio.filters import (
     AgencyFilter,
     CityFilter,
+    GlobalAnnouncementFilter,
+    GlobalEmailTemplateFilter,
     IncidentFilter,
     ScanListFilter,
     ScannerFilter,
@@ -2931,8 +2933,8 @@ class ScannerTransmissionList(APIView, PaginationMixin):
         else:
             allowed_transmisssions = transmissions
 
-        transmissions_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmisssions)
-        page = self.paginate_queryset(transmissions_fs.qs)
+        filterobject_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmisssions)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
             return Response(serializer.data)
@@ -2955,7 +2957,8 @@ class GlobalAnnouncementList(APIView, PaginationMixin):
         else:
             global_announcements = GlobalAnnouncement.objects.filter(enabled=True)
 
-        page = self.paginate_queryset(global_announcements)
+        filterobject_fs = GlobalAnnouncementFilter(self.request.GET, queryset=global_announcements)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = GlobalAnnouncementSerializer(page, many=True)
             return Response(serializer.data)
@@ -3085,7 +3088,8 @@ class GlobalEmailTemplateList(APIView, PaginationMixin):
         """
         global_email_templates = GlobalEmailTemplate.objects.all()
 
-        page = self.paginate_queryset(global_email_templates)
+        filterobject_fs = GlobalEmailTemplateFilter(self.request.GET, queryset=global_email_templates)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = GlobalEmailTemplateSerializer(global_email_templates, many=True)
             return Response(serializer.data)

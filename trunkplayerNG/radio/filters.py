@@ -266,7 +266,6 @@ class ScanListFilter(filters.FilterSet):
         ]
 
 class ScannerFilter(filters.FilterSet):
-    
     name = django_filters.CharFilter(lookup_expr='icontains')
     description = django_filters.CharFilter(lookup_expr='icontains')
 
@@ -298,9 +297,9 @@ class TransmissionFilter(filters.FilterSet):
     units__description = django_filters.CharFilter(field_name='units__unit__description', lookup_expr='icontains')
     frequencys__freq = django_filters.CharFilter(lookup_expr='icontains')
 
-    talkgroup__alpha_tag = django_filters.CharFilter(field_name='talkgroup__alpha_tag', lookup_expr='contains')
+    talkgroup__alpha_tag = django_filters.CharFilter(field_name='talkgroup__alpha_tag', lookup_expr='icontains')
     talkgroup__decimal_id = django_filters.CharFilter(field_name='talkgroup__decimal_id', lookup_expr='exact')
-    talkgroup__agency__name = django_filters.CharFilter(field_name='talkgroup__agency__name', lookup_expr='contains')
+    talkgroup__agency__name = django_filters.CharFilter(field_name='talkgroup__agency__name', lookup_expr='icontains')
 
     frequency = django_filters.NumberFilter()
     frequency__gt = django_filters.NumberFilter(field_name='frequency', lookup_expr='gt')
@@ -328,3 +327,19 @@ class TransmissionFilter(filters.FilterSet):
             "locked",
             "transcript",
         ]
+
+class GlobalAnnouncementFilter(filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+    description = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = GlobalAnnouncement
+        fields = ["UUID", "name", "enabled", "description"]
+
+class GlobalEmailTemplateFilter(filters.FilterSet):
+    name = django_filters.CharFilter(lookup_expr='icontains')
+    template_type = django_filters.CharFilter(lookup_expr='icontains')
+
+    class Meta:
+        model = GlobalEmailTemplate
+        fields = ["UUID", "name", "template_type", "enabled", "HTML"]
