@@ -26,17 +26,17 @@ jobs:
       - run:
           name: Build trunkplayer-NG Docker image
           command: |
-            docker build  -t maxwelldps/trunkplayer-ng:rolling .
-            docker build  -t maxwelldps/trunkplayer-ng:${CIRCLE_SHA1} .
+            docker build  -t trunkplayer/trunkplayer-ng:rolling .
+            docker build  -t trunkplayer/trunkplayer-ng:${CIRCLE_SHA1} .
       - run:
           name: Build nginx Docker image
           command: |
-            docker build  -t maxwelldps/trunkplayer-ng-nginx:rolling nginx/
-            docker build  -t maxwelldps/trunkplayer-ng-nginx:${CIRCLE_SHA1} nginx/
+            docker build  -t trunkplayer/trunkplayer-ng-nginx:rolling nginx/
+            docker build  -t trunkplayer/trunkplayer-ng-nginx:${CIRCLE_SHA1} nginx/
       - deploy:
           name: Push application Docker image
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker push "maxwelldps/trunkplayer-ng-nginx:rolling"
-            docker push "maxwelldps/trunkplayer-ng:${CIRCLE_SHA1}"
+            docker push "trunkplayer/trunkplayer-ng-nginx:rolling"
+            docker push "trunkplayer/trunkplayer-ng:${CIRCLE_SHA1}"
             
