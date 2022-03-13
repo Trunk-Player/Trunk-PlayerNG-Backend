@@ -1,4 +1,12 @@
 version: 2
+orbs: # adds orbs to your configuration
+  jira: circleci/jira@1.0.5 # invokes the Jira orb, making its commands accessible
+workflows:
+  build:
+    jobs:
+      - build:
+          post-steps:
+            - jira/notify 
 jobs:
   build:
     working_directory: /app
