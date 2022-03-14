@@ -23,7 +23,9 @@ jobs:
             sudo apt install -y  \
               curl \
               jq \
-              git
+              git \
+              qemu-user-static \
+              binfmt-support
       - run: |
           ssh remote-docker \<<EOF
             sudo bash -c 'echo "{\"experimental\": true}" > /etc/docker/daemon.json'
