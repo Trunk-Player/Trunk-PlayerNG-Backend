@@ -20,12 +20,8 @@ jobs:
           command: |
             apk update && \
             apk add  --upgrade --no-cache \
-              py-pip \
               curl \
-              jq               
-            pip install \
-              docker-compose
-
+              jq  
       - run:
           name: Build trunkplayer-NG Docker image
           command: |
