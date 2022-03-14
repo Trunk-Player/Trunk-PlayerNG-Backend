@@ -1,0 +1,39 @@
+version: 2.1
+orbs: # adds orbs to your configuration
+  jira: circleci/jira@1.3.1 # invokes the Jira orb, making its commands accessible
+workflows:
+  build:
+    jobs:
+      - build:
+          post-steps:
+            - jira/notify 
+jobs:
+  build:
+    working_directory: /app
+    docker:
+      - image: docker:20.10-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install dependencies
+          command: |
+            apk update && \
+            apk add  --upgrade --no-cache \
+              curl \
+              jq  
+      - run:
+          name: Build trunkplayer-NG Docker image
+          command: |
+            docker build  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH} .
+      - run:
+          name: Build nginx Docker image
+          command: |
+            docker build  -t trunkplayer/trunkplayer-ng-nginx:${CIRCLE_BRANCH} nginx/
+      - deploy:
+          name: Push application Docker image
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push "trunkplayer/trunkplayer-ng-nginx:${CIRCLE_BRANCH}"
+            docker push "trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}"
+            
