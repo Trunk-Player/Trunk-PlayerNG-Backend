@@ -11,7 +11,7 @@ jobs:
   build:
     working_directory: /app
     docker:
-      - image: docker:20.10-git
+      - image: cimg/base:stable
     steps:
       - setup_remote_docker:
           version: 19.03.14
@@ -23,7 +23,8 @@ jobs:
             apk update && \
             apk add  --upgrade --no-cache \
               curl \
-              jq 
+              jq \
+              git
       - run: |
           ssh remote-docker \<<EOF
             sudo bash -c 'echo "{\"experimental\": true}" > /etc/docker/daemon.json'
