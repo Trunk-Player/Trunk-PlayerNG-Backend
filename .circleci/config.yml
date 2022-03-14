@@ -34,25 +34,23 @@ jobs:
           name: Login to Docker
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
+            export DOCKER_BUILDKIT=0
+            export COMPOSE_DOCKER_CLI_BUILD=0
       - run:
           name: Build trunkplayer-NG Docker amd64 image
           command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
             docker buildx build --platform linux/amd64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
       - run:
           name: Build trunkplayer-NG Docker arm64 image
           command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
             docker buildx build --platform linux/arm64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
       - run:
           name: Build trunkplayer-NG Docker arm/v7 image
           command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
             docker buildx build --platform linux/arm/v7 -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
       - run:
           name: Build trunkplayer-NG Docker arm/v6 image
           command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
             docker buildx build --platform linux/arm/v6 -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .   
       - run:
           name: Build nginx Docker image
