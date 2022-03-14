@@ -26,16 +26,14 @@ jobs:
           name: Build trunkplayer-NG Docker image
           command: |
             docker build  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH} .
-            docker build  -t trunkplayer/trunkplayer-ng:${CIRCLE_SHA1} .
       - run:
           name: Build nginx Docker image
           command: |
             docker build  -t trunkplayer/trunkplayer-ng-nginx:${CIRCLE_BRANCH} nginx/
-            docker build  -t trunkplayer/trunkplayer-ng-nginx:${CIRCLE_SHA1} nginx/
       - deploy:
           name: Push application Docker image
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push "trunkplayer/trunkplayer-ng-nginx:${CIRCLE_BRANCH}"
-            docker push "trunkplayer/trunkplayer-ng:${CIRCLE_SHA1}"
+            docker push "trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}"
             
