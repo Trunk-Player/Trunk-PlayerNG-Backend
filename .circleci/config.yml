@@ -21,7 +21,13 @@ jobs:
             apk update && \
             apk add  --upgrade --no-cache \
               curl \
-              jq  
+              jq 
+      - run: |
+          ssh remote-docker \<<EOF
+            sudo bash -c 'echo "{\"experimental\": true}" > /etc/docker/daemon.json'
+            sudo systemctl restart docker
+            sudo docker info
+          EOF
       - run:
           name: Build trunkplayer-NG Docker image
           command: |
