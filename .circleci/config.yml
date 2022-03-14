@@ -25,7 +25,9 @@ jobs:
       - run:
           name: Build trunkplayer-NG Docker image
           command: |
-            docker build  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH} .
+            export DOCKER_CLI_EXPERIMENTAL=enabled
+            docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
+          
       - run:
           name: Build nginx Docker image
           command: |
