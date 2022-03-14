@@ -3053,7 +3053,7 @@ class GlobalEmailTemplateList(APIView, PaginationMixin):
         global_email_templates = GlobalEmailTemplate.objects.all()
 
         page = self.paginate_queryset(global_email_templates)
-a        if page is not None:
+        if page is not None:
             serializer = GlobalEmailTemplateSerializer(global_email_templates, many=True)
             return Response(serializer.data)
 
