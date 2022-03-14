@@ -11,7 +11,7 @@ jobs:
   build:
     working_directory: /app
     docker:
-      - image: docker:17.05.0-ce-git
+      - image: docker:20.10-git
     steps:
       - checkout
       - setup_remote_docker
