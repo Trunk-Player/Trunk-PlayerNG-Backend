@@ -13,9 +13,10 @@ jobs:
     docker:
       - image: docker:20.10-git
     steps:
-      - checkout
       - setup_remote_docker:
           version: 19.03.14
+      - checkout
+      
       - run:
           name: Install dependencies
           command: |
@@ -23,6 +24,12 @@ jobs:
             apk add  --upgrade --no-cache \
               curl \
               jq 
+      - run: |
+          ssh remote-docker \<<EOF
+            sudo bash -c 'echo "{\"experimental\": true}" > /etc/docker/daemon.json'
+            sudo systemctl restart docker
+            sudo docker info
+          EOF
       - run:
           name: Build trunkplayer-NG Docker image
           command: |
