@@ -21,7 +21,7 @@ jobs:
             apk update && \
             apk add --no-cache \
               py-pip=9.0.0-r1 \
-              jq
+              jq \
               curl
             pip install \
               docker-compose==1.12.0 \
