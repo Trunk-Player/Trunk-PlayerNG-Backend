@@ -43,6 +43,8 @@ jobs:
       - run:
           name: Build trunkplayer-NG Docker arm64 image
           command: |
+            export DOCKER_BUILDKIT=0
+            export COMPOSE_DOCKER_CLI_BUILD=0
             docker buildx build --platform linux/arm64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
       - run:
           name: Build trunkplayer-NG Docker arm/v7 image
