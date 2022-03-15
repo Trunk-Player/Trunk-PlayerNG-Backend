@@ -13,7 +13,7 @@ jobs:
       - image: cimg/base:stable
     steps:
       - setup_remote_docker:
-          version: 19.03.14
+          version: 20.10.11
       - checkout
       
       - run:
