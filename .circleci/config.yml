@@ -36,8 +36,8 @@ jobs:
           name: Login to Docker
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            export DOCKER_BUILDKIT=0
-            export COMPOSE_DOCKER_CLI_BUILD=0
+            docker context create multi-arch-build
+            docker buildx create --use multi-arch-build
       - run:
           name: Build trunkplayer-NG Docker amd64 image
           command: |
