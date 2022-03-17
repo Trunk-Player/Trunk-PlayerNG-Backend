@@ -1,116 +1,109 @@
 version: '3.8'
 
 services:
-  trunk-player:
-    restart: always
-    network_mode: "host"
-    build: .
+  trunk-player-ng:
+    image: trunkplayer/trunkplayer-ng
+    container_name: trunk-recorder-ng
     command: "bash -c 'python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
-    # ports:
-    #   - 3031:3031
+    ports:
+      - 3031:3031
     environment:
-      DEBUG: "True"
-      SEND_TELEMETRY: "True"
+       DEBUG: "True"
       FORCE_SECURE: "False"
-      SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
-      SQL_DATABASE: tp
-      SQL_USER: TrunkPlayer
-      SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
+      SEND_TELEMETRY: "True"
+      SECRET_KEY: Sup3rS3cr3tK3y!
+      SQL_DATABASE: tp-ng
+      SQL_USER: tp-ng
+      SQL_PASSWORD: s3CuRiTy
       SQL_HOST: localhost
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@localhost:5672/
       USE_S3: "False"
       AUDIO_DOWNLOAD_HOST: "https://panik.io"
-      S3_ACCESS_KEY_ID: "3U5GSOLSD9TCD77R1NJD"
+      S3_ACCESS_KEY_ID: "Acc3ssK3y1D"
       S3_SECRET_ACCESS_KEY: "I_AM_AN_ID10T"
       S3_BUCKET_NAME: "f33dback"
       S3_ENDPOINT_URL: "https://s3.us-west-1.wasabisys.com"
-
     volumes:
-      - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
-      - /tmp/static:/code/static
-      - /tmp/media:/code/mediafiles
+      - [your/directory]/tp-ng/static:/code/static
+      - [your/directory]/tp-ng/media:/code/mediafiles
     depends_on:
-     # - db
-      - rabbitmqX
+     - tp-ng-db
+     - rabbitmqX
+    restart: unless-stopped
 
   trunk-player-worker:
-    restart: always
-    network_mode: "host"
-    build: .
+    image: trunkplayer/trunkplayer-ng
+    container_name: trunk-player-worker
     command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,RR_IMPORT,radio_alerts,radio_tx
     environment:
       DEBUG: "True"
       FORCE_SECURE: "False"
       SEND_TELEMETRY: "True"
-      SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
-      SQL_DATABASE: tp
-      SQL_USER: TrunkPlayer
-      SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
+      SECRET_KEY: Sup3rS3cr3tK3y!
+      SQL_DATABASE: tp-ng
+      SQL_USER: tp-ng
+      SQL_PASSWORD: s3CuRiTy
       SQL_HOST: localhost
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@localhost:5672/
       USE_S3: "False"
-      S3_ACCESS_KEY_ID: "3U5GSOLSD9TCD77R1NJD"
+      S3_ACCESS_KEY_ID: "3Acc3ssK3y1D"
       S3_SECRET_ACCESS_KEY: "I_AM_AN_ID10T"
       S3_BUCKET_NAME: "f33dback"
       S3_ENDPOINT_URL: "https://s3.us-west-1.wasabisys.com"
     volumes:
-      - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
-      - /tmp/static:/code/static
-      - /tmp/media:/code/mediafiles
+      - [your/directory]/tp-ng/static:/code/static
+      - [your/directory]/tp-ng/media:/code/mediafiles
     depends_on:
-    #  - db
+      - tp-ng-db
       - rabbitmqX
+    restart: unless-stopped
 
-  trunk-player-beat:
-    restart: always
-    network_mode: "host"
-    build: .
+  trunk-player-admin:
+    image: trunkplayer/trunkplayer-ng
+    container_name: trunk-player-admin
     command: celery -A trunkplayer_ng beat -l info
     environment:
       DEBUG: "True"
       FORCE_SECURE: "False"
       SEND_TELEMETRY: "True"
-      SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
-      SQL_DATABASE: tp
-      SQL_USER: TrunkPlayer
-      SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
+      SECRET_KEY: Sup3rS3cr3tK3y!
+      SQL_DATABASE: tp-ng
+      SQL_USER: tp-ng
+      SQL_PASSWORD: s3CuRiTy
       SQL_HOST: localhost
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@localhost:5672/
       USE_S3: "False"
-      S3_ACCESS_KEY_ID: "3U5GSOLSD9TCD77R1NJD"
+      S3_ACCESS_KEY_ID: "Acc3ssK3y1D"
       S3_SECRET_ACCESS_KEY: "I_AM_AN_ID10T"
       S3_BUCKET_NAME: "f33dback"
       S3_ENDPOINT_URL: "https://s3.us-west-1.wasabisys.com"
     volumes:
-      - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
-      - /tmp/static:/code/static
-      - /tmp/media:/code/mediafiles
+      - [your/directory]/tp-ng/static:/code/static
+      - [your/directory]/tp-ng/media:/code/mediafiles
     depends_on:
-      #- db
+      - tp-ng-db
       - rabbitmqX
+    restart: unless-stopped
 
-  # db:
-  #   image: mysql
-  #   restart: always
-  #   command: --default-authentication-plugin=mysql_native_password
-  #   networe
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: s3CuRiTy
-  #     MYSQL_DATABASE: tp
-  #     MYSQL_USER: TrunkPlayer
-  #     MYSQL_PASSWORD: s3CuRiTy
-  #   volumes:
-  #     - /var/lib/mysql
+  tp-ng-db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: s3CuRiTy
+      MYSQL_DATABASE: tp-ng
+      MYSQL_USER: tp-ng
+      MYSQL_PASSWORD: s3CuRiTy
+    volumes:
+      - [your/directory]/tp-ng/db:/var/lib/mysql
+    restart: unless-stopped
 
   rabbitmqX:
     image: 'rabbitmq:management'
-    network_mode: "host"
-    restart: always
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: pass
-        
-  
+    restart: unless-stopped
+
