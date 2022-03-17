@@ -316,6 +316,7 @@ class TalkGroupACL(models.Model):
     default_new_talkgroups = models.BooleanField(default=True)
     default_new_users = models.BooleanField(default=True)
     download_allowed = models.BooleanField(default=True)
+    transcript_allowed = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

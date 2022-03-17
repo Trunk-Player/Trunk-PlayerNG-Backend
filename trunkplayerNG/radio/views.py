@@ -1446,6 +1446,9 @@ class TalkGroupACLCreate(APIView):
                 "download_allowed": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Display Download Option"
                 ),
+                "transcript_allowed": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Display Transcript of transmission"
+                ),
             },
         ),
     )
@@ -1509,6 +1512,9 @@ class TalkGroupACLView(APIView):
                 ),
                 "download_allowed": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="Display Download Option"
+                ),
+                "transcript_allowed": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN, description="Display Transcript of transmission"
                 ),
             },
         ),
