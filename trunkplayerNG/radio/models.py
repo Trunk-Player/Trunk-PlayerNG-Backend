@@ -396,6 +396,8 @@ class UserAlert(models.Model):
     talkgroups = models.ManyToManyField(TalkGroup, blank=True)
     emergency_only = models.BooleanField(default=False)
     units = models.ManyToManyField(Unit, blank=True)
+    count = models.IntegerField('Number of Transmissions over trigger time to alert', default=1)
+    trigger_time = models.IntegerField('trigger time', default=10)
     title = models.CharField(max_length=255, default="New Activity Alert")
     body = models.TextField(default="New Activity on %T - %I")
 

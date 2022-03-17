@@ -234,6 +234,12 @@ class UserAlertCreate(APIView):
                     type=openapi.TYPE_STRING,
                     description="Only alert on Emergency Transmissions",
                 ),
+                "count": openapi.Schema(
+                    type=openapi.TYPE_INTEGER, description="Number of Transmissions over trigger time to alert"
+                ),
+                "trigger_time": openapi.Schema(
+                    type=openapi.TYPE_INTEGER, description="trigger time"
+                ),
             },
         ),
     )
@@ -315,6 +321,12 @@ class UserAlertView(APIView):
                 "emergency_only": openapi.Schema(
                     type=openapi.TYPE_STRING,
                     description="Only alert on Emergency Transmissions",
+                ),
+                "count": openapi.Schema(
+                    type=openapi.TYPE_INTEGER, description="Number of Transmissions over trigger time to alert"
+                ),
+                "trigger_time": openapi.Schema(
+                    type=openapi.TYPE_INTEGER, description="trigger time"
                 ),
             },
         ),
