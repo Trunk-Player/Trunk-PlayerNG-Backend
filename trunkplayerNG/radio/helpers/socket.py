@@ -40,7 +40,6 @@ def tx_request(sid, message):
 
         if user_allowed_to_access_transmission(transmission, user.userProfile.UUID):
             resp = TransmissionListSerializer(transmission)
-            logging.warning(resp.data)
             # Clean me up
             data = json.loads(json.dumps(resp.data, cls=UUIDEncoder))
             sio.emit(

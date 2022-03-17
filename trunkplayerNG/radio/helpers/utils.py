@@ -16,6 +16,7 @@ from radio.models import (
     TransmissionFreq,
     Unit,
     TransmissionUnit,
+    UserProfile,
 )
 
 logger = logging.getLogger(__name__)
@@ -271,6 +272,11 @@ def user_allowed_to_access_transmission(
     """
     Returs bool if user can access Transmission
     """
+
+    user:UserProfile = UserProfile.objects.get(UUID=user_uuid)
+    if user.site_admin:
+        return True
+
     allowed_tgs = get_user_allowed_talkgroups(transmission.system, user_uuid=user_uuid)
 
     if transmission.talkgroup in allowed_tgs:
