@@ -326,6 +326,7 @@ class TalkGroupACLSerializer(serializers.ModelSerializer):
             "default_new_talkgroups",
             "default_new_users",
             "download_allowed",
+            "transcript_allowed",
         ]
 
 
