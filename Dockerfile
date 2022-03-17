@@ -10,7 +10,6 @@ WORKDIR /code
 #RUN apt update && apt install -y uwsgi-plugin-python
 
 # install dependencies
-RUN ln -s /usr/share/pyshared/lsb_release.py /usr/local/lib/python3.8/site-packages/lsb_release.py
 RUN pip install --upgrade pip 
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
