@@ -41,7 +41,7 @@ def unlock_transmssions(modeladmin, request, queryset):
 
 class UserAlertAdmin(admin.ModelAdmin):
     ordering = ("-user",)
-    list_display = ("name", "user", "web_notification", "app_rise_notification")
+    list_display = ("name", "user", "web_notification", "app_rise_notification", "emergency_only", "count", "trigger_time")
     list_filter = ("web_notification", "app_rise_notification")
 
 
@@ -201,10 +201,14 @@ class TalkgroupACLAdmin(admin.ModelAdmin):
         "name",
         "default_new_talkgroups",
         "default_new_users",
+        "download_allowed",
+        "transcript_allowed",
     )
     list_filter = (
         "default_new_talkgroups",
         "default_new_users",
+        "download_allowed",
+        "transcript_allowed",
     )
 
 

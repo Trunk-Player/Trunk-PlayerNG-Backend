@@ -39,6 +39,8 @@ class UserAlertFilter(filters.FilterSet):
             "app_rise_notification",
             "app_rise_urls",
             "emergency_only",
+            "count",
+            "trigger_time"
         ]
 
 class UserProfileFilter(filters.FilterSet):
@@ -270,13 +272,9 @@ class ScannerFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     description = django_filters.CharFilter(lookup_expr='icontains')
 
-    talkgroups__alpha_tag = django_filters.CharFilter(field_name='talkgroups__alpha_tag', lookup_expr='icontains')
-    talkgroups__decimal_id = django_filters.CharFilter(field_name='talkgroups__decimal_id', lookup_expr='exact')
-    talkgroups__agency__name = django_filters.CharFilter(field_name='talkgroups__agency__name', lookup_expr='icontains')
-
 
     class Meta:
-        model = ScanList
+        model = Scanner
         fields = [
             "UUID",
             "owner",
@@ -284,7 +282,7 @@ class ScannerFilter(filters.FilterSet):
             "description",
             "public",
             "community_shared",
-            "talkgroups",
+            "scanlists",
         ]
 
 

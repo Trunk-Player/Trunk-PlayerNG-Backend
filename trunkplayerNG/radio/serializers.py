@@ -39,6 +39,8 @@ class UserAlertSerializer(serializers.ModelSerializer):
             "title",
             "body",
             "emergency_only",
+            "count",
+            "trigger_time",
         ]
 
 
