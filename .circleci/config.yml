@@ -38,10 +38,10 @@ jobs:
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker context create multi-arch-build
             docker buildx create --use multi-arch-build
-      - run:
-          name: Build trunkplayer-NG Docker amd64 image
-          command: |
-            docker buildx build --platform linux/amd64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
+      # - run:
+      #     name: Build trunkplayer-NG Docker amd64 image
+      #     command: |
+      #       docker buildx build --platform linux/amd64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
       - run:
           name: Build trunkplayer-NG Docker arm64 image
           command: |
