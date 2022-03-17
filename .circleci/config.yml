@@ -10,7 +10,7 @@ workflows:
 jobs:
   build:
     docker:
-      - image: cimg/base:stable-20.04
+      - image: cimg/python:stable-20.04
     steps:
       - setup_remote_docker:
           version: 20.10.11
