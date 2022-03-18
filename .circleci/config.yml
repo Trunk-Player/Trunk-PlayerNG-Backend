@@ -46,7 +46,7 @@ jobs:
       - run:
           name: Build trunkplayer-NG Docker arm64 image
           command: |
-            docker buildx build --platform linux/arm64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
+            docker buildx build --platform linux/arm64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push . | cat
       - run:
           name: Build trunkplayer-NG Docker arm/v7 image
           command: |
