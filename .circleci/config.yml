@@ -50,15 +50,15 @@ jobs:
       - run:
           name: Build trunkplayer-NG Docker arm/v7 image
           command: |
-            docker buildx build --platform linux/arm/v7 -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
+            docker buildx build --platform linux/arm/v7 -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push . | cat
       - run:
           name: Build trunkplayer-NG Docker arm/v6 image
           command: |
-            docker buildx build --platform linux/arm/v6 -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .   
+            docker buildx build --platform linux/arm/v6 -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push . | cat   
       - run:
           name: Build nginx Docker image
           command: |
-            docker build  -t trunkplayer/trunkplayer-ng-nginx:${CIRCLE_BRANCH} nginx/
+            docker build  -t trunkplayer/trunkplayer-ng-nginx:${CIRCLE_BRANCH} nginx/ 
       - deploy:
           name: Push application Docker image
           command: |
