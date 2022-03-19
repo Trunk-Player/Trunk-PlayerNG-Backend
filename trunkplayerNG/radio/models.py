@@ -131,6 +131,10 @@ def execute_talkgroup_dedup_check(sender, instance, created, *args, **kwargs):
                 system=system, decimal_id=instance.decimal_id
             ).exclude(UUID=instance.UUID)
             talkgroups.delete()
+            talkgroup_acls = TalkGroupACL.objects.filter(default_new_talkgroups=True)
+            for acl in talkgroup_acls:
+                acl:TalkGroupACL
+                acl.allowed_talkgroups.add(instance)
         else:
             if TalkGroup.objects.filter(
                 system=system, decimal_id=instance.decimal_id
@@ -309,9 +313,10 @@ class TalkGroupACL(models.Model):
     name = models.CharField(max_length=30)
     users = models.ManyToManyField(UserProfile)
     allowed_talkgroups = models.ManyToManyField(TalkGroup)
-    default_new_users = models.BooleanField(default=True)
+    default_new_talkgroups = models.BooleanField(default=True)
     default_new_users = models.BooleanField(default=True)
     download_allowed = models.BooleanField(default=True)
+    transcript_allowed = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -387,10 +392,12 @@ class UserAlert(models.Model):
     description = models.TextField(blank=True, null=True)
     web_notification = models.BooleanField(default=False)
     app_rise_notification = models.BooleanField(default=False)
-    app_rise_urls = models.TextField(", Seperated AppriseURL(s)", default="")
+    app_rise_urls = models.TextField(", Seperated AppriseURL(s)", blank=True, default="")
     talkgroups = models.ManyToManyField(TalkGroup, blank=True)
-    emergencyOnly = models.BooleanField(default=False)
+    emergency_only = models.BooleanField(default=False)
     units = models.ManyToManyField(Unit, blank=True)
+    count = models.IntegerField('Number of Transmissions over trigger time to alert', default=1)
+    trigger_time = models.IntegerField('trigger time', default=10)
     title = models.CharField(max_length=255, default="New Activity Alert")
     body = models.TextField(default="New Activity on %T - %I")
 

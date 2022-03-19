@@ -3,9 +3,12 @@ import logging
 import apprise
 import socketio
 
+from datetime import timedelta
+
+from django.utils import timezone
 from django.conf import settings
 
-from radio.models import TalkGroup, Unit, UserAlert
+from radio.models import TalkGroup, Unit, UserAlert, Transmission
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
@@ -38,6 +41,7 @@ def _send_transmission_notifications(transmission: dict) -> None:
     """
     from radio.tasks import broadcast_user_notification
 
+
     talkgroup = transmission["talkgroup"]
     units = transmission["units"]
     logging.debug(f'[+] Handling Notifications for TX:{transmission["UUID"]}')
@@ -47,11 +51,16 @@ def _send_transmission_notifications(transmission: dict) -> None:
         if not alert.enabled:
             continue
 
+        transmission_count = Transmission.objects.filter(talkgroup__UUID=talkgroup, end_time__gte=timezone.now()-timedelta(seconds=alert.trigger_time)) 
+        if len(transmission_count) < alert.count:
+            continue
+
+
         try:
             if alert.talkgroups.filter(UUID=talkgroup).exists():
                 talkgroup_object = TalkGroup.objects.get(UUID=talkgroup)
                 talkgroup: TalkGroup
-                if alert.emergencyOnly:
+                if alert.emergency_only:
                     if transmission["emergency"]:
                         broadcast_user_notification.delay(
                             "Talkgroup",
@@ -104,7 +113,7 @@ def _send_transmission_notifications(transmission: dict) -> None:
                         unit_id = str(active_unit.decimal_id)
                     active_unit_list = active_unit_list + f"; {unit_id}"
 
-                if alert.emergencyOnly:
+                if alert.emergency_only:
                     if transmission["emergency"]:
                         broadcast_user_notification.delay(
                             "Unit",
