@@ -1,15 +1,28 @@
-from rest_framework.authentication import TokenAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.conf import settings
 
-class TokenAuthSupportCookie(TokenAuthentication):
+class TokenAuthSupportCookie(JWTAuthentication):
     """
     Extend the TokenAuthentication class to support cookie based authentication
     """
     def authenticate(self, request):
         # Check if 'auth_token' is in the request cookies.
         # Give precedence to 'Authorization' header.
-        if 'auth_token' in request.COOKIES and \
+        raw_token = None
+        if settings.JWT_AUTH_COOKIE in request.COOKIES and \
                         'HTTP_AUTHORIZATION' not in request.META:
-            return self.authenticate_credentials(
-                request.COOKIES.get('auth_token').encode("utf-8")
-            )
-        return super().authenticate(request)
+            if 'HTTP_REFERER' in request.META:
+                if "/auth/" not in request.META['HTTP_REFERER']:
+                    raw_token = request.COOKIES.get(settings.JWT_AUTH_COOKIE).encode("utf-8")
+                    print(raw_token)
+
+                    validated_token = self.get_validated_token(raw_token)
+
+                    return self.get_user(validated_token), validated_token
+            else:
+                raw_token = request.COOKIES.get(settings.JWT_AUTH_COOKIE).encode("utf-8")
+                print(raw_token)
+
+                validated_token = self.get_validated_token(raw_token)
+
+                return self.get_user(validated_token), validated_token

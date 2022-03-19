@@ -171,7 +171,7 @@ class UserAlertList(APIView, PaginationMixin):
         page = self.paginate_queryset(user_alerts)
         if page is not None:
             serializer = UserAlertSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class UserAlertCreate(APIView):
@@ -349,7 +349,7 @@ class UserProfileList(APIView, PaginationMixin):
         page = self.paginate_queryset(user_profile)
         if page is not None:
             serializer = UserProfileSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class UserProfileView(APIView):
@@ -443,7 +443,7 @@ class SystemACLList(APIView, PaginationMixin):
         page = self.paginate_queryset(system_acls)
         if page is not None:
             serializer = SystemACLSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class SystemACLCreate(APIView):
@@ -573,7 +573,7 @@ class SystemList(APIView, PaginationMixin):
         page = self.paginate_queryset(systems_fs.qs)
         if page is not None:
             serializer = SystemSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class SystemCreate(APIView):
@@ -785,7 +785,7 @@ class SystemForwarderList(APIView, PaginationMixin):
         page = self.paginate_queryset(system_forwarders)
         if page is not None:
             serializer = SystemForwarderSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class SystemForwarderCreate(APIView):
@@ -926,7 +926,7 @@ class CityList(APIView, PaginationMixin):
         page = self.paginate_queryset(citys)
         if page is not None:
             serializer = CitySerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class CityCreate(APIView):
@@ -1045,7 +1045,7 @@ class AgencyList(APIView, PaginationMixin):
         page = self.paginate_queryset(agencys)
         if page is not None:
             serializer = AgencyViewListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class AgencyCreate(APIView):
@@ -1180,7 +1180,7 @@ class TalkGroupList(APIView, PaginationMixin):
         page = self.paginate_queryset(allowed_talkgroups)
         if page is not None:
             serializer = TalkGroupViewListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class TalkGroupCreate(APIView):
@@ -1372,7 +1372,7 @@ class TalkGroupTransmissionList(APIView, PaginationMixin):
         page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class TalkGroupACLList(APIView):
@@ -1523,7 +1523,7 @@ class SystemRecorderList(APIView, PaginationMixin):
         page = self.paginate_queryset(system_recorders)
         if page is not None:
             serializer = SystemRecorderSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class SystemRecorderCreate(APIView):
@@ -1675,7 +1675,7 @@ class UnitList(APIView, PaginationMixin):
         page = self.paginate_queryset(units)
         if page is not None:
             serializer = UnitSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class UnitCreate(APIView):
@@ -1822,7 +1822,7 @@ class TransmissionUnitList(APIView):
                 return Response(status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = TransmissionUnitSerializer(units, many=True)
-        return Response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
 
 class TransmissionUnitView(APIView):
@@ -1972,30 +1972,29 @@ class TransmissionList(APIView, PaginationMixin):
         else:
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
-            allowed_transmissions = []
+            del system_uuids
+            allowed_transmissions_non_acl = []
+            allowed_transmissions_acl = []
 
             for system in systems:
                 if system.enable_talkgroup_acls:
                     talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
-                    allowed_transmissions.extend(
-                        Transmission.objects.filter(
-                            system=system, talkgroup__in=talkgroups_allowed
-                        )
+                    allowed_transmissions_acl = Transmission.objects.filter(
+                        system=system, talkgroup__in=talkgroups_allowed
                     )
                 else:
-                    allowed_transmissions.extend(
-                        Transmission.objects.filter(system=system)
-                    )
+                    allowed_transmissions_non_acl = Transmission.objects.filter(system=system)
+                    
 
         # allowed_transmissions = sorted(
         #     allowed_transmissions, key=lambda instance: instance.start_time, reverse=True
         # )
-
+            allowed_transmissions = allowed_transmissions_acl | allowed_transmissions_non_acl
         transmissions_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmissions)
         page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class TransmissionCreate(APIView):
@@ -2153,7 +2152,7 @@ class IncidentList(APIView, PaginationMixin):
         page = self.paginate_queryset(incidents)
         if page is not None:
             serializer = IncidentSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class IncidentCreate(APIView):
@@ -2437,7 +2436,7 @@ class ScanListList(APIView, PaginationMixin):
         page = self.paginate_queryset(scanlists)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class ScanListPersonalList(APIView, PaginationMixin):
@@ -2457,7 +2456,7 @@ class ScanListPersonalList(APIView, PaginationMixin):
         page = self.paginate_queryset(scanlists)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class ScanListUserList(APIView, PaginationMixin):
@@ -2483,7 +2482,7 @@ class ScanListUserList(APIView, PaginationMixin):
         page = self.paginate_queryset(scanlists)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class ScanListCreate(APIView):
@@ -2670,7 +2669,7 @@ class ScanListTransmissionList(APIView, PaginationMixin):
         page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class ScannerList(APIView, PaginationMixin):
@@ -2695,7 +2694,7 @@ class ScannerList(APIView, PaginationMixin):
         page = self.paginate_queryset(scanner)
         if page is not None:
             serializer = ScannerSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class ScannerCreate(APIView):
@@ -2902,7 +2901,7 @@ class ScannerTransmissionList(APIView, PaginationMixin):
         page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
             serializer = TransmissionListSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class GlobalAnnouncementList(APIView, PaginationMixin):
@@ -2925,7 +2924,7 @@ class GlobalAnnouncementList(APIView, PaginationMixin):
         page = self.paginate_queryset(global_announcements)
         if page is not None:
             serializer = GlobalAnnouncementSerializer(page, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class GlobalAnnouncementCreate(APIView):
@@ -3055,7 +3054,7 @@ class GlobalEmailTemplateList(APIView, PaginationMixin):
         page = self.paginate_queryset(global_email_templates)
         if page is not None:
             serializer = GlobalEmailTemplateSerializer(global_email_templates, many=True)
-            return Response(serializer.data)
+            return self.get_paginated_response(serializer.data)
 
 
 class GlobalEmailTemplateCreate(APIView):
