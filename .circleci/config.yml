@@ -9,27 +9,56 @@ workflows:
             - jira/notify 
 jobs:
   build:
-    working_directory: /app
     docker:
-      - image: docker:20.10-git
+      - image: cimg/python:3.10.2
     steps:
+      - setup_remote_docker:
+          version: 20.10.11
       - checkout
-      - setup_remote_docker
+      
       - run:
           name: Install dependencies
           command: |
-            apk update && \
-            apk add  --upgrade --no-cache \
+            sudo apt update && \
+            sudo apt install -y  \
               curl \
-              jq  
-      - run:
-          name: Build trunkplayer-NG Docker image
+              jq \
+              git \
+              qemu-user-static \
+              binfmt-support
+      - run: |
+          ssh remote-docker \<<EOF
+            sudo bash -c 'echo "{\"experimental\": true}" > /etc/docker/daemon.json'
+            sudo systemctl restart docker
+            sudo docker info
+          EOF
+      - deploy:
+          name: Setup Docker
           command: |
-            docker build  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH} .
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+            docker context create multi-arch-build
+            docker buildx create --use multi-arch-build
+      # - run:
+      #     name: Build trunkplayer-NG Docker amd64 image
+      #     command: |
+      #       docker buildx build --platform linux/amd64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push .
+      - run:
+          name: Build trunkplayer-NG Docker arm64 image
+          command: |
+            docker buildx build --platform linux/arm64  -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push . | cat
+      - run:
+          name: Build trunkplayer-NG Docker arm/v7 image
+          command: |
+            docker buildx build --platform linux/arm/v7 -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push . | cat
+      - run:
+          name: Build trunkplayer-NG Docker arm/v6 image
+          command: |
+            docker buildx build --platform linux/arm/v6 -t trunkplayer/trunkplayer-ng:${CIRCLE_BRANCH}  --push . | cat   
       - run:
           name: Build nginx Docker image
           command: |
-            docker build  -t trunkplayer/trunkplayer-ng-nginx:${CIRCLE_BRANCH} nginx/
+            docker build  -t trunkplayer/trunkplayer-ng-nginx:${CIRCLE_BRANCH} nginx/ 
       - deploy:
           name: Push application Docker image
           command: |
