@@ -182,6 +182,7 @@ class UserAlertList(APIView, PaginationMixin):
     serializer_class = UserAlertSerializer
     permission_classes = [IsSAOrUser]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = UserAlertFilter
 
     @swagger_auto_schema(tags=["UserAlert"])
@@ -374,6 +375,7 @@ class UserProfileList(APIView, PaginationMixin):
     serializer_class = UserProfileSerializer
     permission_classes = [IsSAOrUser]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = UserProfileFilter
 
     @swagger_auto_schema(tags=["UserProfile"])
@@ -473,6 +475,7 @@ class SystemACLList(APIView, PaginationMixin):
     serializer_class = SystemACLSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = SystemACLFilter
 
     @swagger_auto_schema(tags=["SystemACL"])
@@ -591,6 +594,7 @@ class SystemList(APIView, PaginationMixin):
     serializer_class = SystemSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = SystemFilter
 
     @swagger_auto_schema(tags=["System"])
@@ -813,6 +817,7 @@ class SystemForwarderList(APIView, PaginationMixin):
     serializer_class = SystemForwarderSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = SystemForwarderFilter
 
     @swagger_auto_schema(
@@ -959,6 +964,7 @@ class CityList(APIView, PaginationMixin):
     serializer_class = CitySerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = CityFilter
 
     @swagger_auto_schema(tags=["City"])
@@ -1080,6 +1086,7 @@ class AgencyList(APIView, PaginationMixin):
     serializer_class = AgencyViewListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = AgencyFilter
 
     @swagger_auto_schema(tags=["Agency"])
@@ -1207,6 +1214,7 @@ class TalkGroupList(APIView, PaginationMixin):
     serializer_class = TalkGroupViewListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TalkGroupFilter
 
     @swagger_auto_schema(tags=["TalkGroup"])
@@ -1385,6 +1393,7 @@ class TalkGroupTransmissionList(APIView, PaginationMixin):
     serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TransmissionFilter
 
     def get_object(self, request_uuid):
@@ -1429,6 +1438,7 @@ class TalkGroupACLList(APIView, PaginationMixin):
     serializer_class = TalkGroupACLSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TalkGroupACLFilter
    
     @swagger_auto_schema(tags=["TalkGroupACL"])
@@ -1572,6 +1582,7 @@ class SystemRecorderList(APIView, PaginationMixin):
     serializer_class = SystemRecorderSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = SystemRecorderFilter
 
     @swagger_auto_schema(tags=["SystemRecorder"])
@@ -1719,6 +1730,7 @@ class UnitList(APIView, PaginationMixin):
     serializer_class = UnitSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = UnitFilter
 
     @swagger_auto_schema(tags=["Unit"])
@@ -1859,6 +1871,7 @@ class TransmissionUnitList(APIView, PaginationMixin):
     serializer_class = TransmissionUnitSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TransmissionUnitFilter
 
     @swagger_auto_schema(tags=["TransmissionUnit"])
@@ -1970,6 +1983,7 @@ class TransmissionFreqList(APIView):
     queryset = TransmissionFreq.objects.all()
     serializer_class = TransmissionFreqSerializer
     permission_classes = [IsSAOrReadOnly]
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TransmissionFreqFilter
 
     @swagger_auto_schema(tags=["TransmissionFreq"])
@@ -2202,6 +2216,7 @@ class IncidentList(APIView, PaginationMixin):
     serializer_class = IncidentSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = IncidentFilter
 
     @swagger_auto_schema(tags=["Incident"])
@@ -2490,6 +2505,7 @@ class ScanListList(APIView, PaginationMixin):
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = ScanListFilter
 
     @swagger_auto_schema(tags=["ScanList"])
@@ -2517,6 +2533,7 @@ class ScanListPersonalList(APIView, PaginationMixin):
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = ScanListFilter
 
     @swagger_auto_schema(tags=["ScanList"])
@@ -2539,6 +2556,7 @@ class ScanListUserList(APIView, PaginationMixin):
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = ScanListFilter
 
     @swagger_auto_schema(tags=["ScanList"])
@@ -2706,6 +2724,7 @@ class ScanListTransmissionList(APIView, PaginationMixin):
     serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TransmissionFilter
 
     def get_object(self, request_uuid):
@@ -2756,6 +2775,7 @@ class ScannerList(APIView, PaginationMixin):
     serializer_class = ScannerSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = ScannerFilter
 
     @swagger_auto_schema(tags=["Scanner"])
@@ -2921,6 +2941,7 @@ class ScannerTransmissionList(APIView, PaginationMixin):
     serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = TransmissionFilter
 
     def get_object(self, request_uuid):
@@ -2991,6 +3012,7 @@ class GlobalAnnouncementList(APIView, PaginationMixin):
     serializer_class = GlobalAnnouncementSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = GlobalAnnouncementFilter
 
     @swagger_auto_schema(tags=["GlobalAnnouncement"])
@@ -3127,6 +3149,7 @@ class GlobalEmailTemplateList(APIView, PaginationMixin):
     serializer_class = GlobalEmailTemplateSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = GlobalEmailTemplateFilter
 
     @swagger_auto_schema(tags=["GlobalEmailTemplate"])
