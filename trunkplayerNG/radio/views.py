@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from rest_framework.filters import OrderingFilter
 from rest_framework import status
 
 from django_filters import rest_framework as filters
@@ -68,6 +69,7 @@ from radio.serializers import (
 from radio.tasks import import_radio_refrence, send_transmission_to_web
 from radio.helpers.transmission import new_transmission_handler
 from radio.helpers.utils import (
+    get_user_allowed_talkgroups_for_systems,
     user_allowed_to_download_transmission,
     get_user_allowed_systems,
     get_user_allowed_talkgroups,
@@ -1194,6 +1196,7 @@ class TalkGroupList(APIView, PaginationMixin):
     serializer_class = TalkGroupViewListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend)
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def get(self, request):
@@ -1206,12 +1209,11 @@ class TalkGroupList(APIView, PaginationMixin):
             allowed_talkgroups = TalkGroup.objects.all()
         else:
             system_uuids, systems = get_user_allowed_systems(user.UUID)
-
-            allowed_talkgroups = []
-            for system in systems:
-                allowed_talkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
+            del system_uuids
+            allowed_talkgroups = get_user_allowed_talkgroups_for_systems(systems, user.UUID)
 
         filterobject_fs = TalkGroupFilter(self.request.GET, queryset=allowed_talkgroups)
+
         page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = TalkGroupViewListSerializer(page, many=True)
@@ -1415,7 +1417,7 @@ class TalkGroupACLList(APIView, PaginationMixin):
     serializer_class = TalkGroupACLSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-
+   
     @swagger_auto_schema(tags=["TalkGroupACL"])
     def get(self, request):
         """

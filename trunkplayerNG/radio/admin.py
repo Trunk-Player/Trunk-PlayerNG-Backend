@@ -183,7 +183,7 @@ class TransmissionAdmin(admin.ModelAdmin):
         "frequency",
     )
     list_filter = ("system", "recorder", "emergency", "locked")
-    search_fields = ("UUID", "talkgroup", "frequency")
+    search_fields = ("UUID", "talkgroup__alpha_tag", "frequency")
     actions = [lock_transmssions, unlock_transmssions]
 
 

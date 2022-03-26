@@ -3,6 +3,8 @@ import django_filters
 from django.db import models
 
 from django_filters import rest_framework as filters, IsoDateTimeFromToRangeFilter
+from django_filters.filters import OrderingFilter
+
 
 from radio.models import (
     UserProfile,
@@ -27,6 +29,14 @@ from radio.models import (
 )
 
 class UserAlertFilter(filters.FilterSet):
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+        )
+    )
+
     class Meta:
         model = UserAlert
         fields = [
@@ -43,12 +53,21 @@ class UserAlertFilter(filters.FilterSet):
             "trigger_time"
         ]
 
+
 class UserProfileFilter(filters.FilterSet):
     class Meta:
         model = UserProfile
         fields = ["UUID", "site_admin", "description", "site_theme"]
 
 class SystemACLFilter(filters.FilterSet):
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+        )
+    )
+
     class Meta:
         model = SystemACL
         fields = ["UUID", "name", "users", "public"]
@@ -57,6 +76,14 @@ class SystemFilter(filters.FilterSet):
     prune_transmissions_after_days = django_filters.NumberFilter()
     prune_transmissions_after_days__gt = django_filters.NumberFilter(field_name='prune_transmissions_after_days', lookup_expr='gt')
     prune_transmissions_after_days__lt = django_filters.NumberFilter(field_name='prune_transmissions_after_days', lookup_expr='lt')
+
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+        )
+    )
 
     class Meta:
         model = System
@@ -72,6 +99,16 @@ class SystemFilter(filters.FilterSet):
 class SystemForwarderFilter(filters.FilterSet):
     talkgroup_filter__alpha_tag = django_filters.CharFilter(lookup_expr='icontains')
     forwarded_systems__name = django_filters.CharFilter(lookup_expr='icontains')
+
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+        )
+    )
+
+
     class Meta:
         model = SystemForwarder
         fields = [
@@ -86,6 +123,15 @@ class SystemForwarderFilter(filters.FilterSet):
         ]
 
 class CityFilter(filters.FilterSet):
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+            ('description', 'description'),
+        )
+    )
+
     class Meta:
         model = City
         fields = ["UUID", "name", "description"]
@@ -93,6 +139,16 @@ class CityFilter(filters.FilterSet):
 class AgencyFilter(filters.FilterSet):
     city__name = django_filters.CharFilter(lookup_expr='icontains')
     city__description = django_filters.CharFilter(lookup_expr='icontains')
+
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+            ('description', 'description'),
+        )
+    )
+
 
     class Meta:
         model = Agency
@@ -102,6 +158,16 @@ class TalkGroupFilter(filters.FilterSet):
     system__name = django_filters.CharFilter(lookup_expr='icontains')
     agency__name = django_filters.CharFilter(lookup_expr='icontains')
     agency__description = django_filters.CharFilter(lookup_expr='icontains')
+
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('decimal_id', 'decimal_id'),
+            ('alpha_tag', 'alpha_tag'),
+            ('description', 'description'),
+        )
+    )
 
     class Meta:
         model = TalkGroup
@@ -119,6 +185,15 @@ class TalkGroupACLFilter(filters.FilterSet):
     allowed_talkgroups__decimal_id = django_filters.CharFilter(field_name='allowed_talkgroups__decimal_id', lookup_expr='exact')
     allowed_talkgroups__alpha_tag = django_filters.CharFilter(field_name='allowed_talkgroups__alpha_tag', lookup_expr='icontains')
     allowed_talkgroups__agency__name = django_filters.CharFilter(field_name='allowed_talkgroups__agency__name', lookup_expr='icontains')
+
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+        )
+    )
+
 
     class Meta:
         model = TalkGroupACL
@@ -144,6 +219,14 @@ class SystemRecorderFilter(filters.FilterSet):
     talkgroups_denyed__alpha_tag = django_filters.CharFilter(field_name='talkgroups_denyed__alpha_tag', lookup_expr='icontains')
     talkgroups_denyed__agency__name = django_filters.CharFilter(field_name='talkgroups_denyed__agency__name', lookup_expr='icontains')
 
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+        )
+    )
+
     class Meta:
         model = SystemRecorder
         fields = [
@@ -165,6 +248,14 @@ class UnitFilter(filters.FilterSet):
     decimal_id__gt = django_filters.NumberFilter(field_name='decimal_id', lookup_expr='gt')
     decimal_id__lt = django_filters.NumberFilter(field_name='decimal_id', lookup_expr='lt')
 
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('decimal_id', 'decimal_id'),
+            ('description', 'description'),
+        )
+    )
 
     class Meta:
         model = Unit
@@ -183,6 +274,16 @@ class TransmissionUnitFilter(filters.FilterSet):
     pos = django_filters.NumberFilter()
     pos__gt = django_filters.NumberFilter(field_name='pos', lookup_expr='gt')
     pos__lt = django_filters.NumberFilter(field_name='pos', lookup_expr='lt')
+
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('time', 'time'),
+            ('description', 'description'),
+            ('length', 'length'),
+        )
+    )
 
     class Meta:
         model = TransmissionUnit
@@ -220,6 +321,16 @@ class TransmissionFreqFilter(filters.FilterSet):
     spike_count__gt = django_filters.NumberFilter(field_name='spike_count', lookup_expr='gt')
     spike_count__lt = django_filters.NumberFilter(field_name='spike_count', lookup_expr='lt')
 
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('time', 'time'),
+            ('error_count', 'error_count'),
+            ('spike_count', 'spike_count'),
+            ('len', 'len'),
+        )
+    )
 
     class Meta:
         model = TransmissionFreq
@@ -232,6 +343,16 @@ class IncidentFilter(filters.FilterSet):
 
     name = django_filters.CharFilter(lookup_expr='icontains')
     description = django_filters.CharFilter(lookup_expr='icontains')
+
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+            ('description', 'description'),
+            ('time', 'time'),
+        )
+    )
 
     class Meta:
         model = Incident
@@ -255,6 +376,14 @@ class ScanListFilter(filters.FilterSet):
     talkgroups__decimal_id = django_filters.CharFilter(field_name='talkgroups__decimal_id', lookup_expr='exact')
     talkgroups__agency__name = django_filters.CharFilter(field_name='talkgroups__agency__name', lookup_expr='icontains')
 
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+            ('description', 'description'),
+        )
+    )
 
     class Meta:
         model = ScanList
@@ -272,6 +401,14 @@ class ScannerFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     description = django_filters.CharFilter(lookup_expr='icontains')
 
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+            ('description', 'description'),
+        )
+    )
 
     class Meta:
         model = Scanner
@@ -308,6 +445,16 @@ class TransmissionFilter(filters.FilterSet):
     length__gt = django_filters.NumberFilter(field_name='length', lookup_expr='gt')
     length__lt = django_filters.NumberFilter(field_name='length', lookup_expr='lt')
 
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('start_time', 'start_time'),
+            ('end_time', 'end_time'),
+            ('frequency', 'frequency'),
+            ('length', 'length'),
+        )
+    )
 
     class Meta:
         model = Transmission
@@ -331,6 +478,15 @@ class GlobalAnnouncementFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     description = django_filters.CharFilter(lookup_expr='icontains')
 
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+            ('description', 'description'),
+        )
+    )
+
     class Meta:
         model = GlobalAnnouncement
         fields = ["UUID", "name", "enabled", "description"]
@@ -338,6 +494,15 @@ class GlobalAnnouncementFilter(filters.FilterSet):
 class GlobalEmailTemplateFilter(filters.FilterSet):
     name = django_filters.CharFilter(lookup_expr='icontains')
     template_type = django_filters.CharFilter(lookup_expr='icontains')
+
+    order_by_field = 'ordering'
+    ordering = OrderingFilter(
+        # fields(('model field name', 'parameter name'),)
+        fields=(
+            ('name', 'name'),
+            ('template_type', 'template_type'),
+        )
+    )
 
     class Meta:
         model = GlobalEmailTemplate

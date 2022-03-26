@@ -3,7 +3,7 @@ version: '3.8'
 services:
   nginx:
     restart: always
-    build: nginx/
+    image: trunkplayer/trunkplayer-ng-nginx:latest
     ports:
       - 80:80
       - 443:443
@@ -15,17 +15,17 @@ services:
 
   trunk-player:
     restart: always
-    build: .
+    image: trunkplayer/trunkplayer-ng:latest
     command: "bash -c 'python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
     environment:
-      DEBUG: "True"
-      SEND_TELEMETRY: "True"
+      DEBUG: "False"
+      SEND_TELEMETRY: "False"
       FORCE_SECURE: "False"
       SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
       SQL_DATABASE: tp
       SQL_USER: TrunkPlayer
-      SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
-      SQL_HOST: localhost
+      SQL_PASSWORD: s3CuRiTy
+      SQL_HOST: db
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@rabbitmq:5672/
       USE_S3: "False"
@@ -40,22 +40,22 @@ services:
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:
-     # - db
+      - db
       - rabbitmq
 
   trunk-player-worker:
     restart: always
-    build: .
+    image: trunkplayer/trunkplayer-ng:latest
     command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,RR_IMPORT,radio_alerts,radio_tx
     environment:
-      DEBUG: "True"
+      DEBUG: "False"
       FORCE_SECURE: "False"
-      SEND_TELEMETRY: "True"
+      SEND_TELEMETRY: "False"
       SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
       SQL_DATABASE: tp
       SQL_USER: TrunkPlayer
-      SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
-      SQL_HOST: localhost
+      SQL_PASSWORD: s3CuRiTy
+      SQL_HOST: db
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@rabbitmq:5672/
       USE_S3: "False"
@@ -68,22 +68,22 @@ services:
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:
-    #  - db
+      - db
       - rabbitmq
 
   trunk-player-beat:
     restart: always
-    build: .
+    image: trunkplayer/trunkplayer-ng:latest
     command: celery -A trunkplayer_ng beat -l info
     environment:
-      DEBUG: "True"
+      DEBUG: "False"
       FORCE_SECURE: "False"
-      SEND_TELEMETRY: "True"
+      SEND_TELEMETRY: "False"
       SECRET_KEY: 9fwg4f0734gh0t8hyf3028y4hgf037w4tyhtr579435ty9h45098h
       SQL_DATABASE: tp
       SQL_USER: TrunkPlayer
-      SQL_PASSWORD: w45iujw4a6s56a4qejwa456j
-      SQL_HOST: localhost
+      SQL_PASSWORD: s3CuRiTy
+      SQL_HOST: db
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@rabbitmq:5672/
       USE_S3: "False"
@@ -96,21 +96,20 @@ services:
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:
-      #- db
+      - db
       - rabbitmq
 
-  # db:
-  #   image: mysql
-  #   restart: always
-  #   command: --default-authentication-plugin=mysql_native_password
-  #   networe
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: s3CuRiTy
-  #     MYSQL_DATABASE: tp
-  #     MYSQL_USER: TrunkPlayer
-  #     MYSQL_PASSWORD: s3CuRiTy
-  #   volumes:
-  #     - /var/lib/mysql
+  db:
+    image: mysql
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: s3CuRiTy
+      MYSQL_DATABASE: tp
+      MYSQL_USER: TrunkPlayer
+      MYSQL_PASSWORD: s3CuRiTy
+    volumes:
+      - /var/lib/mysql
 
   rabbitmq:
     image: 'rabbitmq:management'

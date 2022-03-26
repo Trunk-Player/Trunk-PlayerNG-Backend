@@ -265,6 +265,18 @@ def get_user_allowed_talkgroups(system: System, user_uuid: str) -> list:
 
     return allowed_talkgropups
 
+def get_user_allowed_talkgroups_for_systems(systems: list[System], user_uuid: str) -> list:
+    """
+    Gets the talkgroups that the user is allowed to access
+    """
+    non_acl_talkgroups = TalkGroup.objects.filter(system__in=systems, system__enable_talkgroup_acls=False)
+
+    acls = TalkGroupACL.objects.filter(users__UUID=user_uuid)
+    allowed = list(acls.values_list("allowed_talkgroups__UUID", flat=True))
+    acl_talkgroups = TalkGroup.objects.filter(UUID__in=allowed)
+
+    return non_acl_talkgroups | acl_talkgroups
+
 
 def user_allowed_to_access_transmission(
     transmission: Transmission, user_uuid: str
