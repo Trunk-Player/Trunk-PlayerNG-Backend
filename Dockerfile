@@ -7,7 +7,8 @@ ENV PYTHONUNBUFFERED 1
 # set work directory
 WORKDIR /code
 
-#RUN apt update && apt install -y uwsgi-plugin-python
+# install cryptography requirements
+RUN apt update && apt install -y rustc cargo
 
 # install dependencies
 RUN pip install --upgrade pip 
