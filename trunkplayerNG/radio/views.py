@@ -16,8 +16,13 @@ from rest_framework import status
 
 from django_filters import rest_framework as filters
 
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg.inspectors import NotHandled
+from drf_yasg.inspectors.query import CoreAPICompatInspector
+from drf_yasg.inspectors.query import FilterInspector
+
 
 from radio.filters import (
     AgencyFilter,
@@ -141,7 +146,6 @@ def transmission_download(request, transmission_uuid):
 
     return response
 
-
 class PaginationMixin(object):
     @property
     def paginator(self):
@@ -178,6 +182,7 @@ class UserAlertList(APIView, PaginationMixin):
     serializer_class = UserAlertSerializer
     permission_classes = [IsSAOrUser]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = UserAlertFilter
 
     @swagger_auto_schema(tags=["UserAlert"])
     def get(self, request):
@@ -369,6 +374,7 @@ class UserProfileList(APIView, PaginationMixin):
     serializer_class = UserProfileSerializer
     permission_classes = [IsSAOrUser]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = UserProfileFilter
 
     @swagger_auto_schema(tags=["UserProfile"])
     def get(self, request):
@@ -467,6 +473,7 @@ class SystemACLList(APIView, PaginationMixin):
     serializer_class = SystemACLSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = SystemACLFilter
 
     @swagger_auto_schema(tags=["SystemACL"])
     def get(self, request):
@@ -584,6 +591,7 @@ class SystemList(APIView, PaginationMixin):
     serializer_class = SystemSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = SystemFilter
 
     @swagger_auto_schema(tags=["System"])
     def get(self, request):
@@ -805,6 +813,7 @@ class SystemForwarderList(APIView, PaginationMixin):
     serializer_class = SystemForwarderSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = SystemForwarderFilter
 
     @swagger_auto_schema(
         tags=["SystemForwarder"],
@@ -950,6 +959,7 @@ class CityList(APIView, PaginationMixin):
     serializer_class = CitySerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = CityFilter
 
     @swagger_auto_schema(tags=["City"])
     def get(self, request):
@@ -1070,6 +1080,7 @@ class AgencyList(APIView, PaginationMixin):
     serializer_class = AgencyViewListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = AgencyFilter
 
     @swagger_auto_schema(tags=["Agency"])
     def get(self, request):
@@ -1196,7 +1207,7 @@ class TalkGroupList(APIView, PaginationMixin):
     serializer_class = TalkGroupViewListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_backends = (filters.DjangoFilterBackend)
+    filterset_class = TalkGroupFilter
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def get(self, request):
@@ -1374,6 +1385,7 @@ class TalkGroupTransmissionList(APIView, PaginationMixin):
     serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = TransmissionFilter
 
     def get_object(self, request_uuid):
         """
@@ -1417,6 +1429,7 @@ class TalkGroupACLList(APIView, PaginationMixin):
     serializer_class = TalkGroupACLSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = TalkGroupACLFilter
    
     @swagger_auto_schema(tags=["TalkGroupACL"])
     def get(self, request):
@@ -1429,7 +1442,6 @@ class TalkGroupACLList(APIView, PaginationMixin):
         if page is not None:
             serializer = TalkGroupACLSerializer(page, many=True)
             return Response(serializer.data)
-
 
 
 class TalkGroupACLCreate(APIView):
@@ -1560,6 +1572,7 @@ class SystemRecorderList(APIView, PaginationMixin):
     serializer_class = SystemRecorderSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = SystemRecorderFilter
 
     @swagger_auto_schema(tags=["SystemRecorder"])
     def get(self, request):
@@ -1706,6 +1719,7 @@ class UnitList(APIView, PaginationMixin):
     serializer_class = UnitSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = UnitFilter
 
     @swagger_auto_schema(tags=["Unit"])
     def get(self, request):
@@ -1845,6 +1859,7 @@ class TransmissionUnitList(APIView, PaginationMixin):
     serializer_class = TransmissionUnitSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = TransmissionUnitFilter
 
     @swagger_auto_schema(tags=["TransmissionUnit"])
     def get(self, request, request_uuid):
@@ -1955,6 +1970,7 @@ class TransmissionFreqList(APIView):
     queryset = TransmissionFreq.objects.all()
     serializer_class = TransmissionFreqSerializer
     permission_classes = [IsSAOrReadOnly]
+    filterset_class = TransmissionFreqFilter
 
     @swagger_auto_schema(tags=["TransmissionFreq"])
     def get(self, request, request_uuid):
@@ -2013,7 +2029,8 @@ class TransmissionList(APIView, PaginationMixin):
     serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_backends = []
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = TransmissionFilter
 
     @swagger_auto_schema(tags=["Transmission"])
     def get(self, request):
@@ -2039,10 +2056,8 @@ class TransmissionList(APIView, PaginationMixin):
                     )
                 else:
                     allowed_transmissions_non_acl = Transmission.objects.filter(system=system)
-                    
+            allowed_transmissions = allowed_transmissions_acl | allowed_transmissions_non_acl
 
-
-        allowed_transmissions = allowed_transmissions_acl | allowed_transmissions_non_acl
         filterobject_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmissions)
         page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
@@ -2129,7 +2144,7 @@ class TransmissionCreate(APIView):
                     },
                 )
                 sentry_sdk.capture_exception(error)
-            raise error
+
             return Response(str(error), status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -2187,6 +2202,7 @@ class IncidentList(APIView, PaginationMixin):
     serializer_class = IncidentSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = IncidentFilter
 
     @swagger_auto_schema(tags=["Incident"])
     def get(self, request):
@@ -2474,6 +2490,7 @@ class ScanListList(APIView, PaginationMixin):
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = ScanListFilter
 
     @swagger_auto_schema(tags=["ScanList"])
     def get(self, request):
@@ -2500,6 +2517,7 @@ class ScanListPersonalList(APIView, PaginationMixin):
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = ScanListFilter
 
     @swagger_auto_schema(tags=["ScanList"])
     def get(self, request):
@@ -2509,7 +2527,8 @@ class ScanListPersonalList(APIView, PaginationMixin):
         user: UserProfile = request.user.userProfile
         scanlists = ScanList.objects.filter(owner=user)
 
-        page = self.paginate_queryset(scanlists)
+        filterobject_fs = ScanListFilter(self.request.GET, queryset=scanlists)
+        page = self.paginate_queryset(filterobject_fs)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
@@ -2520,6 +2539,7 @@ class ScanListUserList(APIView, PaginationMixin):
     serializer_class = ScanListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = ScanListFilter
 
     @swagger_auto_schema(tags=["ScanList"])
     def get(self, request, user_uuid):
@@ -2686,6 +2706,7 @@ class ScanListTransmissionList(APIView, PaginationMixin):
     serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = TransmissionFilter
 
     def get_object(self, request_uuid):
         """
@@ -2713,6 +2734,7 @@ class ScanListTransmissionList(APIView, PaginationMixin):
         else:
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
+            del system_uuids
             for system in systems:
                 if system.enable_talkgroup_acls:
                     talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
@@ -2734,6 +2756,7 @@ class ScannerList(APIView, PaginationMixin):
     serializer_class = ScannerSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = ScannerFilter
 
     @swagger_auto_schema(tags=["Scanner"])
     def get(self, request):
@@ -2898,6 +2921,7 @@ class ScannerTransmissionList(APIView, PaginationMixin):
     serializer_class = TransmissionListSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = TransmissionFilter
 
     def get_object(self, request_uuid):
         """
@@ -2967,6 +2991,7 @@ class GlobalAnnouncementList(APIView, PaginationMixin):
     serializer_class = GlobalAnnouncementSerializer
     permission_classes = [IsSAOrReadOnly]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = GlobalAnnouncementFilter
 
     @swagger_auto_schema(tags=["GlobalAnnouncement"])
     def get(self, request):
@@ -3102,6 +3127,7 @@ class GlobalEmailTemplateList(APIView, PaginationMixin):
     serializer_class = GlobalEmailTemplateSerializer
     permission_classes = [IsSiteAdmin]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filterset_class = GlobalEmailTemplateFilter
 
     @swagger_auto_schema(tags=["GlobalEmailTemplate"])
     def get(self, request):
