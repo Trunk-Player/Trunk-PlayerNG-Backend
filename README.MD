@@ -1,5 +1,36 @@
 # TrunkPlayer-NG
 
+
+
+## Beta Testing
+> Today I am opening the API upto Beta Testing! If anyone would like to help test API's and connect to their trunk recorder instance and help find bugs!
+
+** PLEASE NOTE THIS IS JUST THE API BACKEND, THERE IS NO REACT WEB UI YET **
+
+***Report back in the [Trunk-Recorder](https://github.com/robotastic/trunk-recorder) discord #tp-ng channel***
+
+### TELEMETRY NOTICE
+This program is integrated with [sentry.io](sentry.io), You are **BY DEFAULT OPTED-OUT OF TELEMETRY**
+
+Please consider turning on telemetry to help us track new errors
+
+
+
+### Steps
+1. get [tpng.py](https://gist.github.com/MaxwellDPS/b93e6aa63eddef2f5705c10c90c8f1a2) for your radio host
+2. [Install docker-compose](https://docs.docker.com/compose/install/)
+3. Run the following 
+```
+git clone https://github.com/Trunk-Player/Trunk-PlayerNG-Backend.git
+cd Trunk-PlayerNG-Backend
+cp .env.sample .env
+# <EDIT .env>
+docker-compose -f docker-compose.prod.yaml up
+```
+4. Visit https://yourip/api/
+5. Report any errors 
+
+
 ## 🚧 TrunkPlayer-NG is still under active development 🚧
 
 ![image](https://user-images.githubusercontent.com/11069376/152628284-ec1ba428-c8e4-4ba3-bac4-6ca13ed5ea59.png)
