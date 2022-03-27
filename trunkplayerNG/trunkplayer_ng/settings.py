@@ -31,9 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY", "%2%xjx4c3obf_xa8hsdbd@ci+8!4)@x16_!auo*h(%*p_z(g"
-)
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
@@ -112,11 +110,11 @@ WSGI_APPLICATION = "trunkplayer_ng.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.mysql"),
-        "NAME": os.environ.get("SQL_DATABASE", "TrunkPlayer"),
-        "USER": os.environ.get("SQL_USER", "TrunkPlayer"),
-        "PASSWORD": os.environ.get("SQL_PASSWORD", "s3CuRiTy"),
-        "HOST": os.environ.get("SQL_HOST", "localhost"),
-        "PORT": os.environ.get("SQL_PORT", "3306"),
+        "NAME": os.environ.get("MYSQL_DATABASE", "TrunkPlayer"),
+        "USER": os.environ.get("MYSQL_USER", "TrunkPlayer"),
+        "PASSWORD": os.environ.get("MYSQL_PASSWORD", "s3CuRiTy"),
+        "HOST": os.environ.get("MYSQL_HOST", "localhost"),
+        "PORT": os.environ.get("MYSQL_PORT", "3306"),
     }
 }
 
