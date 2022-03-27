@@ -58,7 +58,7 @@ urlpatterns = [
     ),
     path(
         "api/auth/token/refresh-token/",
-        user_views.CookieTokenRefreshView.as_view(),
+        user_views.CookieTokenRefreshViewCustom.as_view(),
         name="token_refresh",
     ),
     path("api/registration/", include("dj_rest_auth.registration.urls")),

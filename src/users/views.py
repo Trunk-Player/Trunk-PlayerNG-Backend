@@ -56,7 +56,7 @@ def unset_jwt_cookies(response):
         response.delete_cookie(refresh_cookie_name, samesite=None)
 
 
-class CookieTokenRefreshSerializer(TokenRefreshSerializer):
+class CookieTokenRefreshSerializerCustom(TokenRefreshSerializer):
     refresh = None
 
     def validate(self, attrs):
@@ -100,7 +100,7 @@ class CookieTokenObtainPairView(TokenObtainPairView):
         return super().finalize_response(request, response, *args, **kwargs)
 
 
-class CookieTokenRefreshView(TokenRefreshView):
+class CookieTokenRefreshViewCustom(TokenRefreshView):
     def finalize_response(self, request, response, *args, **kwargs):
         cookie_max_age = 3600 * 24 * 14  # 14 days
         if response.data.get("refresh"):
@@ -120,7 +120,7 @@ class CookieTokenRefreshView(TokenRefreshView):
         del response.data["access"]
         return super().finalize_response(request, response, *args, **kwargs)
 
-    serializer_class = CookieTokenRefreshSerializer
+    serializer_class = CookieTokenRefreshSerializerCustom
 
 
 class UserList(APIView):
