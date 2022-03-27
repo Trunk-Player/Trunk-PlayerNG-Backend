@@ -16,7 +16,7 @@ services:
   trunk-player:
     restart: always
     build: .
-    command: "bash -c 'python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
+    command: "bash -c 'python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py createsuperuser --noinput; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
     environment:
       DEBUG: "True"
       SEND_TELEMETRY: "True"
@@ -34,6 +34,8 @@ services:
       S3_SECRET_ACCESS_KEY: "I_AM_AN_ID10T"
       S3_BUCKET_NAME: "f33dback"
       S3_ENDPOINT_URL: "https://s3.us-west-1.wasabisys.com"
+      DJANGO_SUPERUSER_PASSWORD: "password"
+      DJANGO_SUPERUSER_EMAIL: "admin@example.com"
 
     volumes:
       - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
