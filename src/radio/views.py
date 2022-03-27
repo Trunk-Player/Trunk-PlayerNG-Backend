@@ -23,6 +23,7 @@ from drf_yasg.inspectors import NotHandled
 from drf_yasg.inspectors.query import CoreAPICompatInspector
 from drf_yasg.inspectors.query import FilterInspector
 
+from trunkplayer_ng.auth import enforce_csrf
 
 from radio.filters import (
     AgencyFilter,
@@ -109,6 +110,8 @@ from radio.models import (
     GlobalEmailTemplate,
     UserAlert
 )
+
+
 
 if settings.SEND_TELEMETRY:
     import sentry_sdk
@@ -255,6 +258,7 @@ class UserAlertCreate(APIView):
         """
         UserAlert Create EP POST
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         data = JSONParser().parse(request)
 
@@ -343,6 +347,7 @@ class UserAlertView(APIView):
         """
         user update EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         user_alert: UserAlert = self.get_object(request_uuid)
         if not user_alert.user == user:
@@ -362,6 +367,7 @@ class UserAlertView(APIView):
         """
         user delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         user_alert: UserAlert = self.get_object(request_uuid)
         if not user_alert.user == user:
@@ -445,6 +451,7 @@ class UserProfileView(APIView):
         """
         UserProfile Update EP
         """
+        enforce_csrf(request)
         user = request.user.userProfile
         if user.site_admin or user.UUID == request_uuid:
             user_profile = self.get_object(request_uuid)
@@ -461,6 +468,7 @@ class UserProfileView(APIView):
         """
         UserProfile Delete EP
         """
+        enforce_csrf(request)
         user = request.user.userProfile
         if user.site_admin or user.UUID == request_uuid:
             user_profile = self.get_object(request_uuid)
@@ -483,6 +491,7 @@ class SystemACLList(APIView, PaginationMixin):
         """
         System ACL get EP
         """
+        enforce_csrf(request)
         system_acls = SystemACL.objects.all()
         filtered_result = SystemACLFilter(self.request.GET, queryset=system_acls)
         page = self.paginate_queryset(filtered_result.qs)
@@ -518,6 +527,7 @@ class SystemACLCreate(APIView):
         """
         SystemACL Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
@@ -572,6 +582,7 @@ class SystemACLView(APIView):
         """
         systemACL Update EP
         """
+        enforce_csrf(request)
         system_acl = self.get_object(request_uuid)
         serializer = SystemACLSerializer(system_acl, data=request.data, partial=True)
         if serializer.is_valid():
@@ -584,6 +595,7 @@ class SystemACLView(APIView):
         """
         SystemACL Delete EP
         """
+        enforce_csrf(request)
         system_acl = self.get_object(request_uuid)
         system_acl.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -655,6 +667,7 @@ class SystemCreate(APIView):
             },
         ),
     )
+    enforce_csrf(request)
     def post(self, request):
         """
         System Create EP
@@ -749,6 +762,7 @@ class SystemView(APIView):
         """
         Put Request for Updating User Profile
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         data = JSONParser().parse(request)
         system = self.get_object(request_uuid)
@@ -766,6 +780,7 @@ class SystemView(APIView):
         """
         UserProfile Delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         system = self.get_object(request_uuid)
         if user.site_admin:
@@ -803,6 +818,7 @@ class SystemRRImportView(APIView):
         """
         RR import EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         import_radio_refrence.delay(
@@ -886,6 +902,7 @@ class SystemForwarderCreate(APIView):
         """
         SystemForwarder Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -939,6 +956,7 @@ class SystemForwarderView(APIView):
         """
         SystemForwarder Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         system_forwarder = self.get_object(request_uuid)
         if "feedKey" in data:
@@ -954,6 +972,7 @@ class SystemForwarderView(APIView):
         """
         SystemForwarder Delete EP
         """
+        enforce_csrf(request)
         system_forwarder = self.get_object(request_uuid)
         system_forwarder.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1004,6 +1023,7 @@ class CityCreate(APIView):
         """
         City Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1057,6 +1077,7 @@ class CityView(APIView):
         """
         City Update EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             raise PermissionDenied
@@ -1073,6 +1094,7 @@ class CityView(APIView):
         """
         City Delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             raise PermissionDenied
@@ -1129,6 +1151,7 @@ class AgencyCreate(APIView):
         """
         Agency Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1185,6 +1208,7 @@ class AgencyView(APIView):
         """
         Agency update EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             raise PermissionDenied
@@ -1201,6 +1225,7 @@ class AgencyView(APIView):
         """
         Agency Delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             raise PermissionDenied
@@ -1277,6 +1302,7 @@ class TalkGroupCreate(APIView):
         """
         Talkgroup Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1360,6 +1386,7 @@ class TalkGroupView(APIView):
         """
         Talkgroup Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         talkgroup = self.get_object(request_uuid)
 
@@ -1379,6 +1406,7 @@ class TalkGroupView(APIView):
         """
         Talkgroup Delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
