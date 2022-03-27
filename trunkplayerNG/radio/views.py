@@ -2545,7 +2545,7 @@ class ScanListPersonalList(APIView, PaginationMixin):
         scanlists = ScanList.objects.filter(owner=user)
 
         filterobject_fs = ScanListFilter(self.request.GET, queryset=scanlists)
-        page = self.paginate_queryset(filterobject_fs)
+        page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
             serializer = ScanListSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
