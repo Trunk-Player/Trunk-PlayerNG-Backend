@@ -25,7 +25,7 @@ services:
       SQL_DATABASE: tp
       SQL_USER: TrunkPlayer
       SQL_PASSWORD: s3CuRiTy
-      SQL_HOST: db
+      SQL_HOST: mysql
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@rabbitmq:5672/
       USE_S3: "False"
@@ -41,7 +41,7 @@ services:
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:
-      - db
+      - mysql
       - rabbitmq
 
   trunk-player-worker:
@@ -56,7 +56,7 @@ services:
       SQL_DATABASE: tp
       SQL_USER: TrunkPlayer
       SQL_PASSWORD: s3CuRiTy
-      SQL_HOST: db
+      SQL_HOST: mysql
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@rabbitmq:5672/
       USE_S3: "False"
@@ -69,7 +69,7 @@ services:
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:
-      - db
+      - mysql
       - rabbitmq
 
   trunk-player-beat:
@@ -84,7 +84,7 @@ services:
       SQL_DATABASE: tp
       SQL_USER: TrunkPlayer
       SQL_PASSWORD: s3CuRiTy
-      SQL_HOST: db
+      SQL_HOST: mysql
       TZ: America/Chicago
       CELERY_BROKER_URL: amqp://user:pass@rabbitmq:5672/
       USE_S3: "False"
@@ -97,10 +97,10 @@ services:
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:
-      - db
+      - mysql
       - rabbitmq
 
-  db:
+  mysql:
     image: mysql
     restart: always
     command: --default-authentication-plugin=mysql_native_password
