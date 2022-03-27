@@ -17,6 +17,26 @@ services:
     restart: always
     image: trunkplayer/trunkplayer-ng:latest
     command: "bash -c 'sleep 10; python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py createsuperuser --noinput; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
+    environment:
+      DEBUG: "${DEBUG}"
+      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
+      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
+      FORCE_SECURE: "${FORCE_SECURE}" #
+      SECRET_KEY: "${SECRET_KEY}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_HOST: "${MYSQL_HOST}"
+      TZ: "${TZ}"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
+      USE_S3: "${USE_S3}"
+      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
+      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
+      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
+      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
+      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
+      DJANGO_SUPERUSER_PASSWORD: "${DJANGO_SUPERUSER_PASSWORD}"
+      DJANGO_SUPERUSER_EMAIL: "${DJANGO_SUPERUSER_EMAIL}"
     volumes:
       #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
       - /tmp/static:/code/static
@@ -29,6 +49,24 @@ services:
     restart: always
     image: trunkplayer/trunkplayer-ng:latest
     command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,RR_IMPORT,radio_alerts,radio_tx
+    environment:
+      DEBUG: "${DEBUG}"
+      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
+      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
+      FORCE_SECURE: "${FORCE_SECURE}" #
+      SECRET_KEY: "${SECRET_KEY}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_HOST: "${MYSQL_HOST}"
+      TZ: "${TZ}"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
+      USE_S3: "${USE_S3}"
+      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
+      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
+      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
+      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
+      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
     volumes:
       #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
       - /tmp/static:/code/static
@@ -41,6 +79,24 @@ services:
     restart: always
     image: trunkplayer/trunkplayer-ng:latest
     command: celery -A trunkplayer_ng beat -l info
+    environment:
+      DEBUG: "${DEBUG}"
+      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
+      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
+      FORCE_SECURE: "${FORCE_SECURE}" #
+      SECRET_KEY: "${SECRET_KEY}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_HOST: "${MYSQL_HOST}"
+      TZ: "${TZ}"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
+      USE_S3: "${USE_S3}"
+      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
+      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
+      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
+      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
+      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
     volumes:
     #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql) 
       - /tmp/static:/code/static
@@ -55,6 +111,11 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     ports:
       - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
     volumes:
       - /path/to/db:/var/lib/mysql
 
@@ -63,5 +124,8 @@ services:
     restart: always
     ports:
       - "15672:15672"
-
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+        
   
