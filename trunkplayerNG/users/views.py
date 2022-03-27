@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.http import Http404
 
 from rest_framework.views import APIView
@@ -12,12 +13,46 @@ from users.models import CustomUser
 from users.serializers import UserSerializer
 from users.permission import IsSAOrUser
 
-
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.exceptions import InvalidToken
 
+from django.utils import timezone
 from django.conf import settings
+
+def unset_jwt_cookies(response):
+    refresh_cookie_name = getattr(settings, 'JWT_AUTH_REFRESH_COOKIE', None)
+    refresh_cookie_path = getattr(settings, 'JWT_AUTH_REFRESH_COOKIE_PATH', '/')
+    cookie_secure = getattr(settings, 'JWT_AUTH_SECURE', False)
+    cookie_httponly = getattr(settings, 'JWT_AUTH_HTTPONLY', True)
+    cookie_samesite = getattr(settings, 'JWT_AUTH_SAMESITE', 'Lax')
+    cookie_name = getattr(settings, 'JWT_AUTH_COOKIE', None)
+
+
+    expiration = datetime(1970,1,1,0,0,0)
+
+    if cookie_name:
+        response.set_cookie(
+            cookie_name,
+            "",
+            expires=expiration,
+            secure=cookie_secure,
+            httponly=cookie_httponly,
+            samesite=cookie_samesite,
+        )
+        response.delete_cookie(cookie_name, samesite=None)
+
+    if refresh_cookie_name:
+        response.set_cookie(
+            refresh_cookie_name,
+            "",
+            expires=expiration,
+            secure=cookie_secure,
+            httponly=cookie_httponly,
+            samesite=cookie_samesite,
+            path=refresh_cookie_path,
+        )
+        response.delete_cookie(refresh_cookie_name, samesite=None)
 
 
 class CookieTokenRefreshSerializer(TokenRefreshSerializer):
@@ -31,7 +66,6 @@ class CookieTokenRefreshSerializer(TokenRefreshSerializer):
             return super().validate(attrs)
         else:
             raise InvalidToken("No valid token found in cookie 'refresh-token'")
-
 
 class CookieTokenObtainPairView(TokenObtainPairView):
     def finalize_response(self, request, response, *args, **kwargs):

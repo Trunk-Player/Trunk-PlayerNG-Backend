@@ -37,7 +37,7 @@ services:
       DJANGO_SUPERUSER_PASSWORD: "password"
       DJANGO_SUPERUSER_EMAIL: "admin@example.com"
     volumes:
-      - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
+      #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:
@@ -65,7 +65,7 @@ services:
       S3_BUCKET_NAME: "f33dback"
       S3_ENDPOINT_URL: "https://s3.us-west-1.wasabisys.com"
     volumes:
-      - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
+      #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:
@@ -93,7 +93,7 @@ services:
       S3_BUCKET_NAME: "f33dback"
       S3_ENDPOINT_URL: "https://s3.us-west-1.wasabisys.com"
     volumes:
-      - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock
+    #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql) 
       - /tmp/static:/code/static
       - /tmp/media:/code/mediafiles
     depends_on:

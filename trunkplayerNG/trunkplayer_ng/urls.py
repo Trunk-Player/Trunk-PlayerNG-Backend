@@ -22,6 +22,10 @@ from drf_yasg import openapi
 from allauth.account.views import confirm_email
 
 from users import views as user_views
+from users.views import unset_jwt_cookies
+
+import dj_rest_auth.jwt_auth as jwt_auth
+jwt_auth.unset_jwt_cookies = unset_jwt_cookies
 
 schema_view = get_schema_view(
     openapi.Info(

@@ -4,12 +4,6 @@ FROM ubuntu:20.04
 # File Author / Maintainer
 MAINTAINER MaxwellDPS
 
-# Install Nginx
-
-# Add application repository URL to the default sources
-RUN echo "deb http://archive.ubuntu.com/ubuntu/ focal main universe" >> /etc/apt/sources.list
-
-
 # Install necessary tools
 RUN apt-get update && apt-get install -y nano wget dialog net-tools curl dnsutils openssl
 
