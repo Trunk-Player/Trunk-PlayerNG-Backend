@@ -667,11 +667,12 @@ class SystemCreate(APIView):
             },
         ),
     )
-    enforce_csrf(request)
+    
     def post(self, request):
         """
         System Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
