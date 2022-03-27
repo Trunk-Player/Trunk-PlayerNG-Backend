@@ -7,10 +7,10 @@ app = Celery("trunkplayer_ng")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
-app.conf.beat_schedule = {
-    "prune-transmissions": {
-        "task": "radio.tasks.prune_transmissions",
-        "schedule": 3600.0,
-        "args": None,
-    },
-}
+# app.conf.beat_schedule = {
+#     "prune-transmissions": {
+#         "task": "radio.tasks.prune_transmissions",
+#         "schedule": 3600.0,
+#         "args": None,
+#     },
+# }

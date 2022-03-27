@@ -15,7 +15,7 @@ RUN pip install --upgrade pip
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
 
-COPY ./trunkplayerNG/ /code/
+COPY ./src/ /code/
 ADD uwsgi.conf /code/
 
 RUN mkdir /code/static

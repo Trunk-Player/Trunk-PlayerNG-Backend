@@ -10,8 +10,8 @@ services:
     depends_on:
       - trunk-player
     volumes:
-      - /tmp/static:/code/static
-      - /tmp/media:/code/mediafiles
+      - ${STATIC_VOLUME_PATH}:/code/static
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
 
   trunk-player:
     restart: always
@@ -23,10 +23,10 @@ services:
       # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
       FORCE_SECURE: "${FORCE_SECURE}" #
       SECRET_KEY: "${SECRET_KEY}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE}"
-      MYSQL_USER: "${MYSQL_USER}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-      MYSQL_HOST: "${MYSQL_HOST}"
+      MYSQL_DATABASE: "${SQL_DATABASE}"
+      MYSQL_USER: "${SQL_USER}"
+      MYSQL_PASSWORD: "${SQL_PASSWORD}"
+      MYSQL_HOST: "${SQL_HOST}"
       TZ: "${TZ}"
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
       USE_S3: "${USE_S3}"
@@ -39,10 +39,10 @@ services:
       DJANGO_SUPERUSER_EMAIL: "${DJANGO_SUPERUSER_EMAIL}"
     volumes:
       #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
-      - /tmp/static:/code/static
-      - /tmp/media:/code/mediafiles
+      - ${STATIC_VOLUME_PATH}:/code/static
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
     depends_on:
-      - mysql
+      - database
       - rabbitmq
 
   trunk-player-worker:
@@ -55,10 +55,10 @@ services:
       # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
       FORCE_SECURE: "${FORCE_SECURE}" #
       SECRET_KEY: "${SECRET_KEY}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE}"
-      MYSQL_USER: "${MYSQL_USER}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-      MYSQL_HOST: "${MYSQL_HOST}"
+      MYSQL_DATABASE: "${SQL_DATABASE}"
+      MYSQL_USER: "${SQL_USER}"
+      MYSQL_PASSWORD: "${SQL_PASSWORD}"
+      MYSQL_HOST: "${SQL_HOST}"
       TZ: "${TZ}"
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
       USE_S3: "${USE_S3}"
@@ -69,10 +69,10 @@ services:
       S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
     volumes:
       #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
-      - /tmp/static:/code/static
-      - /tmp/media:/code/mediafiles
+      - ${STATIC_VOLUME_PATH}:/code/static
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
     depends_on:
-      - mysql
+      - database
       - rabbitmq
 
   trunk-player-beat:
@@ -85,10 +85,10 @@ services:
       # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
       FORCE_SECURE: "${FORCE_SECURE}" #
       SECRET_KEY: "${SECRET_KEY}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE}"
-      MYSQL_USER: "${MYSQL_USER}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-      MYSQL_HOST: "${MYSQL_HOST}"
+      MYSQL_DATABASE: "${SQL_DATABASE}"
+      MYSQL_USER: "${SQL_USER}"
+      MYSQL_PASSWORD: "${SQL_PASSWORD}"
+      MYSQL_HOST: "${SQL_HOST}"
       TZ: "${TZ}"
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
       USE_S3: "${USE_S3}"
@@ -99,25 +99,25 @@ services:
       S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
     volumes:
     #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql) 
-      - /tmp/static:/code/static
-      - /tmp/media:/code/mediafiles
+      - ${STATIC_VOLUME_PATH}:/code/static
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
     depends_on:
-      - mysql
+      - database
       - rabbitmq
 
-  mysql:
+  database:
     image: mysql
     restart: always
     command: --default-authentication-plugin=mysql_native_password
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      MYSQL_DATABASE: "${MYSQL_DATABASE}"
-      MYSQL_USER: "${MYSQL_USER}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${YSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${SQL_DATABASE}"
+      MYSQL_USER: "${SQL_USER}"
+      MYSQL_PASSWORD: "${SQL_PASSWORD}"
     volumes:
-      - /path/to/db:/var/lib/mysql
+      - ${DATABASE_PATH}:/var/lib/mysql
 
   rabbitmq:
     image: 'rabbitmq:management'
