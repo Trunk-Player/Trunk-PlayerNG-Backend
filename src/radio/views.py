@@ -1521,6 +1521,7 @@ class TalkGroupACLCreate(APIView):
         """
         Talkgroup ACL Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1588,6 +1589,7 @@ class TalkGroupACLView(APIView):
         """
         Talkgroup ACL Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         talkgroup_acl = self.get_object(request_uuid)
         serializer = TalkGroupACLSerializer(talkgroup_acl, data=data, partial=True)
@@ -1601,6 +1603,7 @@ class TalkGroupACLView(APIView):
         """
         Talkgroup ACL Delete EP
         """
+        enforce_csrf(request)
         talkgroup_acl = self.get_object(request_uuid)
         talkgroup_acl.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1668,6 +1671,7 @@ class SystemRecorderCreate(APIView):
         """
         System Recorder Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1736,6 +1740,7 @@ class SystemRecorderView(APIView):
         """
         System Recorder update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         system_recorder = self.get_object(request_uuid)
         serializer = SystemRecorderSerializer(system_recorder, data=data, partial=True)
@@ -1749,6 +1754,7 @@ class SystemRecorderView(APIView):
         """
         System Recorder delete EP
         """
+        enforce_csrf(request)
         system_recorder = self.get_object(request_uuid)
         system_recorder.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1810,6 +1816,7 @@ class UnitCreate(APIView):
         """
         Unit Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -1869,6 +1876,7 @@ class UnitView(APIView):
         """
         Unit update EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -1886,6 +1894,7 @@ class UnitView(APIView):
         """
         Unit delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -1987,6 +1996,7 @@ class TransmissionUnitView(APIView):
     #     }
     # ))
     # def put(self, request, UUID):
+        #enforce_csrf(request)
     #     data = JSONParser().parse(request)
     #     TransmissionUnit = self.get_object(UUID)
     #     serializer = TransmissionUnitSerializer(TransmissionUnit, data=data, partial=True)
@@ -2000,6 +2010,7 @@ class TransmissionUnitView(APIView):
         """
         TransmissionUnit delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if user.site_admin:
             transmission_unit = self.get_object(request_uuid)
@@ -2139,6 +2150,7 @@ class TransmissionCreate(APIView):
         """
         Transmission Create EP
         """
+        enforce_csrf(request)
         from radio.tasks import send_transmission_notifications
 
         data = JSONParser().parse(request)
@@ -2231,6 +2243,7 @@ class TransmissionView(APIView):
         """
         Transmission Delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
 
         if not user.site_admin:
@@ -2309,6 +2322,7 @@ class IncidentCreate(APIView):
         """
         Incident Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -2369,6 +2383,7 @@ class IncidentForward(APIView):
         """
         Incident Forward EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         # try:
@@ -2400,6 +2415,7 @@ class IncidentForward(APIView):
         """
         Incident Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         # try:
@@ -2475,6 +2491,7 @@ class IncidentUpdate(APIView):
         """
         Incident Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         incident = self.get_object(request_uuid)
         serializer = IncidentCreateSerializer(incident, data=data, partial=True)
@@ -2640,6 +2657,7 @@ class ScanListCreate(APIView):
         """
         ScanList Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         user: UserProfile = request.user.userProfile
 
@@ -2718,6 +2736,7 @@ class ScanListView(APIView):
         """
         ScanList Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         scanlist: ScanList = self.get_object(request_uuid)
         serializer = ScanListSerializer(scanlist, data=data, partial=True)
@@ -2737,6 +2756,7 @@ class ScanListView(APIView):
         """
         ScanList Delete EP
         """
+        enforce_csrf(request)
         scanlist: ScanList = self.get_object(request_uuid)
 
         user: UserProfile = request.user.userProfile
@@ -2858,6 +2878,7 @@ class ScannerCreate(APIView):
         """
         Scanner Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         user: UserProfile = request.user.userProfile
 
@@ -2935,6 +2956,7 @@ class ScannerView(APIView):
         """
         Scanner Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         scanner: Scanner = self.get_object(request_uuid)
 
@@ -2954,6 +2976,7 @@ class ScannerView(APIView):
         """
         Scanner Delete EP
         """
+        enforce_csrf(request)
         scanner: Scanner = self.get_object(request_uuid)
         user: UserProfile = request.user.userProfile
 
@@ -3087,6 +3110,7 @@ class GlobalAnnouncementCreate(APIView):
         """
         GlobalAnnouncement Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -3145,6 +3169,7 @@ class GlobalAnnouncementView(APIView):
         """
         GlobalAnnouncement Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         user: UserProfile = request.user.userProfile
 
@@ -3165,6 +3190,7 @@ class GlobalAnnouncementView(APIView):
         """
         GlobalAnnouncement Delete EP
         """
+        enforce_csrf(request)
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -3220,6 +3246,7 @@ class GlobalEmailTemplateCreate(APIView):
         """
         GlobalEmailTemplate Create EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
@@ -3276,6 +3303,7 @@ class GlobalEmailTemplateView(APIView):
         """
         GlobalEmailTemplate Update EP
         """
+        enforce_csrf(request)
         data = JSONParser().parse(request)
         global_email_template = self.get_object(request_uuid)
         serializer = GlobalEmailTemplateSerializer(
@@ -3291,6 +3319,7 @@ class GlobalEmailTemplateView(APIView):
         """
         GlobalEmailTemplate delete EP
         """
+        enforce_csrf(request)
         global_email_template = self.get_object(request_uuid)
         global_email_template.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
