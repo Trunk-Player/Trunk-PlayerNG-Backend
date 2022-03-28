@@ -106,18 +106,16 @@ services:
       - rabbitmq
 
   database:
-    image: mysql
+    image: linuxserver/mariadb
     restart: always
-    command: --default-authentication-plugin=mysql_native_password
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: "${SQL_ROOT_PASSWORD}"
       MYSQL_DATABASE: "${SQL_DATABASE}"
       MYSQL_USER: "${SQL_USER}"
       MYSQL_PASSWORD: "${SQL_PASSWORD}"
     volumes:
-      - ${DATABASE_PATH}:/var/lib/mysql
+      - ${DATABASE_PATH}:/config
 
   rabbitmq:
     image: 'rabbitmq:management'
