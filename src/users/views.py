@@ -90,13 +90,14 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                 path="/",
             )
             del response.data["refresh"]
-        response.data["access_token"] = response.data["access"]
-        del response.data["access"]
         response.data["CSRF_TOKEN"] = get_token(request)
-        cookie_max_age_dt = datetime.now() - timedelta(seconds=cookie_max_age)
-        response.data["access_token_expiration"] = cookie_max_age_dt.isoformat()
-        response.data["refresh_token_expiration"] = cookie_max_age_dt.isoformat()
-
+        try:
+            cookie_max_age_dt = datetime.now() - timedelta(seconds=cookie_max_age)
+            response.data["access_token_expiration"] = cookie_max_age_dt.isoformat()
+            response.data["refresh_token_expiration"] = cookie_max_age_dt.isoformat()
+            response.data["access_token"] = response.data["access"]
+            del response.data["access"]        
+        except KeyError: pass
         return super().finalize_response(request, response, *args, **kwargs)
 
 
@@ -115,9 +116,11 @@ class CookieTokenRefreshViewCustom(TokenRefreshView):
             del response.data["refresh"]
         response.data["CSRF_TOKEN"] = get_token(request)
         cookie_max_age_dt = datetime.now() - timedelta(seconds=cookie_max_age)
-        response.data["access_token_expiration"] = cookie_max_age_dt.isoformat()
-        response.data["access_token"] = response.data["access"]
-        del response.data["access"]
+        try:
+            response.data["access_token"] = response.data["access"]
+            del response.data["access"]
+            response.data["access_token_expiration"] = cookie_max_age_dt.isoformat()
+        except KeyError: pass
         return super().finalize_response(request, response, *args, **kwargs)
 
     serializer_class = CookieTokenRefreshSerializerCustom
