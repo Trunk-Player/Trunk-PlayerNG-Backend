@@ -13,11 +13,11 @@ def enforce_csrf(request):
         # CSRF failed, bail with explicit error message
         raise exceptions.PermissionDenied('CSRF Failed: %s' % reason)
 
-
 class TokenAuthSupportCookie(JWTAuthentication):
     """
     Extend the TokenAuthentication class to support cookie based authentication
     """
+    
     def authenticate(self, request):
         # Check if 'auth_token' is in the request cookies.
         # Give precedence to 'Authorization' header.
