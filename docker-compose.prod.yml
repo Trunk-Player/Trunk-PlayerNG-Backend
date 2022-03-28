@@ -112,7 +112,7 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: "${YSQL_ROOT_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${SQL_ROOT_PASSWORD}"
       MYSQL_DATABASE: "${SQL_DATABASE}"
       MYSQL_USER: "${SQL_USER}"
       MYSQL_PASSWORD: "${SQL_PASSWORD}"

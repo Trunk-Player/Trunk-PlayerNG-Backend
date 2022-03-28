@@ -90,13 +90,18 @@ class CookieTokenObtainPairView(TokenObtainPairView):
                 path="/",
             )
             del response.data["refresh"]
-        response.data["access_token"] = response.data["access"]
-        del response.data["access"]
         response.data["CSRF_TOKEN"] = get_token(request)
-        cookie_max_age_dt = datetime.now() - timedelta(seconds=cookie_max_age)
-        response.data["access_token_expiration"] = cookie_max_age_dt.isoformat()
-        response.data["refresh_token_expiration"] = cookie_max_age_dt.isoformat()
-
+        try:
+            from rest_framework_simplejwt.settings import (
+                api_settings as jwt_settings,
+            )
+            access_token_expiration = (timezone.now() + jwt_settings.ACCESS_TOKEN_LIFETIME)
+            refresh_token_expiration = (timezone.now() + jwt_settings.REFRESH_TOKEN_LIFETIME)
+            response.data["access_token_expiration"] = access_token_expiration.isoformat()
+            response.data["refresh_token_expiration"] = refresh_token_expiration.isoformat()
+            response.data["access_token"] = response.data["access"]
+            del response.data["access"]        
+        except KeyError: pass
         return super().finalize_response(request, response, *args, **kwargs)
 
 
@@ -114,10 +119,15 @@ class CookieTokenRefreshViewCustom(TokenRefreshView):
             )
             del response.data["refresh"]
         response.data["CSRF_TOKEN"] = get_token(request)
-        cookie_max_age_dt = datetime.now() - timedelta(seconds=cookie_max_age)
-        response.data["access_token_expiration"] = cookie_max_age_dt.isoformat()
-        response.data["access_token"] = response.data["access"]
-        del response.data["access"]
+        try:
+            from rest_framework_simplejwt.settings import (
+                api_settings as jwt_settings,
+            )
+            access_token_expiration = (timezone.now() + jwt_settings.ACCESS_TOKEN_LIFETIME)
+            response.data["access_token"] = response.data["access"]
+            del response.data["access"]
+            response.data["access_token_expiration"] = access_token_expiration.isoformat()
+        except KeyError: pass
         return super().finalize_response(request, response, *args, **kwargs)
 
     serializer_class = CookieTokenRefreshSerializerCustom
