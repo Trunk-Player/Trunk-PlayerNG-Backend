@@ -52,7 +52,7 @@ def _send_transmission_notifications(transmission: dict) -> None:
             continue
 
         transmission_count = Transmission.objects.filter(talkgroup__UUID=talkgroup, end_time__gte=timezone.now()-timedelta(seconds=alert.trigger_time)) 
-        if len(transmission_count) < alert.count:
+        if len(transmission_count) <= alert.count:
             continue
 
 
