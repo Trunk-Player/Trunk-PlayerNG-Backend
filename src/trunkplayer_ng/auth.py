@@ -26,13 +26,13 @@ class TokenAuthSupportCookie(JWTAuthentication):
                         'HTTP_AUTHORIZATION' not in request.META:
             if 'HTTP_REFERER' in request.META:
                 if "/auth/" not in request.META['HTTP_REFERER']:
-                    enforce_csrf(request)
+                    #enforce_csrf(request)
                     raw_token = request.COOKIES.get(settings.JWT_AUTH_COOKIE).encode("utf-8")
                     validated_token = self.get_validated_token(raw_token)
 
                     return self.get_user(validated_token), validated_token
             else:
-                enforce_csrf(request)
+                #enforce_csrf(request)
                 raw_token = request.COOKIES.get(settings.JWT_AUTH_COOKIE).encode("utf-8")
                 validated_token = self.get_validated_token(raw_token)
                 return self.get_user(validated_token), validated_token
