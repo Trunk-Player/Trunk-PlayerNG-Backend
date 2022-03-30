@@ -26,10 +26,10 @@ sudo chmod 755 /opt/tpng
 ```bash
 git clone https://github.com/Trunk-Player/Trunk-PlayerNG-Backend.git /opt/tpng
 cd /opt/tpng
-mkdir /opt/tpng/mediafiles/
-mkdir /opt/tpng/static
-cp local-tools/settings.local.py src/trunkplayer_ng/
-nano src/trunkplayer_ng/settings.local.py
+mkdir /opt/tpng/src/mediafiles/
+mkdir /opt/tpng/src/staticfiles/
+cp local-tools/settings.local.py src/trunkplayer_ng/settings_local.py
+nano src/trunkplayer_ng/settings_local.py
 ```
 Update settings.local.py
 
@@ -50,5 +50,7 @@ sudo systemctl restart nginx
 sudo supervisorctl reread
 sudo supervisorctl add tpng
 sudo supervisorctl start tpng:
+
+/opt/tpng/src/manage.py migrate
 ```
 
