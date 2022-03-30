@@ -42,15 +42,21 @@ pip install -r requirements.txt
 
 ```bash
 sudo ln -s /opt/tpng/local-tools/nginx.local.conf /etc/nginx/sites-enabled/
-sudo ln -s /opt/tpng/local-tools/trunkplayer-ng.supervisor.conf /etc/supervisor/conf.d/
 sudo rm /etc/nginx/sites-enabled/default
 sudo nginx -t 
 sudo systemctl restart nginx
+```
 
+```bash
+sudo ln -s /opt/tpng/local-tools/trunkplayer-ng.supervisor.conf /etc/supervisor/conf.d/
 sudo supervisorctl reread
 sudo supervisorctl add tpng
 sudo supervisorctl start tpng:
-
-/opt/tpng/src/manage.py migrate
 ```
 
+```bash
+/opt/tpng/src/manage.py migrate
+/opt/tpng/src/manage.py collectstatic
+```
+
+And youre done
