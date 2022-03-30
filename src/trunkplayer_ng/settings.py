@@ -9,18 +9,6 @@ from kombu.entity import Exchange
 
 
 SEND_TELEMETRY = os.getenv("SEND_TELEMETRY", "False").lower() in ("true", "1", "t")
-if SEND_TELEMETRY:
-    import sentry_sdk
-
-    sentry_sdk.init(
-        os.getenv(
-            "SENTRY_DSN",
-            "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io/2",
-        ),
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        traces_sample_rate=1.0,
-    )
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -50,6 +38,7 @@ INSTALLED_APPS = [
     "radio",
     "users",
     "corsheaders",
+    'django_celery_results',
     "django_celery_beat",
     "rest_framework_simplejwt",
     "rest_framework",
@@ -326,6 +315,7 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/"
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+CELERY_RESULT_BACKEND = 'django-db'
 CELERY_TIMEZONE = str(os.getenv("TZ", "America/Chicago"))
 CELERY_IMPORTS = ("radio.tasks",)
 # Application definition
@@ -350,3 +340,26 @@ CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = True
 CSRF_HEADER_NAME="HTTP_CSRFTOKEN"
+
+
+# Load our local settings 
+try:
+    LOCAL_SETTINGS
+except NameError:
+    try:
+        from trunkplayer_ng.settings_local import *
+    except ImportError:
+        pass
+
+if SEND_TELEMETRY:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        os.getenv(
+            "SENTRY_DSN",
+            "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io/2",
+        ),
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+    )
