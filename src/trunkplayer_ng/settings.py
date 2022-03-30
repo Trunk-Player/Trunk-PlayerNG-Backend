@@ -9,18 +9,6 @@ from kombu.entity import Exchange
 
 
 SEND_TELEMETRY = os.getenv("SEND_TELEMETRY", "False").lower() in ("true", "1", "t")
-if SEND_TELEMETRY:
-    import sentry_sdk
-
-    sentry_sdk.init(
-        os.getenv(
-            "SENTRY_DSN",
-            "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io/2",
-        ),
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        traces_sample_rate=1.0,
-    )
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -350,3 +338,26 @@ CSRF_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = True
 CSRF_HEADER_NAME="HTTP_CSRFTOKEN"
+
+
+# Load our local settings 
+try:
+    LOCAL_SETTINGS
+except NameError:
+    try:
+        from trunk_player.settings_local import *
+    except ImportError:
+        pass
+    
+if SEND_TELEMETRY:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        os.getenv(
+            "SENTRY_DSN",
+            "https://d83fa527e0044728b20de7dab246ea6f@bigbrother.weathermelon.io/2",
+        ),
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+    )

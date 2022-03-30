@@ -140,7 +140,7 @@ def _forward_transmission_to_remote_instance(
 def _broadcast_transmission(event: str, room: str, data: dict):
     try:
         mgr = socketio.KombuManager(
-            os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
+            settings.CELERY_BROKER_URL
         )
         sio = socketio.Server(
             async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False

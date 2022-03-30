@@ -193,7 +193,7 @@ def _broadcast_web_notification(
     alertuser_uuid: str, trannsmission_uuid: str, emergency: bool, title: str, body: str
 ) -> None:
     mgr = socketio.KombuManager(
-        os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/")
+        settings.CELERY_BROKER_URL
     )
     sio = socketio.Server(
         async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
