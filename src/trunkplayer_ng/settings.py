@@ -347,10 +347,10 @@ try:
     LOCAL_SETTINGS
 except NameError:
     try:
-        from trunk_player.settings_local import *
+        from trunkplayer_ng.settings_local import *
     except ImportError:
         pass
-    
+
 if SEND_TELEMETRY:
     import sentry_sdk
 

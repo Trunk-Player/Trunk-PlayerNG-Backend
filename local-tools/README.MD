@@ -7,10 +7,11 @@
 > Theses items have great support and are out of scope for this documentation
 1. RabbitMQ (Local or Remote)
 2. MYSQL/MardiaDB (Local or Remote)
-3. UWSGI
-4. Python 3.8+
-5. Python-Virtualenv
+3. **Python 3.9+**
+4. python-dev
+5. python-venv
 6. Nginx
+7SO . libmariadbclient-dev
 
 ### Install
 We will be using `/opt/tpng` in this install, if you choose to not use this directory be sure to edit the files in the `local-tools/` folder
@@ -40,11 +41,13 @@ pip install -r requirements.txt
 ```
 
 ```bash
-sudo ln -s local-tools/nginx.local.conf /etc/nginx/sites-enabled/
-sudo ln -s local-tools/trunkplayer-ng.supervisor.conf /etc/supervisor/conf.d/
+sudo ln -s /opt/tpng/local-tools/nginx.local.conf /etc/nginx/sites-enabled/
+sudo ln -s /opt/tpng/local-tools/trunkplayer-ng.supervisor.conf /etc/supervisor/conf.d/
+sudo rm /etc/nginx/sites-enabled/default
 sudo nginx -t 
 sudo systemctl restart nginx
 
+sudo supervisorctl reread
 sudo supervisorctl add tpng
 sudo supervisorctl start tpng:
 ```
