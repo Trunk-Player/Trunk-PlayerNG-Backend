@@ -1,6 +1,8 @@
 import os
 import logging
+from unittest.mock import sentinel
 import apprise
+import sentry_sdk
 import socketio
 
 from datetime import timedelta
@@ -51,9 +53,10 @@ def _send_transmission_notifications(transmission: dict) -> None:
         if not alert.enabled:
             continue
 
-        transmission_count = Transmission.objects.filter(talkgroup__UUID=talkgroup, end_time__gte=timezone.now()-timedelta(seconds=alert.trigger_time)) 
-        if len(transmission_count) <= alert.count:
-            continue
+        if alert.count != 1:
+            transmission_count = Transmission.objects.filter(talkgroup__UUID=talkgroup, end_time__gte=timezone.now()-timedelta(seconds=alert.trigger_time)) 
+            if len(transmission_count) < alert.count:
+                continue
 
 
         try:
@@ -196,7 +199,7 @@ def _broadcast_web_notification(
         settings.CELERY_BROKER_URL
     )
     sio = socketio.Server(
-        async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
+        async_mode="gevent", client_manager=mgr, logger=True, engineio_logger=True
     )
     data = {
         "trannsmission_uuid": trannsmission_uuid,

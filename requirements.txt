@@ -40,6 +40,7 @@ boto3
 celery
 django-celery
 django-celery-beat
+django-celery-results
 django-storages
 Django-rest-auth
 django-cors-headers
@@ -52,3 +53,4 @@ python-socketio
 kombu
 apprise
 django-filter
+psycopg2-binary

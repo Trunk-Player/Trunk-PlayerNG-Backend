@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "radio",
     "users",
     "corsheaders",
+    'django_celery_results',
     "django_celery_beat",
     "rest_framework_simplejwt",
     "rest_framework",
@@ -314,6 +315,7 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "ampq://user:pass@127.0.0.1/"
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+CELERY_RESULT_BACKEND = 'django-db'
 CELERY_TIMEZONE = str(os.getenv("TZ", "America/Chicago"))
 CELERY_IMPORTS = ("radio.tasks",)
 # Application definition
