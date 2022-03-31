@@ -6,8 +6,8 @@ from datetime import timedelta
 
 from kombu import Queue
 from kombu.entity import Exchange
-
-
+import pymysql
+pymysql.install_as_MySQLdb()
 SEND_TELEMETRY = os.getenv("SEND_TELEMETRY", "False").lower() in ("true", "1", "t")
 
 
