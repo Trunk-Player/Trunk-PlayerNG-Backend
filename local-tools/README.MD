@@ -11,7 +11,7 @@
 4. python-dev
 5. python-venv
 6. Nginx
-7SO . libmariadbclient-dev
+7. libmariadbclient-dev
 
 ### Install
 We will be using `/opt/tpng` in this install, if you choose to not use this directory be sure to edit the files in the `local-tools/` folder
