@@ -48,7 +48,7 @@ services:
   trunk-player-worker:
     restart: always
     image: trunkplayer/trunkplayer-ng:latest
-    command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,RR_IMPORT,radio_alerts,radio_tx
+    command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,radio_refrence,radio_alerts,transmission_ingest,tranmission_push
     environment:
       DEBUG: "${DEBUG}"
       SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
