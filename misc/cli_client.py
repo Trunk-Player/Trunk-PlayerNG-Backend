@@ -838,7 +838,6 @@ def main():
             print(f"[+] LISTENING ON: {working_type[choice][1]}")
             choice = input("PRESS [ENTER] to select a new Talkgroup / Scanlist / Scanner\n\n[+] Waiting for New Transmissions\n\n")
             sio.emit('deregister_tx_source', {"UUIDs":[item_uuid]})
-            sio.
             break
 
 main()

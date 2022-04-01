@@ -72,7 +72,6 @@ from radio.serializers import (
     GlobalEmailTemplateSerializer
 )
 from radio.tasks import import_radio_refrence, send_transmission_to_web
-from radio.helpers.transmission import new_transmission_handler
 from radio.helpers.utils import (
     get_user_allowed_talkgroups_for_systems,
     user_allowed_to_download_transmission,
@@ -2110,45 +2109,34 @@ class TransmissionCreate(APIView):
         """
         Transmission Create EP
         """
-        from radio.tasks import send_transmission_notifications
-
+        from radio.tasks import new_transmission_handler
+        from radio.helpers.utils import validate_upload
+        
         data = JSONParser().parse(request)
+        
+        try:
+            recorder: SystemRecorder = SystemRecorder.objects.get(
+                api_key=data["recorder"]
+            )
 
-        if not SystemRecorder.objects.filter(api_key=data["recorder"]):
+            tg_id = data["json"]["talkgroup"]
+            talkgroup: TalkGroup = TalkGroup.objects.get(decimal_id=tg_id, system=recorder.system)
+            if not validate_upload(talkgroup.UUID, data["recorder"]):
+                 return Response(
+                    data={"error":"Not allowed to post this talkgroup"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+        except SystemRecorder.DoesNotExist:
             return Response(
-                "Not allowed to post this talkgroup",
+                data={"error":"Not allowed to post this talkgroup"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         try:
-            cleaned_data = new_transmission_handler(data)
-
-            if not cleaned_data:
-                return Response(
-                    "Not allowed to post this talkgroup",
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-
-            cleaned_data["UUID"] = uuid.uuid4()
-
-            recorder: SystemRecorder = SystemRecorder.objects.get(
-                api_key=cleaned_data["recorder"]
-            )
-            cleaned_data["system"] = str(recorder.system.UUID)
-
-            transmission = TransmissionUploadSerializer(data=cleaned_data, partial=True)
-
-            if transmission.is_valid(raise_exception=True):
-                transmission.save()
-                socket_data = {
-                    "UUID": transmission.data["UUID"],
-                    "talkgroup": transmission.data["talkgroup"],
-                }
-                send_transmission_to_web.delay(socket_data, cleaned_data["talkgroup"])
-                send_transmission_notifications.delay(transmission.data)
-                return Response({"success": True, "UUID": cleaned_data["UUID"]})
-            else:
-                Response(transmission.errors)
+            UUID = uuid.uuid4()
+            data["UUID"] = UUID
+            new_transmission_handler.delay(data)
+            return Response(data={"UUID": UUID}, status=status.HTTP_201_CREATED)
         except Exception as error:
             if settings.SEND_TELEMETRY:
                 sentry_sdk.set_context(
