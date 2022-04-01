@@ -117,9 +117,24 @@ class TalkGroupSerializer(serializers.ModelSerializer):
             "agency",
         ]
 
+class TalkGroupListSerializer(serializers.ModelSerializer):
+    system = SystemSerializer(read_only=True)
+    class Meta:
+        model = TalkGroup
+        fields = [
+            "UUID",
+            "system",
+            "decimal_id",
+            "alpha_tag",
+            "description",
+            "encrypted",
+            "agency",
+        ]
+
 
 class TalkGroupViewListSerializer(serializers.ModelSerializer):
     agency = AgencyViewListSerializer(read_only=True, many=True)
+    system = SystemSerializer(read_only=True)
 
     class Meta:
         model = TalkGroup
