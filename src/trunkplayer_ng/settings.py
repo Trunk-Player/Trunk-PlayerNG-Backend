@@ -272,6 +272,12 @@ CELERY_CREATE_MISSING_QUEUES = True
 CELERY_QUEUES = (
     Queue("default", Exchange("default"), routing_key="default"),
     Queue(
+        "transmission_ingest",
+        Exchange("transmission_ingest"),
+        routing_key="transmission_ingest",
+        queue_arguments={"x-max-priority": 10},
+    ),
+    Queue(
         "transmission_forwarding",
         Exchange("transmission_forwarding"),
         routing_key="transmission_forwarding",
@@ -284,28 +290,29 @@ CELERY_QUEUES = (
         queue_arguments={"x-max-priority": 8},
     ),
     Queue(
-        "radio_tx",
-        Exchange("radio_alerts"),
-        routing_key="radio_alerts",
+        "tranmission_push",
+        Exchange("tranmission_push"),
+        routing_key="tranmission_push",
         queue_arguments={"x-max-priority": 10},
     ),
     Queue(
-        "RR_IMPORT",
-        Exchange("RR_IMPORT"),
-        routing_key="RR_IMPORT",
+        "radio_refrence",
+        Exchange("radio_refrence"),
+        routing_key="radio_refrence",
         queue_arguments={"x-max-priority": 1},
     ),
 )
 CELERY_TASK_ROUTES = {
+    "radio.tasks.new_transmission_handler": {"queue": "transmission_ingest"},
     "radio.tasks.forward_Transmission": {"queue": "transmission_forwarding"},
     "radio.tasks.send_transmission": {"queue": "transmission_forwarding"},
     "radio.tasks.forward_Incident": {"queue": "transmission_forwarding"},
     "radio.tasks.send_Incident": {"queue": "transmission_forwarding"},
-    "radio.tasks.import_radio_refrence": {"queue": "RR_IMPORT"},
+    "radio.tasks.import_radio_refrence": {"queue": "radio_refrence"},
     "radio.tasks.send_tx_notifications": {"queue": "radio_alerts"},
     "radio.tasks.publish_user_notification": {"queue": "radio_alerts"},
     "radio.tasks.dispatch_web_notification": {"queue": "radio_alerts"},
-    "radio.tasks.broadcast_transmission": {"queue": "radio_tx"},
+    "radio.tasks.broadcast_transmission": {"queue": "tranmission_push"},
 }
 CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_TASK_DEFAULT_EXCHANGE = "default"
