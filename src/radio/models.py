@@ -204,10 +204,10 @@ def execute_unit_dedup_check(sender, instance, created, *args, **kwargs):
 
     if created:
         if instance.description != "":
-            talkgroups = Unit.objects.filter(
+            units = Unit.objects.filter(
                 system=system, decimal_id=instance.decimal_id
             ).exclude(UUID=instance.UUID)
-            talkgroups.delete()
+            units.delete()
         else:
             if Unit.objects.filter(system=system, decimal_id=instance.decimal_id).exclude(
                 description=""
