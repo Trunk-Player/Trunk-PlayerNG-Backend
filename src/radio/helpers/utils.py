@@ -329,38 +329,34 @@ def user_allowed_to_download_transmission(
 
     return False
 
-def validate_upload(talkgroup_uuid: str, recorder_uuid: str) -> bool:
+def validate_upload(talkgroup_decimalid: str, recorder: SystemRecorder) -> bool:
     """
     Validate that user is allowed to post TG
     """
-    recorder: SystemRecorder = SystemRecorder.objects.get(
-        api_key=recorder_uuid
-    )
 
-    talkgroups_allowed = recorder.talkgroups_allowed.all()
-    talkgroups_denyed = recorder.talkgroups_denyed.all()
-    talkgroup = TalkGroup.objects.filter(UUID=talkgroup_uuid)
+    talkgroups_allowed = recorder.talkgroups_allowed.all().count()
+    talkgroups_denyed = recorder.talkgroups_denyed.all().count()
+    talkgroup = TalkGroup.objects.filter(decimal_id=talkgroup_decimalid, system=recorder.system)
 
     if (
-        len(talkgroups_allowed) > 0
-        and len(talkgroups_denyed) == 0
+        talkgroups_allowed > 0
+        and talkgroups_denyed == 0
     ):
-        
         if talkgroup in talkgroups_allowed:
             return True
         else:
             return False
     elif (
-        len(talkgroups_allowed) == 0
-        and len(talkgroups_denyed) > 0
+        talkgroups_allowed == 0
+        and talkgroups_denyed > 0
     ):
         if talkgroup in talkgroups_denyed:
             return False
         else:
             return True
     elif (
-        len(talkgroups_allowed) > 0
-        and len(talkgroups_denyed) > 0
+        talkgroups_allowed > 0
+        and talkgroups_denyed > 0
     ):
         if talkgroup in talkgroups_denyed:
             return False
@@ -370,7 +366,7 @@ def validate_upload(talkgroup_uuid: str, recorder_uuid: str) -> bool:
             else:
                 return False
     elif (
-        len(talkgroups_allowed) == 0
-        and len(talkgroups_denyed) == 0
+        talkgroups_allowed == 0
+        and talkgroups_denyed == 0
     ):
-         return True
+        return True

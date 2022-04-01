@@ -2112,18 +2112,17 @@ class TransmissionCreate(APIView):
         """
         from radio.tasks import new_transmission_handler
         from radio.helpers.utils import validate_upload
-        
+
         data = JSONParser().parse(request)
-        
+ 
         try:
             recorder: SystemRecorder = SystemRecorder.objects.get(
                 api_key=data["recorder"]
             )
 
             tg_id = data["json"]["talkgroup"]
-            talkgroup: TalkGroup = TalkGroup.objects.get(decimal_id=tg_id, system=recorder.system)
-            if not validate_upload(talkgroup.UUID, data["recorder"]):
-                 return Response(
+            if not validate_upload(tg_id, recorder):
+                return Response(
                     data={"error":"Not allowed to post this talkgroup"},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
