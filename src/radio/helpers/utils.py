@@ -129,6 +129,7 @@ class TransmissionDetails:
         """
         self.system = payload.get("system")
         self.freq = payload.get("freq")
+        self.audio_type = payload.get("audio_type")
         self.call_length = payload.get("call_length")
         self.talkgroup = payload.get("talkgroup")
         self.talkgroup_tag = payload.get("talkgroup_tag", str(self.talkgroup))
@@ -181,6 +182,7 @@ class TransmissionDetails:
                 acl.save()
 
         payload = {
+            "audio_type": self.audio_type,
             "start_time": self.start_time,
             "end_time": self.stop_time,
             "talkgroup": str(talkgroup.UUID),

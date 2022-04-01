@@ -252,6 +252,7 @@ class Transmission(models.Model):
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE, db_index=True)
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
+    audio_type = models.CharField(max_length=50, null=True, default=None)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
     audio_file = models.FileField(upload_to="audio/%Y/%m/%d/")

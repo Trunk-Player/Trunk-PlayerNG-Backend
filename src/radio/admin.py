@@ -173,6 +173,7 @@ class TransmissionAdmin(admin.ModelAdmin):
         "UUID",
         "system",
         "recorder",
+        "audio_type",
         "start_time",
         "talkgroup",
         "locked",

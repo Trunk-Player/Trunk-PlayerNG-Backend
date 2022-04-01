@@ -462,6 +462,7 @@ class TransmissionFilter(filters.FilterSet):
             "UUID",
             "system",
             "recorder",
+            "audio_type",
             "start_time",
             "end_time",
             "talkgroup",
