@@ -6,8 +6,10 @@ from datetime import timedelta
 
 from kombu import Queue
 from kombu.entity import Exchange
+
 import pymysql
 pymysql.install_as_MySQLdb()
+
 SEND_TELEMETRY = os.getenv("SEND_TELEMETRY", "False").lower() in ("true", "1", "t")
 
 
@@ -264,10 +266,12 @@ SITE_ID = 1
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # CELERY_ALWAYS_EAGER = True
-CELERY_TASK_RESULT_EXPIRES = 60  # 1 mins
-CELERYD_MAX_TASKS_PER_CHILD = 50
+CELERY_TASK_RESULT_EXPIRES = 120  # 1 mins
+CELERYD_MAX_TASKS_PER_CHILD = 1500
 CELERYD_PREFETCH_MULTIPLIER = 1
 CELERY_CREATE_MISSING_QUEUES = True
+CELERY_ACKS_LATE = False
+CELERY_DISABLE_RATE_LIMITS = True
 
 CELERY_QUEUES = (
     Queue("default", Exchange("default"), routing_key="default"),
@@ -337,6 +341,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://localhost:3001",
     "http://127.0.0.1:3001",
     "https://127.0.0.1:3001",
+    "https://dev.trunkplayer.io",
     "https://trunk-player-frontend.vercel.app",
 ]
 CORS_ALLOW_ALL_ORIGINS = False
