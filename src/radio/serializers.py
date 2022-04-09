@@ -50,6 +50,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["UUID", "site_admin", "description", "site_theme"]
 
 
+class UserMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ["UUID", "urgent", "read", "time", "title", "body", "source"]
+
+
+class UserInboxSerializer(serializers.ModelSerializer):
+    messages = UserMessageSerializer(many=True)
+    class Meta:
+        model = UserProfile
+        fields = ["UUID", "user", "messages", "site_theme"]
+
+
+
 class SystemACLSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemACL
