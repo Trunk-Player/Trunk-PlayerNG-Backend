@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
-from radio.models import UserProfile, TalkGroupACL
+from radio.models import UserInbox, UserProfile, TalkGroupACL
 from users.managers import CustomUserManager
 
 
@@ -45,6 +45,9 @@ def create_user_profile(sender, instance: CustomUser, **kwargs):
     )
 
     user_profile.save()
+
+    user_inbox = UserInbox(user=user_profile)
+    user_inbox.save()
 
     for acl in TalkGroupACL.objects.filter(default_new_users=True):
         acl: TalkGroupACL
