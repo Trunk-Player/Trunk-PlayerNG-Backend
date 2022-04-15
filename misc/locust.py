@@ -51,12 +51,12 @@ audio = "AAAAHGZ0eXBNNEEgAAACAE00QSBpc29taXNvMgAAAAhmcmVlAABfb21kYXQBMDQD6WrMAAK
 
 
 class TranmissionUploadUser(HttpUser):
-    wait_time = between(1, 5)
+    wait_time = between(1, 3)
 
     @task
     def post_new_tx(self):
         payload = {
-            "recorder": "ccb3ec08-4d44-4e35-8419-eb73e8e6e82e",
+            "recorder": "fafb8867-43c7-49a8-ab5b-f59afd9c0511",
             "json": {
                     "freq": 857712500,
                     "start_time": 1644740626,

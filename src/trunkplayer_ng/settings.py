@@ -332,18 +332,19 @@ CELERY_IMPORTS = ("radio.tasks",)
 # Application definition
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://127.0.0.1:3000",
-    "http://localhost:3001",
-    "https://localhost:3001",
-    "http://127.0.0.1:3001",
-    "https://127.0.0.1:3001",
-    "https://dev.trunkplayer.io",
-    "https://trunk-player-frontend.vercel.app",
-]
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_HOSTS", default="https://dev.trunkplayer.io https://trunk-player-frontend.vercel.app https://localhost:3000 https://localhost:3001").split(" ")
+# [
+#     "http://localhost:3000",
+#     "https://localhost:3000",
+#     "http://127.0.0.1:3000",
+#     "https://127.0.0.1:3000",
+#     "http://localhost:3001",
+#     "https://localhost:3001",
+#     "http://127.0.0.1:3001",
+#     "https://127.0.0.1:3001",
+#     "https://dev.trunkplayer.io",
+#     "https://trunk-player-frontend.vercel.app",
+# ]
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = None

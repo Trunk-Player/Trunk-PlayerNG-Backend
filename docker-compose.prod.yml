@@ -22,6 +22,7 @@ services:
       SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
       # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
       FORCE_SECURE: "${FORCE_SECURE}" #
+      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS}
       SECRET_KEY: "${SECRET_KEY}"
       MYSQL_DATABASE: "${SQL_DATABASE}"
       MYSQL_USER: "${SQL_USER}"
@@ -54,6 +55,7 @@ services:
       SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
       # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
       FORCE_SECURE: "${FORCE_SECURE}" #
+      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS}
       SECRET_KEY: "${SECRET_KEY}"
       MYSQL_DATABASE: "${SQL_DATABASE}"
       MYSQL_USER: "${SQL_USER}"
@@ -84,6 +86,7 @@ services:
       SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
       # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
       FORCE_SECURE: "${FORCE_SECURE}" #
+      CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS}
       SECRET_KEY: "${SECRET_KEY}"
       MYSQL_DATABASE: "${SQL_DATABASE}"
       MYSQL_USER: "${SQL_USER}"
