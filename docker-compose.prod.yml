@@ -37,6 +37,12 @@ services:
       S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
       DJANGO_SUPERUSER_PASSWORD: "${DJANGO_SUPERUSER_PASSWORD}"
       DJANGO_SUPERUSER_EMAIL: "${DJANGO_SUPERUSER_EMAIL}"
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_PORT: "${EMAIL_PORT}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
+      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
     volumes:
       #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
       - ${STATIC_VOLUME_PATH}:/code/static
@@ -48,7 +54,7 @@ services:
   trunk-player-worker:
     restart: always
     image: trunkplayer/trunkplayer-ng:latest
-    command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,RR_IMPORT,radio_alerts,radio_tx
+    command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,radio_refrence,radio_alerts,transmission_ingest,tranmission_push
     environment:
       DEBUG: "${DEBUG}"
       SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
@@ -67,6 +73,12 @@ services:
       S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
       S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
       S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_PORT: "${EMAIL_PORT}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
+      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
     volumes:
       #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
       - ${STATIC_VOLUME_PATH}:/code/static
@@ -97,6 +109,12 @@ services:
       S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
       S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
       S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_PORT: "${EMAIL_PORT}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
+      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
     volumes:
     #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql) 
       - ${STATIC_VOLUME_PATH}:/code/static
@@ -106,16 +124,18 @@ services:
       - rabbitmq
 
   database:
-    image: linuxserver/mariadb
+    image: mysql
     restart: always
+    command: --default-authentication-plugin=mysql_native_password
     ports:
       - "3306:3306"
     environment:
+      MYSQL_ROOT_PASSWORD: "${SQL_ROOT_PASSWORD}"
       MYSQL_DATABASE: "${SQL_DATABASE}"
       MYSQL_USER: "${SQL_USER}"
       MYSQL_PASSWORD: "${SQL_PASSWORD}"
     volumes:
-      - ${DATABASE_PATH}:/config
+      - ${DATABASE_PATH}:/var/lib/mysql
 
   rabbitmq:
     image: 'rabbitmq:management'

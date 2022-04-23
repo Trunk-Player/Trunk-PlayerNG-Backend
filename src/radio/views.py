@@ -1,4 +1,5 @@
 # import logging
+import logging
 import uuid
 import traceback
 
@@ -43,10 +44,12 @@ from radio.filters import (
     TransmissionUnitFilter,
     UnitFilter,
     UserAlertFilter,
+    UserInboxFilter,
     UserProfileFilter
 )
 from radio.serializers import (
     UserAlertSerializer,
+    UserInboxSerializer,
     UserProfileSerializer,
     SystemACLSerializer,
     SystemSerializer,
@@ -72,7 +75,6 @@ from radio.serializers import (
     GlobalEmailTemplateSerializer
 )
 from radio.tasks import import_radio_refrence, send_transmission_to_web
-from radio.helpers.transmission import new_transmission_handler
 from radio.helpers.utils import (
     get_user_allowed_talkgroups_for_systems,
     user_allowed_to_download_transmission,
@@ -89,6 +91,7 @@ from radio.permission import (
 )
 
 from radio.models import (
+    UserInbox,
     UserProfile,
     SystemACL,
     System,
@@ -467,6 +470,190 @@ class UserProfileView(APIView):
         else:
             return Response(status=401)
         user_profile.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserInboxList(APIView, PaginationMixin):
+    queryset = UserInbox.objects.all()
+    serializer_class = UserInboxSerializer
+    permission_classes = [IsSAOrUser]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_backends = (filters.DjangoFilterBackend,)
+    filterset_class = UserInboxFilter
+
+    @swagger_auto_schema(tags=["UserInbox"])
+    def get(self, request):
+        """
+        UserInbox GET EP
+        """
+        user = request.user.userProfile
+        if user.site_admin:
+            user_profile = UserInbox.objects.all()
+        else:
+            user_profile = UserInbox.objects.filter(user__UUID=user.UUID)
+
+        filtered_result = UserInboxFilter(self.request.GET, queryset=user_profile)
+        page = self.paginate_queryset(filtered_result.qs)
+        if page is not None:
+            serializer = UserInboxSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+
+class UserInboxDirectView(APIView):
+    queryset = UserInbox.objects.all()
+    serializer_class = UserInboxSerializer
+    permission_classes = [IsSAOrReadOnly]
+
+    def get_object(self, request_uuid):
+        """
+        User profile fetch function
+        """
+        try:
+            return UserInbox.objects.get(user__UUID=request_uuid)
+        except UserInbox.DoesNotExist:
+            raise Http404 from UserInbox.DoesNotExist
+
+    @swagger_auto_schema(tags=["UserInbox"])
+    def get(self, request, request_uuid):
+        """
+        UserInbox Get EP
+        """
+        user = request.user.userProfile
+        if user.site_admin:
+            user_inbox = self.get_object(request_uuid)
+        elif user_inbox.user.UUID == user.UUID:
+            user_inbox = self.get_object(request_uuid)
+        else:
+            return Response(status=401)
+        serializer = UserInboxSerializer(user_inbox)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        tags=["UserInbox"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "messages": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="The users messages"
+                ),
+                "user": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="The user"
+                ),
+            },
+        ),
+    )
+    def put(self, request, request_uuid):
+        """
+        UserInbox Update EP
+        """
+        user = request.user.userProfile
+        if user.site_admin:
+            user_inbox = self.get_object(request_uuid)
+        elif user_inbox.user.UUID == user.UUID:
+            user_inbox = self.get_object(request_uuid)
+        else:
+            return Response(status=401)
+        serializer = UserInboxSerializer(user_inbox, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=["UserInbox"])
+    def delete(self, request, request_uuid):
+        """
+        UserInbox Delete EP
+        """
+        user = request.user.userProfile
+        if user.site_admin:
+            user_inbox = self.get_object(request_uuid)
+        elif user_inbox.user.UUID == user.UUID:
+            user_inbox = self.get_object(request_uuid)
+        else:
+            return Response(status=401)
+        user_inbox.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserInboxView(APIView):
+    queryset = UserInbox.objects.all()
+    serializer_class = UserInboxSerializer
+    permission_classes = [IsSAOrReadOnly]
+
+    def get_object(self, request_uuid):
+        """
+        User profile fetch function
+        """
+        try:
+            return UserInbox.objects.get(UUID=request_uuid)
+        except UserInbox.DoesNotExist:
+            raise Http404 from UserInbox.DoesNotExist
+
+    @swagger_auto_schema(tags=["UserInbox"])
+    def get(self, request, request_uuid):
+        """
+        UserInbox Get EP
+        """
+        user = request.user.userProfile
+        
+        if user.site_admin:
+            user_inbox = self.get_object(request_uuid)
+        elif user_inbox.user.UUID == user.UUID:
+            user_inbox = self.get_object(request_uuid)
+        else:
+            return Response(status=401)
+
+        serializer = UserInboxSerializer(user_inbox)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        tags=["UserInbox"],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "messages": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="The users messages"
+                ),
+                "user": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_STRING),
+                    description="The user"
+                ),
+            },
+        ),
+    )
+    def put(self, request, request_uuid):
+        """
+        UserInbox Update EP
+        """
+        user = request.user.userProfile
+        if user.site_admin:
+            user_inbox = self.get_object(request_uuid)
+        elif user_inbox.user.UUID == user.UUID:
+            user_inbox = self.get_object(request_uuid)
+        else:
+            return Response(status=401)
+        serializer = UserInboxSerializer(user_inbox, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(tags=["UserInbox"])
+    def delete(self, request, request_uuid):
+        """
+        UserInbox Delete EP
+        """
+        user = request.user.userProfile
+        if user.site_admin:
+            user_inbox = self.get_object(request_uuid)
+        elif user_inbox.user.UUID == user.UUID:
+            user_inbox = self.get_object(request_uuid)
+        else:
+            return Response(status=401)
+        user_inbox.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2110,45 +2297,34 @@ class TransmissionCreate(APIView):
         """
         Transmission Create EP
         """
-        from radio.tasks import send_transmission_notifications
+        from radio.tasks import new_transmission_handler
+        from radio.helpers.utils import validate_upload
 
         data = JSONParser().parse(request)
+ 
+        try:
+            recorder: SystemRecorder = SystemRecorder.objects.get(
+                api_key=data["recorder"]
+            )
 
-        if not SystemRecorder.objects.filter(api_key=data["recorder"]):
+            tg_id = data["json"]["talkgroup"]
+            if not validate_upload(tg_id, recorder):
+                return Response(
+                    data={"error":"Not allowed to post this talkgroup"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+        except SystemRecorder.DoesNotExist:
             return Response(
-                "Not allowed to post this talkgroup",
+                data={"error":"Not allowed to post this talkgroup"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
         try:
-            cleaned_data = new_transmission_handler(data)
-
-            if not cleaned_data:
-                return Response(
-                    "Not allowed to post this talkgroup",
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-
-            cleaned_data["UUID"] = uuid.uuid4()
-
-            recorder: SystemRecorder = SystemRecorder.objects.get(
-                api_key=cleaned_data["recorder"]
-            )
-            cleaned_data["system"] = str(recorder.system.UUID)
-
-            transmission = TransmissionUploadSerializer(data=cleaned_data, partial=True)
-
-            if transmission.is_valid(raise_exception=True):
-                transmission.save()
-                socket_data = {
-                    "UUID": transmission.data["UUID"],
-                    "talkgroup": transmission.data["talkgroup"],
-                }
-                send_transmission_to_web.delay(socket_data, cleaned_data["talkgroup"])
-                send_transmission_notifications.delay(transmission.data)
-                return Response({"success": True, "UUID": cleaned_data["UUID"]})
-            else:
-                Response(transmission.errors)
+            UUID = uuid.uuid4()
+            data["UUID"] = UUID
+            new_transmission_handler.delay(data)
+            logging.info(f"[+] Got new tx - {UUID}")
+            return Response(data={"UUID": UUID}, status=status.HTTP_201_CREATED)
         except Exception as error:
             if settings.SEND_TELEMETRY:
                 sentry_sdk.set_context(

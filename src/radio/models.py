@@ -1,10 +1,10 @@
+from datetime import datetime
+from pyexpat import model
 import uuid
 
 from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
-
-
 
 class UserProfile(models.Model):
     UUID = models.UUIDField(
@@ -21,6 +21,37 @@ class UserProfile(models.Model):
             parent: CustomUser = CustomUser.objects.get(userProfile=self)
 
             return f"{parent.email}"
+        except Exception:
+            return str(self.UUID)
+
+class UserMessage(models.Model):
+    UUID = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+    )
+    urgent = models.BooleanField(default=False)
+    read = models.BooleanField(default=False)
+    time = models.DateTimeField(default=timezone.now)
+    title = models.CharField(max_length=255,blank=True, null=True)
+    body = models.TextField(blank=True, null=True)
+    source = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return str(self.title)
+
+class UserInbox(models.Model):
+    UUID = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
+    )
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    messages = models.ManyToManyField(UserMessage)
+
+    def number_unread(self):
+        return len(self.messages.filter(read=False))
+
+    def __str__(self):
+        try:
+            parent: UserProfile = UserProfile.objects.get(userProfile=self.user)
+            return f"{str(parent)}"
         except Exception:
             return str(self.UUID)
 
@@ -204,10 +235,10 @@ def execute_unit_dedup_check(sender, instance, created, *args, **kwargs):
 
     if created:
         if instance.description != "":
-            talkgroups = Unit.objects.filter(
+            units = Unit.objects.filter(
                 system=system, decimal_id=instance.decimal_id
             ).exclude(UUID=instance.UUID)
-            talkgroups.delete()
+            units.delete()
         else:
             if Unit.objects.filter(system=system, decimal_id=instance.decimal_id).exclude(
                 description=""
@@ -252,6 +283,7 @@ class Transmission(models.Model):
     )
     system = models.ForeignKey(System, on_delete=models.CASCADE, db_index=True)
     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
+    audio_type = models.CharField(max_length=50, null=True, default=None)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
     audio_file = models.FileField(upload_to="audio/%Y/%m/%d/")

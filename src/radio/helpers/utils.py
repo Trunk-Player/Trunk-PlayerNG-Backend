@@ -129,6 +129,7 @@ class TransmissionDetails:
         """
         self.system = payload.get("system")
         self.freq = payload.get("freq")
+        self.audio_type = payload.get("audio_type")
         self.call_length = payload.get("call_length")
         self.talkgroup = payload.get("talkgroup")
         self.talkgroup_tag = payload.get("talkgroup_tag", str(self.talkgroup))
@@ -181,6 +182,7 @@ class TransmissionDetails:
                 acl.save()
 
         payload = {
+            "audio_type": self.audio_type,
             "start_time": self.start_time,
             "end_time": self.stop_time,
             "talkgroup": str(talkgroup.UUID),
@@ -205,39 +207,40 @@ class TransmissionDetails:
             api_key=recorder_uuid
         )
 
+        talkgroups_allowed = recorder.talkgroups_allowed.all()
+        talkgroups_denyed = recorder.talkgroups_denyed.all()
+        talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
+
         if (
-            len(recorder.talkgroups_allowed.all()) > 0
-            and len(recorder.talkgroups_denyed.all()) == 0
+            len(talkgroups_allowed) > 0
+            and len(talkgroups_denyed) == 0
         ):
-            talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroups_allowed.all():
+            if talkgroup in talkgroups_allowed:
                 return True
             else:
                 return False
         elif (
-            len(recorder.talkgroups_allowed.all()) == 0
-            and len(recorder.talkgroups_denyed.all()) > 0
+            len(talkgroups_allowed) == 0
+            and len(talkgroups_denyed) > 0
         ):
-            talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroups_denyed.all():
+            if talkgroup in talkgroups_denyed:
                 return False
             else:
                 return True
         elif (
-            len(recorder.talkgroups_allowed.all()) > 0
-            and len(recorder.talkgroups_denyed.all()) > 0
+            len(talkgroups_allowed) > 0
+            and len(talkgroups_denyed) > 0
         ):
-            talkgroup = TalkGroup.objects.filter(UUID=self.talkgroup)
-            if talkgroup in recorder.talkgroups_denyed.all():
+            if talkgroup in talkgroups_denyed:
                 return False
             else:
-                if talkgroup in recorder.talkgroups_allowed.all():
+                if talkgroup in talkgroups_allowed:
                     return True
                 else:
                     return False
         elif (
-            len(recorder.talkgroups_allowed.all()) == 0
-            and len(recorder.talkgroups_denyed.all()) == 0
+            len(talkgroups_allowed) == 0
+            and len(talkgroups_denyed) == 0
         ):
             return True
 
@@ -325,3 +328,45 @@ def user_allowed_to_download_transmission(
         return True
 
     return False
+
+def validate_upload(talkgroup_decimalid: str, recorder: SystemRecorder) -> bool:
+    """
+    Validate that user is allowed to post TG
+    """
+
+    talkgroups_allowed = recorder.talkgroups_allowed.all().count()
+    talkgroups_denyed = recorder.talkgroups_denyed.all().count()
+    talkgroup = TalkGroup.objects.filter(decimal_id=talkgroup_decimalid, system=recorder.system)
+
+    if (
+        talkgroups_allowed > 0
+        and talkgroups_denyed == 0
+    ):
+        if talkgroup in talkgroups_allowed:
+            return True
+        else:
+            return False
+    elif (
+        talkgroups_allowed == 0
+        and talkgroups_denyed > 0
+    ):
+        if talkgroup in talkgroups_denyed:
+            return False
+        else:
+            return True
+    elif (
+        talkgroups_allowed > 0
+        and talkgroups_denyed > 0
+    ):
+        if talkgroup in talkgroups_denyed:
+            return False
+        else:
+            if talkgroup in talkgroups_allowed:
+                return True
+            else:
+                return False
+    elif (
+        talkgroups_allowed == 0
+        and talkgroups_denyed == 0
+    ):
+        return True

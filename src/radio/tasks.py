@@ -14,6 +14,7 @@ from radio.helpers.notifications import (
 from radio.helpers.transmission import (
     _broadcast_transmission,
     _forward_transmission,
+    _new_transmission_handler,
     _send_transmission_to_web,
     _forward_transmission_to_remote_instance,
 )
@@ -164,3 +165,10 @@ def broadcast_transmission(event: str, room: str, data: dict) -> None:
     Sends new TX messsage to client
     """
     _broadcast_transmission(event, room, data)
+
+@shared_task
+def new_transmission_handler(data: dict):
+    """
+    Process new transmission
+    """
+    _new_transmission_handler(data)

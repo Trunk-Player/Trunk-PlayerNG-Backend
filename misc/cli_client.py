@@ -1,19 +1,20 @@
 from getpass import getpass
+from re import S
 from typing import List
 import requests, os, uuid, time, argparse
 from datetime import date, datetime, timedelta
 import socketio
 
-
 parser = argparse.ArgumentParser(description='TP-NG CLI Client')
 parser.add_argument('--user', type=str, help='TrunkPlayerNG User', required=True)
 parser.add_argument('--password', type=str, help='TrunkPlayerNG User')
 parser.add_argument('--url', type=str, help='The url to TP-NG ie http://panik.io', required=True)
+parser.add_argument('--alerts', help='Enable Web Alerts in CLI', action='store_true')
 parser.add_argument('--no_verify', help='Dont verify TLS', action='store_true')
 parser.add_argument('--no_audio', help='Dont play audio', action='store_true')
+parser.add_argument('--no_transmission', help='Dont Show new TXs', action='store_true')
 parser.add_argument('--debug', help='Show Debug Messages', action='store_true')
 parser.add_argument('--json', help='Output in json', action='store_true')
-parser.add_argument('--alerts', help='Enable Web Alerts in CLI', action='store_true')
 parser.set_defaults(alerts=True)
 
 args = parser.parse_args()
@@ -77,26 +78,25 @@ class tp_ng_api:
         URL = self.host + "/api/" + EP
         Response = requests.request(Method, URL, json=data, headers=headers, params=prams, verify=self.verify_ssl)
         
-        print(Response.text)
         assert Response.ok
         payload = Response.json()
 
-        payloadX = payload
-
+        payloadX = payload["results"]
+        payloadz = [None]
         if Page:
-            while len(payloadX) > 0:
+            while len(payloadz) > 0:
                 prams["offset"] =  prams["offset"] +  prams["limit"]
                 Response = requests.request(Method, URL, json=data, headers=headers, params=prams, verify=self.verify_ssl)
                 assert Response.ok
-                payloadX = Response.json()
-                payload.extend(payloadX)
+                payloadz = Response.json()["results"]
+                payloadX.extend(payloadz)
 
 
 
         
 
 
-        return payload
+        return payloadX
 
     class system:
         def __init__(self, make_request):
@@ -727,7 +727,7 @@ sio = socketio.Client()
 def debug(data=""):
     if args.debug:
         if not args.json:
-            print(f"[DEBUG]: {data}")
+            print(f"[DEBUG]: {data['data']}")
         else:
             print(data)
 
@@ -742,61 +742,103 @@ def unicast(data):
 def alert(data):
     if args.alerts:
         if not args.json:
-            print(f"[ALERT]: {data}")
+            print(f"[!][{datetime.now().isoformat()}] ALERT -> [{data['title']}] -> {data['body']}")
         else:
             print(data)
         
-
+@sio.event
+def disconnect():
+    connect_socket(url)
+    
 @sio.on('tx_response')
 def tx_response(data):
-    units = ""
-    for unit in data["data"]["units"]:
-        units = units + f'{str(unit["unit"])}, '
-
-    resp = f"""
-[NEW TRANSMISSION]:
-\tSystem: {data["data"]["system_name"]}
-\tTalkgroup: [{str(data["data"]["talkgroup"]["decimal_id"])}] {data["data"]["talkgroup"]["alpha_tag"]}
-\tLength: {data["data"]["length"]}
-\tAudio: {url}{data["data"]["audio_file"]}
-\tUnits: [{units}]
-    """
-    if not args.json:
-        print(resp)
-    else:
-        print(data)
-
+    resp = f'[*][{datetime.now().isoformat()}] NEW TRANSMISSION - [{data["data"]["system_name"]}] -> [{str(data["data"]["talkgroup"]["decimal_id"])}] {data["data"]["talkgroup"]["alpha_tag"].ljust(25)} -> Length: {str(data["data"]["length"]).ljust(20)}'
+    if not args.no_transmission:
+        if not args.json:
+            print(resp)
+        else:
+            print(data)
 
 @sio.on('*')
 def print_tx(event, data):
     if 'tx' in event:
         sio.emit('tx_request', {"UUID": data["UUID"]})
 
-def connect_socket(tpngAPI, url):
+def connect_socket(url):
+    verify = True
+    if args.no_verify:
+        verify = False
+    tpngAPI = tp_ng_api(user=args.user, password=args.password, host=url, verify_ssl=verify)
     socket_token = tpngAPI.get_token()
     header = {"Authorization": socket_token}
     sio.connect(url, headers=header)
-    print("[+] Connected to TP-NG SOCKET")
+    print("[+] Connected to TP-NG SOCKET\n")
 
 def main():
-    print("Welcome to the TrunkPlayer-NG CLI Client")
+    print("Welcome to the TrunkPlayer-NG CLI Client\n")
 
     verify = True
     if args.no_verify:
         verify = False
-
-    
-
+  
     password = args.password
     if not password:
         password = getpass(f"Enter password for {args.user}: ")
 
-    tpngAPI = tp_ng_api(user=args.user, password=password, host=url, verify_ssl=verify)
+    tpngAPI = tp_ng_api(user=args.user, password=args.password, host=url, verify_ssl=verify)
+    connect_socket(url)
 
-    connect_socket(tpngAPI, url)
+ 
+    
 
-    sio.emit('register_tx_source', {"UUIDs":["809e811c-2730-4f57-bb87-969ad6eb4d1b"]})
+    while(True):
+        print("Select an object to listen to")
+        print("1. Show Scanlists")
+        print("2. Show Talkgroups")
+        print("3. Show Scanners")
+        choice = int(input("Choice: "))
+        print('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+        working_type = None
 
+
+        if choice == 1:
+            print("Scanlists:")
+            scanlists = tpngAPI.Scanlist.list()     
+            scanlist_numbered = []
+            for sl in scanlists:
+                scanlist_numbered.append([sl["UUID"], sl["name"]])
+            for idx, tg in enumerate(scanlist_numbered):
+                print(f"\t{str(idx)}. {tg[1]}")
+                working_type = scanlist_numbered
+        elif choice == 2:
+            print("Talkgroups:")
+            talkgroups = tpngAPI.TalkGroup.list()
+            talkgroup_numbered = []
+            for tg in talkgroups:
+                talkgroup_numbered.append([tg["UUID"], tg["alpha_tag"]])
+            for idx, tg in enumerate(talkgroup_numbered):
+                print(f"\t{str(idx)}. {tg[1]}")
+                working_type = talkgroup_numbered
+        elif choice == 3:
+            print("Scanners:")
+            scanners = tpngAPI.Scanner.list()
+            scanner_numbered = []
+            for scr in scanners:
+                scanner_numbered.append([scr["UUID"],scr["alpha_tag"]])
+            for idx, tg in enumerate(scanner_numbered):
+                print(f"\t{str(idx)}. {tg[1]}")
+                working_type = scanner_numbered
+
+        choice = int(input("Please enter the number of the item you want to listen to: "))
+        item_uuid = working_type[choice][0]
+        sio.emit('register_tx_source', {"UUIDs":[item_uuid]})
+
+        while(True):
+            print('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
+            print(f"[+] LISTENING ON: {working_type[choice][1]}")
+            choice = input("PRESS [ENTER] to select a new Talkgroup / Scanlist / Scanner\n\n[+] Waiting for New Transmissions\n\n")
+            sio.emit('deregister_tx_source', {"UUIDs":[item_uuid]})
+            break
 
 main()
 

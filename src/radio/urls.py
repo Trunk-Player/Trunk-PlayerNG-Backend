@@ -19,6 +19,9 @@ urlpatterns = [
     ),
     path("users/list", views.UserProfileList.as_view(), name="users_list"),
     path("users/<uuid:request_uuid>", views.UserProfileView.as_view(), name="users_view"),
+    path("users/<uuid:request_uuid>/inbox", views.UserInboxDirectView.as_view(), name="users_inbox_direct_view"),
+    path("users/inbox/list", views.UserInboxList.as_view(), name="users_inbox_list"),
+    path("users/inbox/<uuid:request_uuid>", views.UserInboxView.as_view(), name="users_inbox_view"),
     path("systemacl/list", views.SystemACLList.as_view(), name="systemacl_list"),
     path(
         "systemacl/create",

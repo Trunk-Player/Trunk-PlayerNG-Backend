@@ -50,6 +50,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["UUID", "site_admin", "description", "site_theme"]
 
 
+class UserMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ["UUID", "urgent", "read", "time", "title", "body", "source"]
+
+
+class UserInboxSerializer(serializers.ModelSerializer):
+    messages = UserMessageSerializer(many=True)
+    class Meta:
+        model = UserProfile
+        fields = ["UUID", "user", "messages", "site_theme"]
+
+
+
 class SystemACLSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemACL
@@ -117,9 +131,24 @@ class TalkGroupSerializer(serializers.ModelSerializer):
             "agency",
         ]
 
+class TalkGroupListSerializer(serializers.ModelSerializer):
+    system = SystemSerializer(read_only=True)
+    class Meta:
+        model = TalkGroup
+        fields = [
+            "UUID",
+            "system",
+            "decimal_id",
+            "alpha_tag",
+            "description",
+            "encrypted",
+            "agency",
+        ]
+
 
 class TalkGroupViewListSerializer(serializers.ModelSerializer):
     agency = AgencyViewListSerializer(read_only=True, many=True)
+    system = SystemSerializer(read_only=True)
 
     class Meta:
         model = TalkGroup
@@ -196,6 +225,7 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "UUID",
             "system",
             "recorder",
+            "audio_type",
             "start_time",
             "end_time",
             "audio_file",
@@ -224,6 +254,7 @@ class TransmissionListSerializer(serializers.ModelSerializer):
             "system",
             "system_name",
             "recorder",
+            "audio_type",
             "start_time",
             "end_time",
             "audio_file",
@@ -272,6 +303,7 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "UUID",
             "system",
             "recorder",
+            "audio_type",
             "start_time",
             "end_time",
             "audio_file",

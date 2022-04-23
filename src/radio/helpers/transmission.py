@@ -3,6 +3,7 @@ import logging
 import os
 import uuid
 import requests
+import sentry_sdk
 import socketio
 
 from django.conf import settings
@@ -17,6 +18,7 @@ from radio.models import (
     SystemForwarder,
     TalkGroup,
 )
+from radio.serializers import TransmissionUploadSerializer
 
 
 if settings.SEND_TELEMETRY:
@@ -25,15 +27,16 @@ if settings.SEND_TELEMETRY:
 logger = logging.getLogger(__name__)
 
 
-def new_transmission_handler(data: dict) -> dict:
+def _new_transmission_handler(data: dict) -> dict:
     """
     Converts API call to DB format and stores file
     """
-    from radio.tasks import forward_transmission
+    from radio.tasks import forward_transmission, send_transmission_to_web, send_transmission_notifications
 
     recorder_uuid = data["recorder"]
     jsonx = data["json"]
     audio = data["audio_file"]
+    tx_uuid = data["UUID"]
 
     recorder: SystemRecorder = SystemRecorder.objects.get(
         api_key=recorder_uuid
@@ -49,14 +52,26 @@ def new_transmission_handler(data: dict) -> dict:
     else:
         return False
 
+    payload["UUID"] = tx_uuid
     payload["recorder"] = recorder_uuid
+    payload["system"] = str(system.UUID)
+
     name = data["name"].split(".")
     payload["audio_file"] = ContentFile(
         audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).rsplit("-", maxsplit=1)[-1]}.{name[1]}'
     )
+    
+    transmission = TransmissionUploadSerializer(data=payload, partial=True)
 
-    forward_transmission.delay(data, payload["talkgroup"])
-    return payload
+    if transmission.is_valid(raise_exception=True):
+        transmission.save()
+        socket_data = {
+            "UUID": transmission.data["UUID"],
+            "talkgroup": transmission.data["talkgroup"],
+        }
+        send_transmission_to_web.delay(socket_data, payload["talkgroup"])
+        send_transmission_notifications.delay(transmission.data)
+        forward_transmission.delay(data, payload["talkgroup"])
 
 
 def _send_transmission_to_web(data: dict) -> None:
