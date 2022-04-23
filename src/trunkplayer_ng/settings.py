@@ -6,8 +6,10 @@ from datetime import timedelta
 
 from kombu import Queue
 from kombu.entity import Exchange
+
 import pymysql
 pymysql.install_as_MySQLdb()
+
 SEND_TELEMETRY = os.getenv("SEND_TELEMETRY", "False").lower() in ("true", "1", "t")
 
 
@@ -255,22 +257,39 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/?verification=1"
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/?verification=1"
 
 SITE_ID = 1
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = os.getenv("EMAIL_PORT", "")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False").lower() in ("true", "1", "t")
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ("true", "1", "t")
+EMAIL_SUBJECT_PREFIX = ""
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 # CELERY_ALWAYS_EAGER = True
-CELERY_TASK_RESULT_EXPIRES = 60  # 1 mins
-CELERYD_MAX_TASKS_PER_CHILD = 50
+CELERY_TASK_RESULT_EXPIRES = 120  # 1 mins
+CELERYD_MAX_TASKS_PER_CHILD = 1500
 CELERYD_PREFETCH_MULTIPLIER = 1
 CELERY_CREATE_MISSING_QUEUES = True
+CELERY_ACKS_LATE = False
+CELERY_DISABLE_RATE_LIMITS = True
 
 CELERY_QUEUES = (
     Queue("default", Exchange("default"), routing_key="default"),
+    Queue(
+        "transmission_ingest",
+        Exchange("transmission_ingest"),
+        routing_key="transmission_ingest",
+        queue_arguments={"x-max-priority": 10},
+    ),
     Queue(
         "transmission_forwarding",
         Exchange("transmission_forwarding"),
@@ -284,28 +303,29 @@ CELERY_QUEUES = (
         queue_arguments={"x-max-priority": 8},
     ),
     Queue(
-        "radio_tx",
-        Exchange("radio_alerts"),
-        routing_key="radio_alerts",
+        "tranmission_push",
+        Exchange("tranmission_push"),
+        routing_key="tranmission_push",
         queue_arguments={"x-max-priority": 10},
     ),
     Queue(
-        "RR_IMPORT",
-        Exchange("RR_IMPORT"),
-        routing_key="RR_IMPORT",
+        "radio_refrence",
+        Exchange("radio_refrence"),
+        routing_key="radio_refrence",
         queue_arguments={"x-max-priority": 1},
     ),
 )
 CELERY_TASK_ROUTES = {
+    "radio.tasks.new_transmission_handler": {"queue": "transmission_ingest"},
     "radio.tasks.forward_Transmission": {"queue": "transmission_forwarding"},
     "radio.tasks.send_transmission": {"queue": "transmission_forwarding"},
     "radio.tasks.forward_Incident": {"queue": "transmission_forwarding"},
     "radio.tasks.send_Incident": {"queue": "transmission_forwarding"},
-    "radio.tasks.import_radio_refrence": {"queue": "RR_IMPORT"},
+    "radio.tasks.import_radio_refrence": {"queue": "radio_refrence"},
     "radio.tasks.send_tx_notifications": {"queue": "radio_alerts"},
     "radio.tasks.publish_user_notification": {"queue": "radio_alerts"},
     "radio.tasks.dispatch_web_notification": {"queue": "radio_alerts"},
-    "radio.tasks.broadcast_transmission": {"queue": "radio_tx"},
+    "radio.tasks.broadcast_transmission": {"queue": "tranmission_push"},
 }
 CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_TASK_DEFAULT_EXCHANGE = "default"
@@ -321,17 +341,19 @@ CELERY_IMPORTS = ("radio.tasks",)
 # Application definition
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://127.0.0.1:3000",
-    "http://localhost:3001",
-    "https://localhost:3001",
-    "http://127.0.0.1:3001",
-    "https://127.0.0.1:3001",
-    "https://trunk-player-frontend.vercel.app",
-]
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_HOSTS", default="https://dev.trunkplayer.io https://trunk-player-frontend.vercel.app https://localhost:3000 http://localhost:3000 https://localhost:3001 http://localhost:3001").split(" ")
+# [
+#     "http://localhost:3000",
+#     "https://localhost:3000",
+#     "http://127.0.0.1:3000",
+#     "https://127.0.0.1:3000",
+#     "http://localhost:3001",
+#     "https://localhost:3001",
+#     "http://127.0.0.1:3001",
+#     "https://127.0.0.1:3001",
+#     "https://dev.trunkplayer.io",
+#     "https://trunk-player-frontend.vercel.app",
+# ]
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = None

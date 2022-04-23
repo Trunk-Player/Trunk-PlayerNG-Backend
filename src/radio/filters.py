@@ -7,6 +7,7 @@ from django_filters.filters import OrderingFilter
 
 
 from radio.models import (
+    UserInbox,
     UserProfile,
     SystemACL,
     System,
@@ -58,6 +59,16 @@ class UserProfileFilter(filters.FilterSet):
     class Meta:
         model = UserProfile
         fields = ["UUID", "site_admin", "description", "site_theme"]
+
+class UserInboxFilter(filters.FilterSet):
+    class Meta:
+        model = UserInbox
+        fields = [
+            "UUID",
+            "user",
+            "messages"
+        ]
+
 
 class SystemACLFilter(filters.FilterSet):
     order_by_field = 'ordering'
