@@ -257,13 +257,22 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/?verification=1"
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/?verification=1"
 
 SITE_ID = 1
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = os.getenv("EMAIL_PORT", "")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False").lower() in ("true", "1", "t")
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ("true", "1", "t")
+EMAIL_SUBJECT_PREFIX = ""
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
 # CELERY_ALWAYS_EAGER = True
 CELERY_TASK_RESULT_EXPIRES = 120  # 1 mins
@@ -332,7 +341,7 @@ CELERY_IMPORTS = ("radio.tasks",)
 # Application definition
 
 
-CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_HOSTS", default="https://dev.trunkplayer.io https://trunk-player-frontend.vercel.app https://localhost:3000 https://localhost:3001").split(" ")
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_HOSTS", default="https://dev.trunkplayer.io https://trunk-player-frontend.vercel.app https://localhost:3000 http://localhost:3000 https://localhost:3001 http://localhost:3001").split(" ")
 # [
 #     "http://localhost:3000",
 #     "https://localhost:3000",
