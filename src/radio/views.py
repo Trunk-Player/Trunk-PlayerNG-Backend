@@ -1767,7 +1767,7 @@ class TalkGroupACLView(APIView):
 class SystemRecorderList(APIView, PaginationMixin):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
-    permission_classes = [IsSiteAdmin]
+    permission_classes = [IsSAOrUser]
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_backends = (filters.DjangoFilterBackend,)
     filterset_class = SystemRecorderFilter
@@ -1777,7 +1777,14 @@ class SystemRecorderList(APIView, PaginationMixin):
         """
         System Recorder list EP
         """
-        system_recorders = SystemRecorder.objects.all()
+        user: UserProfile = request.user.userProfile
+
+
+        if not user.site_admin:
+            system_recorders = SystemRecorder.objects.filter(user=user)
+        else:
+            system_recorders = SystemRecorder.objects.all()
+        
         filterobject_fs = SystemRecorderFilter(self.request.GET, queryset=system_recorders)
         page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
