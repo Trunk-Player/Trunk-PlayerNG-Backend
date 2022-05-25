@@ -1,14 +1,12 @@
-import os
 import logging
-from unittest.mock import sentinel
-import apprise
-import sentry_sdk
-import socketio
 
 from datetime import timedelta
 
 from django.utils import timezone
 from django.conf import settings
+
+import apprise
+import socketio
 
 from radio.models import TalkGroup, Unit, UserAlert, Transmission
 
