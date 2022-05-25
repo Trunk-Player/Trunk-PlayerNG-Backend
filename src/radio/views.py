@@ -1449,6 +1449,9 @@ class TalkGroupCreate(APIView):
                 "alpha_tag": openapi.Schema(
                     type=openapi.TYPE_STRING, description="alpha_tag"
                 ),
+                "mode": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="mode"
+                ),
                 "encrypted": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="encrypted"
                 ),
@@ -1534,6 +1537,9 @@ class TalkGroupView(APIView):
                 ),
                 "encrypted": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN, description="encrypted"
+                ),
+                "mode": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="mode"
                 ),
                 "agency": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
