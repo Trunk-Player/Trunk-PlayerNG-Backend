@@ -127,6 +127,7 @@ class TalkGroupSerializer(serializers.ModelSerializer):
             "decimal_id",
             "alpha_tag",
             "description",
+            "mode",
             "encrypted",
             "agency",
         ]
@@ -141,6 +142,7 @@ class TalkGroupListSerializer(serializers.ModelSerializer):
             "decimal_id",
             "alpha_tag",
             "description",
+            "mode",
             "encrypted",
             "agency",
         ]
@@ -158,6 +160,7 @@ class TalkGroupViewListSerializer(serializers.ModelSerializer):
             "decimal_id",
             "alpha_tag",
             "description",
+            "mode",
             "encrypted",
             "agency",
         ]
