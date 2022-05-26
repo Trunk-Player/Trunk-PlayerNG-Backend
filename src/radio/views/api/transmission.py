@@ -327,7 +327,7 @@ class Create(APIView):
             UUID = uuid.uuid4()
             data["UUID"] = UUID
             new_transmission_handler.delay(data)
-            logging.info(f"[+] Got new tx - {UUID}")
+            logging.info(f"[+] Got new tx - {UUID}", extra=data["json"])
             return Response(data={"UUID": UUID}, status=status.HTTP_201_CREATED)
         except Exception as error:
             if settings.SEND_TELEMETRY:
