@@ -33,6 +33,7 @@ def _new_transmission_handler(data: dict) -> dict:
     """
     from radio.tasks import forward_transmission, send_transmission_to_web, send_transmission_notifications
 
+    logging.info(f"Got new transmission - {data['name'].split('.')[0]}", extra=data["json"])
     recorder_uuid = data["recorder"]
     jsonx = data["json"]
     audio = data["audio_file"]
