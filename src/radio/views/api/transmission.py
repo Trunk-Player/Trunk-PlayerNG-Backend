@@ -57,6 +57,8 @@ from radio.views.misc import (
 if settings.SEND_TELEMETRY:
     import sentry_sdk
 
+logger = logging.getLogger(__name__)
+
 class UnitList(APIView, PaginationMixin):
     queryset = TransmissionUnit.objects.all()
     serializer_class = TransmissionUnitSerializer
@@ -327,7 +329,7 @@ class Create(APIView):
             UUID = uuid.uuid4()
             data["UUID"] = UUID
             new_transmission_handler.delay(data)
-            logging.info(f"[+] Got new tx - {UUID}", extra=data["json"])
+            logger.info(f"[+] Got new tx - {UUID}", extra=data["json"])
             return Response(data={"UUID": UUID}, status=status.HTTP_201_CREATED)
         except Exception as error:
             if settings.SEND_TELEMETRY:

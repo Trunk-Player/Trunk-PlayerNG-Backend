@@ -33,7 +33,7 @@ def _new_transmission_handler(data: dict) -> dict:
     """
     from radio.tasks import forward_transmission, send_transmission_to_web, send_transmission_notifications
 
-    logging.info(f"Got new transmission - {data['name'].split('.')[0]}", extra=data["json"])
+    logger.info(f"Got new transmission - {data['name'].split('.')[0]}", extra=data["json"])
     recorder_uuid = data["recorder"]
     jsonx = data["json"]
     audio = data["audio_file"]
@@ -81,7 +81,7 @@ def _send_transmission_to_web(data: dict) -> None:
     """
     from radio.tasks import broadcast_transmission
 
-    logging.debug(f"[+] GOT NEW TX - {data['UUID']}")
+    logger.debug(f"[+] GOT NEW TX - {data['UUID']}")
 
     talkgroup = TalkGroup.objects.filter(UUID=data["talkgroup"])
     broadcast_transmission.delay(
@@ -162,7 +162,7 @@ def _broadcast_transmission(event: str, room: str, data: dict):
             async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
         )
         sio.emit(event, data, room=room)
-        logging.debug(f"[+] BROADCASTING TO {room}")
+        logger.debug(f"[+] BROADCASTING TO {room}")
     except Exception as error:
         if settings.SEND_TELEMETRY:
             capture_exception(error)
