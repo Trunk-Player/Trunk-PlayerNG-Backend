@@ -3,7 +3,7 @@
 
 
 ## Beta Testing
-> Today I am opening the API upto Beta Testing! If anyone would like to help test API's and connect to their trunk recorder instance and help find bugs!
+> The API is open to beta testing- help us test APIs and find bugs
 
 ** PLEASE NOTE THIS IS JUST THE API BACKEND, THERE IS NO REACT WEB UI YET **
 
@@ -35,9 +35,9 @@ docker-compose -f docker-compose.prod.yaml up
 
 ![image](https://user-images.githubusercontent.com/11069376/152628284-ec1ba428-c8e4-4ba3-bac4-6ca13ed5ea59.png)
 
-This will be a complete rewrite of Trunk Player, all from scratch! The new version will be all API based, Kubernetes Ready, and Feature a beautiful new REACT UI thanks to @nebraskaCoder!
+This will be a complete rewrite of Trunk-Player! The new version will be all API-based, Kubernetes-ready, and feature a beautiful new REACT UI thanks to @nebraskaCoder!
 
-Dont expect this soon, Likely wont be till Summer, or Fall. But progress Continues, and we will work to keep updating the community! We are on a mission to build the most functional, feature rich, and obviously coolest looking Trunk playback UI
+Don't expect this soon- likely not until summer or fall. We will work to keep updating the community! We are on a mission to build the most functional, feature-rich, and obviously coolest looking trunked radio playback UI
 
 
 ***BROADCASTIFY WE ARE COMING FOR YOU 😉***
@@ -46,28 +46,28 @@ Planned Features 🎁
 Please note some of these may change
 
 - [IN PROGRESS] New REACT Web UI
-- [COMPLETE] Better Multi-System Support
-- [COMPLETE] Multiple site Recorder per System support
-- [COMPLETE] System / Incident Transmission Forwarding (Allowing you to share transmissions with a whole separate TrunkPlayer instance)
+- [COMPLETE] Better multi-system Support
+- [COMPLETE] Multiple site recorder per system support
+- [COMPLETE] System / incident transmission forwarding (Allowing you to share transmissions with a separate TrunkPlayer instance)
 - [COMPLETE] System ACLs
 - [COMPLETE] Talkgroup ACLs
 - [UNSTARTED] Kubernetes support (Allows for scaling for massive sites)
-- [COMPLETE] Better Security, ACLs and S3 Signing
-- [COMPLETE] All REST API based
-- [UNSTARTED] Trunk-Recorder Status server Metrics Dashboard
-- [UNSTARTED] File and TX Metrics Dashboard
-- [COMPLETE] User and Global Scan Lists
-- [IN PROGRESS] Sockets.IO for Better playback and fewer interruptions on playback
-- [COMPLETE] Talkgroup / Unit activity alert with Apprise
+- [COMPLETE] Better security, ACLs and S3 Signing
+- [COMPLETE] REST API based
+- [UNSTARTED] Trunk-Recorder status server metrics dashboard
+- [UNSTARTED] File and TX metrics dashboard
+- [COMPLETE] User and global scan lists
+- [IN PROGRESS] Sockets.IO for improved playback
+- [COMPLETE] Talkgroup and radio ID activity alert with Apprise
 - [UNSTARTED] Mobile app w/ push notifications
-- [COMPLETE] Audio Authentication/signing in s3
-- [UNSTARTED] Historical Transmission Page / API
-- [IN PROGRESS] Improved Incident System
-- [IN PROGRESS] Improved Global Notifications
-- [UNSTARTED] Pulse Point integration (UnOffical)
+- [COMPLETE] Audio authentication/signing in with S3
+- [UNSTARTED] Historical transmission page / API
+- [IN PROGRESS] Improved incident system
+- [IN PROGRESS] Improved global notifications
+- [UNSTARTED] Pulse Point integration (Unoffical)
 - [IN PROGRESS] Click on unit to skip to time in transmission
 - [IN PROGRESS] System email customization
-- [IN PROGRESS] Branding Support
+- [IN PROGRESS] Branding support
 
 --------------------------------------------------------------------- 
 ## Development Update 1/1/21
