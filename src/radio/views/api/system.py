@@ -99,6 +99,9 @@ class Create(APIView):
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Talkgroup ACLs on system",
                 ),
+                "rr_system_id": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="The Radio Refrence system ID"
+                ),
                 "prune_transmissions": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Pruneing Transmissions on system",
@@ -106,6 +109,9 @@ class Create(APIView):
                 "prune_transmissions_after_days": openapi.Schema(
                     type=openapi.TYPE_INTEGER,
                     description="Days to keep Transmissions (Prune)",
+                ),
+                "notes": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="notes"
                 ),
             },
         ),
@@ -189,6 +195,9 @@ class View(APIView):
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Talkgroup ACLs on system",
                 ),
+                "rr_system_id": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="The Radio Refrence system ID"
+                ),
                 "prune_transmissions": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="Enable Pruneing Transmissions on system",
@@ -196,6 +205,9 @@ class View(APIView):
                 "prune_transmissions_after_days": openapi.Schema(
                     type=openapi.TYPE_INTEGER,
                     description="Days to keep Transmissions (Prune)",
+                ),
+                "notes": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="notes"
                 ),
             },
         ),
@@ -238,10 +250,10 @@ class RRImport(APIView):
         tags=["System"],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=["siteid", "username", "password"],
+            required=["username", "password"],
             properties={
                 "siteid": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Radio Refrence Site ID"
+                    type=openapi.TYPE_STRING, description="Radio Refrence Site ID - Only needed if not in DB"
                 ),
                 "username": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Radio Refrence Username"
@@ -259,8 +271,17 @@ class RRImport(APIView):
         """
         data = JSONParser().parse(request)
 
+        system: System = System.objects.get(uuid=request_uuid)
+        if system.rr_system_id:
+            site_id = system.rr_system_id
+        elif "siteid" in data:
+            site_id = data["siteid"]
+        else:
+            return Response({"message": "Please add 'siteid' to your request or add the rr id to the system"}, status=status.HTTP_400_BAD_REQUEST)
+
+
         import_radio_refrence.delay(
-            request_uuid, data["siteid"], data["username"], data["password"]
+            request_uuid, site_id, data["username"], data["password"]
         )
 
         return Response({"message": "System Import from Radio Refrence Qued"})
