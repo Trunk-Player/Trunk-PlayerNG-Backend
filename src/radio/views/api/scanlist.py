@@ -157,6 +157,9 @@ class Create(APIView):
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup UUIDs",
                 ),
+                "notes": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="notes"
+                ),
             },
         ),
     )
@@ -234,6 +237,9 @@ class View(APIView):
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
                     description="Talkgroup UUIDs",
+                ),
+                "notes": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="notes"
                 ),
             },
         ),

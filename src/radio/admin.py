@@ -22,6 +22,7 @@ from radio.models import (
     UserAlert
 )
 
+
 # pylint: disable=unused-argument
 @admin.action(description="Lock selected Transmissions")
 def lock_transmssions(modeladmin, request, queryset):
@@ -38,6 +39,18 @@ def unlock_transmssions(modeladmin, request, queryset):
     """
     queryset.update(locked=False)
 
+# pylint: disable=unused-argument
+# @admin.action(description="Import Talkgroups from RR")
+# def import_talkgroups(modeladmin, request, queryset):
+#     """
+#     Bulk Imports RR talkgroups
+#     """
+#     from radio.tasks import import_radio_refrence
+#     for system in queryset:
+#         system:System
+#         import_radio_refrence.delay(
+#             system.uuid, system.rr_system_id, data["username"], data["password"]
+#         )
 
 class UserAlertAdmin(admin.ModelAdmin):
     ordering = ("-user",)
@@ -63,6 +76,7 @@ class SystemAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "systemACL",
+        "rr_system_id",
         "enable_talkgroup_acls",
         "prune_transmissions",
         "prune_transmissions_after_days",

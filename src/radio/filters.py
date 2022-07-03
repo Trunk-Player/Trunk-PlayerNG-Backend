@@ -91,6 +91,7 @@ class SystemFilter(filters.FilterSet):
         # fields(('model field name', 'parameter name'),)
         fields=(
             ('name', 'name'),
+            ('rr_system_id', 'rr_system_id')
         )
     )
 
@@ -100,6 +101,7 @@ class SystemFilter(filters.FilterSet):
             "UUID",
             "name",
             "systemACL",
+            "rr_system_id",
             "enable_talkgroup_acls",
             "prune_transmissions",
             "prune_transmissions_after_days",
