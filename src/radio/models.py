@@ -398,7 +398,7 @@ class GlobalAnnouncement(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=80)
     enabled = models.BooleanField(default=False)
     description = models.TextField()
 

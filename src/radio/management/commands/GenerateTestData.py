@@ -705,7 +705,7 @@ System Recorder API Keys:
         self.stdout.write(self.style.SUCCESS(f"[+] Created global announcement - {global_announcement1.name}"))
 
         global_announcement2: GlobalAnnouncement = GlobalAnnouncement.objects.create(
-            name = "THIS IS AN DISABLED ANNOUNCEMENT",
+            name = "THIS IS DISABLED",
             enabled=False,
             description="**MARKDOWN READY**"
         )
