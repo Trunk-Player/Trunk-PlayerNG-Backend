@@ -273,8 +273,7 @@ class TransmissionListSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
-            "transcript",
-            "notes"
+            "transcript"
         ]
 
     def get_system_name(self, obj):
@@ -324,8 +323,7 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
-            "transcript",
-            "notes"
+            "transcript"
         ]
 
 
