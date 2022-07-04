@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import re_path, path, include
-from django.conf.urls import url
+#from django.conf.urls import url
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -62,8 +62,8 @@ urlpatterns = [
         name="token_refresh",
     ),
     path("apiv1/registration/", include("dj_rest_auth.registration.urls")),
-    url(r"^account/", include("allauth.urls")),
-    url(
+    re_path(r"^account/", include("allauth.urls")),
+    re_path(
         r"^accounts-rest/registration/account-confirm-email/(?P<key>.+)/$",
         confirm_email,
         name="account_confirm_email",

@@ -1,5 +1,4 @@
 from datetime import datetime
-from pyexpat import model
 import uuid
 
 from django.db import models

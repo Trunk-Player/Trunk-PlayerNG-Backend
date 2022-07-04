@@ -1,5 +1,6 @@
 from django.contrib.auth.base_user import BaseUserManager
-from django.utils.translation import ugettext_lazy as _
+#from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from allauth.account.models import EmailAddress
 

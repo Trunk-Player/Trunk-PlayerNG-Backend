@@ -9,6 +9,7 @@ def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "trunkplayer_ng.settings")
     try:
+        gevent.monkey.patch_all()
         from django.core.management import execute_from_command_line
     except ImportError as exc:
         raise ImportError(
