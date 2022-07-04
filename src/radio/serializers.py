@@ -77,9 +77,11 @@ class SystemSerializer(serializers.ModelSerializer):
             "UUID",
             "name",
             "systemACL",
+            "rr_system_id",
             "enable_talkgroup_acls",
             "prune_transmissions",
             "prune_transmissions_after_days",
+            "notes"
         ]
 
 
@@ -127,8 +129,10 @@ class TalkGroupSerializer(serializers.ModelSerializer):
             "decimal_id",
             "alpha_tag",
             "description",
+            "mode",
             "encrypted",
             "agency",
+            "notes"
         ]
 
 class TalkGroupListSerializer(serializers.ModelSerializer):
@@ -141,8 +145,10 @@ class TalkGroupListSerializer(serializers.ModelSerializer):
             "decimal_id",
             "alpha_tag",
             "description",
+            "mode",
             "encrypted",
             "agency",
+            "notes"
         ]
 
 
@@ -158,8 +164,10 @@ class TalkGroupViewListSerializer(serializers.ModelSerializer):
             "decimal_id",
             "alpha_tag",
             "description",
+            "mode",
             "encrypted",
             "agency",
+            "notes"
         ]
 
 
@@ -236,7 +244,7 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
-            "transcript",
+            "transcript"
         ]
 
 
@@ -266,6 +274,7 @@ class TransmissionListSerializer(serializers.ModelSerializer):
             "length",
             "locked",
             "transcript",
+            "notes"
         ]
 
     def get_system_name(self, obj):
@@ -316,6 +325,7 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "length",
             "locked",
             "transcript",
+            "notes"
         ]
 
 
@@ -377,6 +387,7 @@ class ScanListSerializer(serializers.ModelSerializer):
             "public",
             "community_shared",
             "talkgroups",
+            "notes"
         ]
 
 
@@ -393,6 +404,7 @@ class ScannerSerializer(serializers.ModelSerializer):
             "public",
             "community_shared",
             "scanlists",
+            "notes"
         ]
 
 

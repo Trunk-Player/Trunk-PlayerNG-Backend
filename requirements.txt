@@ -55,3 +55,6 @@ kombu
 apprise
 django-filter
 psycopg2-binary
+splunk_handler
+python-json-logger
+graypy

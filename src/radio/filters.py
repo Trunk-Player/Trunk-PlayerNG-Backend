@@ -1,7 +1,5 @@
 import django_filters
 
-from django.db import models
-
 from django_filters import rest_framework as filters, IsoDateTimeFromToRangeFilter
 from django_filters.filters import OrderingFilter
 
@@ -93,6 +91,7 @@ class SystemFilter(filters.FilterSet):
         # fields(('model field name', 'parameter name'),)
         fields=(
             ('name', 'name'),
+            ('rr_system_id', 'rr_system_id')
         )
     )
 
@@ -102,6 +101,7 @@ class SystemFilter(filters.FilterSet):
             "UUID",
             "name",
             "systemACL",
+            "rr_system_id",
             "enable_talkgroup_acls",
             "prune_transmissions",
             "prune_transmissions_after_days",

@@ -43,6 +43,15 @@ services:
       EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
       DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
       EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
+      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
+      SPLUNK_HOST: "${SPLUNK_HOST}"
+      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
+      SPLUNK_PORT: "${SPLUNK_PORT}"
+      SPLUNK_INDEX: "${SPLUNK_INDEX}"
+      USE_GREYLOG_LOGGING:  "${USE_GREYLOG_LOGGING}"
+      GREYLOG_HOST:  "${GREYLOG_HOST}"
+      GREYLOG_PORT:  "${GREYLOG_PORT}"
+      LOG_LEVEL:  "${LOG_LEVEL}"
     volumes:
       #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
       - ${STATIC_VOLUME_PATH}:/code/static
@@ -79,6 +88,15 @@ services:
       EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
       EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
       DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
+      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
+      SPLUNK_HOST: "${SPLUNK_HOST}"
+      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
+      SPLUNK_PORT: "${SPLUNK_PORT}"
+      SPLUNK_INDEX: "${SPLUNK_INDEX}"
+      USE_GREYLOG_LOGGING:  "${USE_GREYLOG_LOGGING}"
+      GREYLOG_HOST:  "${GREYLOG_HOST}"
+      GREYLOG_PORT:  "${GREYLOG_PORT}"
+      LOG_LEVEL:  "${LOG_LEVEL}"
     volumes:
       #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
       - ${STATIC_VOLUME_PATH}:/code/static
@@ -115,6 +133,15 @@ services:
       EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
       EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
       DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
+      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
+      SPLUNK_HOST: "${SPLUNK_HOST}"
+      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
+      SPLUNK_PORT: "${SPLUNK_PORT}"
+      SPLUNK_INDEX: "${SPLUNK_INDEX}"
+      USE_GREYLOG_LOGGING:  "${USE_GREYLOG_LOGGING}"
+      GREYLOG_HOST:  "${GREYLOG_HOST}"
+      GREYLOG_PORT:  "${GREYLOG_PORT}"
+      LOG_LEVEL:  "${LOG_LEVEL}"
     volumes:
     #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql) 
       - ${STATIC_VOLUME_PATH}:/code/static

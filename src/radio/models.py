@@ -90,6 +90,7 @@ class System(models.Model):
     )
     name = models.CharField(max_length=100, db_index=True, unique=True)
     systemACL = models.ForeignKey(SystemACL, on_delete=models.CASCADE)
+    rr_system_id = models.CharField(max_length=100, blank=True, null=True)
     enable_talkgroup_acls = models.BooleanField("Enable Talkgroup ACLs", default=False)
     prune_transmissions = models.BooleanField(
         "Enable Pruneing Transmissions", default=False
@@ -97,6 +98,8 @@ class System(models.Model):
     prune_transmissions_after_days = models.IntegerField(
         "Days to keep Transmissions (Prune)", default=365
     )
+
+    notes = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.name
@@ -107,7 +110,7 @@ class City(models.Model):
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
     name = models.CharField(max_length=30)
-    description = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.name
@@ -118,7 +121,7 @@ class Agency(models.Model):
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
     )
     name = models.CharField(max_length=30)
-    description = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, default="")
     city = models.ManyToManyField(City, blank=True)
 
     def __str__(self):
@@ -143,6 +146,8 @@ class TalkGroup(models.Model):
     mode = models.CharField(max_length=250, default="digital", choices=MODE_OPTS)
     encrypted = models.BooleanField(default=False, blank=True)
     agency = models.ManyToManyField(Agency, blank=True)
+
+    notes = models.TextField(blank=True, default="")
 
     def __str__(self):
         return f"[{self.system.name}] {self.alpha_tag}"
@@ -317,6 +322,8 @@ class Incident(models.Model):
     description = models.TextField(blank=True, null=True)
     agency = models.ManyToManyField(Agency, blank=True)
 
+    
+
     class Meta:
         ordering = ["-time"]
 
@@ -365,6 +372,8 @@ class ScanList(models.Model):
     community_shared = models.BooleanField(default=True)
     talkgroups = models.ManyToManyField(TalkGroup)
 
+    notes = models.TextField(blank=True, default="")
+
     def __str__(self):
         return self.name
 
@@ -379,6 +388,8 @@ class Scanner(models.Model):
     public = models.BooleanField(default=True)
     community_shared = models.BooleanField(default=True)
     scanlists = models.ManyToManyField(ScanList)
+
+    notes = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.name

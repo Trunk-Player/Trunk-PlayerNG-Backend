@@ -26,10 +26,65 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
-if DEBUG:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.WARNING)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "WARNING").upper()
+
+# Splunk settings
+USE_SPLUNK = os.getenv("USE_SPLUNK_LOGGING", "False").lower() in ("true", "1", "t")
+SPLUNK_HOST = os.getenv('SPLUNK_HOST')
+SPLUNK_PORT = int(os.getenv('SPLUNK_PORT', '8080'))
+SPLUNK_TOKEN = os.getenv('SPLUNK_TOKEN')
+SPLUNK_INDEX = os.getenv('SPLUNK_INDEX')
+
+# Greylog settings
+USE_GREYLOG = os.getenv("USE_GREYLOG_LOGGING", "False").lower() in ("true", "1", "t")
+GREYLOG_HOST = os.getenv('GREYLOG_HOST')
+GREYLOG_PORT = int(os.getenv('GREYLOG_PORT', '12201'))
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': '%(asctime)s %(created)f %(exc_info)s %(filename)s %(funcName)s %(levelname)s %(levelno)s %(lineno)d %(module)s %(message)s %(pathname)s %(process)s %(processName)s %(relativeCreated)d %(thread)s %(threadName)s'
+        }
+    },
+    'handlers': {        
+        'console': {
+            'level': LOG_LEVEL,
+            'class': 'logging.StreamHandler',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL
+        }
+    }
+}
+
+if USE_SPLUNK:
+    LOGGING['handlers']['splunk'] = {
+            'level': LOG_LEVEL,
+            'class': 'splunk_handler.SplunkHandler',
+            'formatter': 'json',
+            'host': SPLUNK_HOST,
+            'port': SPLUNK_PORT,
+            'token': SPLUNK_TOKEN,
+            'index': SPLUNK_INDEX,
+            'sourcetype': 'json',
+        },
+    LOGGING['loggers']['']['handlers'].append('splunk')
+
+if USE_GREYLOG:
+    LOGGING['handlers']['graypy'] = {
+            'level': LOG_LEVEL,
+            'class': 'graypy.GELFUDPHandler',
+            'host': GREYLOG_HOST,
+            'port': GREYLOG_PORT
+        },
+    LOGGING['loggers']['']['handlers'].append('graypy')
 
 AUDIO_DOWNLOAD_HOST = os.environ.get("AUDIO_DOWNLOAD_HOST", default="example.com")
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", default="*").split(" ")
@@ -370,7 +425,9 @@ try:
 except NameError:
     try:
         from trunkplayer_ng.settings_local import *
+        logging.info("Initalized local settings", extra={"foo","bar"})
     except ImportError:
+        logging.info("Local settings not initalized", extra={"foo","bar"})
         pass
 
 if SEND_TELEMETRY:
@@ -385,3 +442,4 @@ if SEND_TELEMETRY:
         # of transactions for performance monitoring.
         traces_sample_rate=1.0,
     )
+logging.info("Initalized settings", extra={"foo","bar"})
