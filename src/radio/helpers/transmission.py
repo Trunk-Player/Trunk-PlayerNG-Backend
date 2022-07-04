@@ -73,6 +73,7 @@ def _new_transmission_handler(data: dict) -> dict:
         send_transmission_to_web.delay(socket_data, payload["talkgroup"])
         send_transmission_notifications.delay(transmission.data)
         forward_transmission.delay(data, payload["talkgroup"])
+        return transmission.data
 
 
 def _send_transmission_to_web(data: dict) -> None:
