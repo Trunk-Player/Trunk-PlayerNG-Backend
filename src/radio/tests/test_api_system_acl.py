@@ -174,7 +174,7 @@ class APISystemACLTests(APITestCase):
         self.assertEqual(json.dumps(restricted_data), json.dumps(restricted_payload, cls=UUIDEncoder))
 
     def test_api_system_acl_update(self):
-        '''Test for the City Update EP'''
+        '''Test for the System ACL Update EP'''
         view = View.as_view()
 
         to_update: SystemACL = SystemACL.objects.get(
@@ -206,7 +206,7 @@ class APISystemACLTests(APITestCase):
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_system_acl_delete(self):
-        '''Test for the city Delete EP'''
+        '''Test for the System ACL Delete EP'''
         view = View.as_view()
 
         to_delete: SystemACL = SystemACL.objects.get(

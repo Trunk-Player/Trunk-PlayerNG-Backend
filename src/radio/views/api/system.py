@@ -178,7 +178,7 @@ class View(APIView):
             serializer = SystemSerializer(system)
             return Response(serializer.data)
 
-        if system.systemACL.UUID in user_acls:
+        if system.systemACL in user_acls:
             serializer = SystemSerializer(system)
             return Response(serializer.data)
         else:
