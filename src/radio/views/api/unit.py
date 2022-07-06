@@ -3,6 +3,8 @@ import uuid
 
 from django.conf import settings
 from django.http import Http404
+from django.core.exceptions import PermissionDenied
+
 
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -142,7 +144,7 @@ class View(APIView):
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
             if not unit.system in systems:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
         serializer = UnitSerializer(unit)
         return Response(serializer.data)
@@ -164,7 +166,7 @@ class View(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
 
         data = JSONParser().parse(request)
         unit = self.get_object(request_uuid)
@@ -181,7 +183,7 @@ class View(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
 
         unit = self.get_object(request_uuid)
         unit.delete()

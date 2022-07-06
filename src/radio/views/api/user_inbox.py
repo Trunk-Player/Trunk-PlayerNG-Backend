@@ -2,6 +2,7 @@ import logging
 
 from django.conf import settings
 from django.http import Http404
+from django.core.exceptions import PermissionDenied
 
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView

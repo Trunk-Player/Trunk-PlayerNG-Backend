@@ -8,6 +8,8 @@ from django.http import Http404
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.core.exceptions import PermissionDenied
+
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 
@@ -320,7 +322,7 @@ class View(APIView):
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
             if not incident.system in systems:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
         serializer = IncidentSerializer(incident)
         return Response(serializer.data)
@@ -332,7 +334,7 @@ class View(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
 
         incident: Incident = self.get_object(request_uuid)
         incident.delete()

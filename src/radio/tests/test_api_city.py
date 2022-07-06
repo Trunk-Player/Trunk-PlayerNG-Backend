@@ -8,16 +8,16 @@ from rest_framework.test import force_authenticate
 from rest_framework import status
 
 
-from radio.models import Agency, City
-from radio.serializers import AgencySerializer, AgencyViewListSerializer
-from radio.views.api.agency import Create, List, View
+from radio.models import City
+from radio.serializers import CitySerializer
+from radio.views.api.city import Create, List, View
 from radio.helpers.utils import UUIDEncoder
 from users.models import CustomUser
 
 
-class APIAgencyTests(APITestCase):
+class APICityTests(APITestCase):
     """
-    Tests the Agency API EP
+    Tests the City API EP
     """
     def setUp(self):
         self.factory = APIRequestFactory()
@@ -34,32 +34,27 @@ class APIAgencyTests(APITestCase):
             description="Home to the Dimsdale Dimmadome"
         )
 
-        self.agency: Agency = Agency.objects.create(
-            name="Ghostbusters",
-            description="Who Ya gonna call"
-
+        self.city: City = City.objects.create(
+            name="Gotham",
+            description="Batman or something"
         )
-        self.agency.save()
-        self.agency.city.add(self.city)
-        self.agency.save()
 
-        self.agency2: Agency = Agency.objects.create(
-            name="LAPD",
-            description="LAPD"
+        self.city: City = City.objects.create(
+            name="Atlantis",
+            description="Why cant max be an id10t? the world may never know"
         )
-        self.agency2.save()
-        self.agency2.city.add(self.city)
-        self.agency2.save()
 
-    def test_api_agency_list(self):
-        '''Test for the Agency List EP'''
+ 
+
+    def test_api_city_list(self):
+        '''Test for the City List EP'''
         view = List.as_view()
 
-        agency_serializer = AgencyViewListSerializer(
-            Agency.objects.all(),
+        serializer = CitySerializer(
+            City.objects.all(),
             many=True
         )
-        endpoint = reverse('agency_list')
+        endpoint = reverse('city_list')
 
         request = self.factory.get(endpoint, None)
         force_authenticate(request, user=self.user)
@@ -69,23 +64,22 @@ class APIAgencyTests(APITestCase):
         data = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(data["count"], 2)
-        self.assertEqual(data["results"], agency_serializer.data)
+        self.assertEqual(data["count"], 3)
+        self.assertEqual(data["results"], serializer.data)
 
-    def test_api_agency_create(self):
+    def test_api_city_create(self):
         '''Test for the Agency Create EP'''
         view = Create.as_view()
 
-        agency_to_create: Agency = Agency(
-            name="Bacon Boys",
-            description="Bacon Boys"
+        to_create: City = City(
+            name="Las Vegas",
+            description="Las Vegas, NV"
         )
-        payload = AgencySerializer(
-            agency_to_create
+        payload = CitySerializer(
+            to_create
         ).data
-        payload["city"].append(self.city.UUID)
 
-        endpoint = reverse('agency_create')
+        endpoint = reverse('city_create')
 
         un_privilaged_request = self.factory.post(endpoint, payload, format='json')
         force_authenticate(un_privilaged_request, user=self.user)
@@ -98,26 +92,26 @@ class APIAgencyTests(APITestCase):
         response = response.render()
 
         data = json.loads(response.content)
-        agencies = Agency.objects.all().count()
+        cities = City.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(agencies, 3)
+        self.assertEqual(cities, 4)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
-    def test_api_agency_get(self):
+    def test_api_city_get(self):
         '''Test for the Agency Get EP'''
         view = View.as_view()
 
-        agency: Agency = Agency.objects.get(
-            name="Ghostbusters",
+        city: City = City.objects.get(
+            name="Dimsdale",
         )
-        payload = AgencyViewListSerializer(agency).data
-        endpoint = reverse('agency_view',  kwargs={'request_uuid': agency.UUID})
+        payload = CitySerializer(city).data
+        endpoint = reverse('city_view',  kwargs={'request_uuid': city.UUID})
 
         request = self.factory.get(endpoint)
         force_authenticate(request, user=self.user)
-        response = view(request, request_uuid=agency.UUID)
+        response = view(request, request_uuid=city.UUID)
         response = response.render()
 
         data = json.loads(response.content)
@@ -125,60 +119,60 @@ class APIAgencyTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
-    def test_api_agency_update(self):
-        '''Test for the Agency Update EP'''
+    def test_api_city_update(self):
+        '''Test for the City Update EP'''
         view = View.as_view()
 
-        agency_to_update: Agency = Agency.objects.get(
-            name="Ghostbusters"
+        to_update: City = City.objects.get(
+            name="Gotham"
         )
-        payload = AgencySerializer(
-            agency_to_update
+        payload = CitySerializer(
+            to_update
         ).data
-        payload["name"] = "Ghost Busters"
+        payload["name"] = "Joker was here"
 
-        endpoint = reverse('agency_view',  kwargs={'request_uuid': agency_to_update.UUID})
+        endpoint = reverse('city_view',  kwargs={'request_uuid': to_update.UUID})
 
         un_privilaged_request = self.factory.put(endpoint, payload, format='json')
         force_authenticate(un_privilaged_request, user=self.user)
-        un_privilaged_response = view(un_privilaged_request, request_uuid=agency_to_update.UUID)
+        un_privilaged_response = view(un_privilaged_request, request_uuid=to_update.UUID)
         un_privilaged_response = un_privilaged_response.render()
 
         request = self.factory.put(endpoint, payload, format='json')
         force_authenticate(request, user=self.privilaged_user)
-        response = view(request, request_uuid=agency_to_update.UUID)
+        response = view(request, request_uuid=to_update.UUID)
         response = response.render()
 
         data = json.loads(response.content)
-        agencies = Agency.objects.all().count()
+        cities = City.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(agencies, 2)
+        self.assertEqual(cities, 3)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
-    def test_api_agency_delete(self):
-        '''Test for the Agency Delete EP'''
+    def test_api_city_delete(self):
+        '''Test for the city Delete EP'''
         view = View.as_view()
 
-        agency_to_delete: Agency = Agency.objects.get(
-            name="LAPD"
+        to_delete: City = City.objects.get(
+            name="Atlantis"
         )
 
-        endpoint = reverse('agency_view',  kwargs={'request_uuid': agency_to_delete.UUID})
+        endpoint = reverse('city_view',  kwargs={'request_uuid': to_delete.UUID})
 
         un_privilaged_request = self.factory.delete(endpoint)
         force_authenticate(un_privilaged_request, user=self.user)
-        un_privilaged_response = view(un_privilaged_request, request_uuid=agency_to_delete.UUID)
+        un_privilaged_response = view(un_privilaged_request, request_uuid=to_delete.UUID)
         un_privilaged_response = un_privilaged_response.render()
 
         request = self.factory.delete(endpoint)
         force_authenticate(request, user=self.privilaged_user)
-        response = view(request, request_uuid=agency_to_delete.UUID)
+        response = view(request, request_uuid=to_delete.UUID)
         response = response.render()
 
-        agencies = Agency.objects.all().count()
+        cities = City.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(agencies, 1)
+        self.assertEqual(cities, 2)

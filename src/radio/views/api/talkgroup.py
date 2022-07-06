@@ -3,6 +3,7 @@ import logging
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 
 from rest_framework.settings import api_settings
@@ -176,7 +177,7 @@ class View(APIView):
                 allowed_talkgroups.extend(get_user_allowed_talkgroups(system, user.UUID))
 
             if not talkgroup in allowed_talkgroups:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
         serializer = TalkGroupViewListSerializer(talkgroup)
         return Response(serializer.data)
@@ -220,7 +221,7 @@ class View(APIView):
 
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
 
         serializer = TalkGroupSerializer(talkgroup, data=data, partial=True)
         if serializer.is_valid():
@@ -236,7 +237,7 @@ class View(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
 
         talkgroup = self.get_object(request_uuid)
         talkgroup.delete()
@@ -277,10 +278,10 @@ class TransmissionList(APIView, PaginationMixin):
             talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
 
             if not system in systems:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
             if not talkgroup in talkgroups_allowed:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
         transmissions_fs = TransmissionFilter(self.request.GET, queryset=transmissions)
         page = self.paginate_queryset(transmissions_fs.qs)
         if page is not None:
