@@ -4,6 +4,7 @@ import uuid
 
 from django.conf import settings
 from django.http import Http404
+from django.core.exceptions import PermissionDenied
 
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -128,7 +129,7 @@ class View(APIView):
         global_announcement: GlobalAnnouncement = self.get_object(request_uuid)
         if not user.site_admin:
             if not global_announcement.enabled:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
         serializer = GlobalAnnouncementSerializer(global_announcement)
         return Response(serializer.data)
 
@@ -163,7 +164,7 @@ class View(APIView):
                 serializer.save()
                 return Response(serializer.data)
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["GlobalAnnouncement"])
@@ -173,7 +174,7 @@ class View(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
         global_announcement: GlobalAnnouncement = self.get_object(request_uuid)
         global_announcement.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1247,7 +1247,7 @@ class CityView(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            raise PermissionDenied
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         data = JSONParser().parse(request)
         city = self.get_object(request_uuid)
         serializer = CitySerializer(city, data=data, partial=True)
@@ -1263,7 +1263,7 @@ class CityView(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            raise PermissionDenied
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         city = self.get_object(request_uuid)
         city.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -1375,7 +1375,7 @@ class AgencyView(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            raise PermissionDenied
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         data = JSONParser().parse(request)
         agency = self.get_object(request_uuid)
         serializer = AgencySerializer(agency, data=data, partial=True)
@@ -1391,7 +1391,7 @@ class AgencyView(APIView):
         """
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
-            raise PermissionDenied
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         agency = self.get_object(request_uuid)
         agency.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -2,6 +2,8 @@ import uuid
 
 from django.conf import settings
 from django.http import Http404
+from django.core.exceptions import PermissionDenied
+
 
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -180,7 +182,7 @@ class View(APIView):
             serializer = SystemSerializer(system)
             return Response(serializer.data)
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
 
     @swagger_auto_schema(
         tags=["System"],
@@ -225,7 +227,7 @@ class View(APIView):
                 serializer.save()
                 return Response(serializer.data)
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=["System"])
@@ -239,7 +241,7 @@ class View(APIView):
             system.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
 
 class RRImport(APIView):
     queryset = System.objects.all()

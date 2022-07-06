@@ -3,13 +3,14 @@ import uuid
 
 from django.conf import settings
 from django.http import Http404
-
+from django.core.exceptions import PermissionDenied
 
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from rest_framework import status
+
 
 from django_filters import rest_framework as filters
 
@@ -157,7 +158,7 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         user_alert: UserAlert = self.get_object(request_uuid)
         if not user_alert.user == user:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
 
         serializer = UserAlertSerializer(user_alert)
         return Response(serializer.data)
@@ -211,7 +212,7 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         user_alert: UserAlert = self.get_object(request_uuid)
         if not user_alert.user == user:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
         data = request.data
         if "user" in data:
             del data["user"]
@@ -230,6 +231,6 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         user_alert: UserAlert = self.get_object(request_uuid)
         if not user_alert.user == user:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
         user_alert.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

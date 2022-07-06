@@ -4,6 +4,8 @@ import uuid
 
 from django.conf import settings
 from django.http import Http404
+from django.core.exceptions import PermissionDenied
+
 
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -84,14 +86,14 @@ class UnitList(APIView, PaginationMixin):
                 system: System = transmission.system
 
                 if not system in systems:
-                    return Response(status=status.HTTP_401_UNAUTHORIZED)
+                    raise PermissionDenied
 
                 if system.enable_talkgroup_acls:
                     talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
                     if not transmission.talkgroup in talkgroups_allowed:
-                        return Response(status=status.HTTP_401_UNAUTHORIZED)
+                        raise PermissionDenied
             else:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
 
         filterobject_fs = TransmissionUnitFilter(self.request.GET, queryset=units)
@@ -133,13 +135,13 @@ class UnitView(APIView):
             if transmission.system in systems:
                 system: System = transmission.system
                 if not system in systems:
-                    return Response(status=status.HTTP_401_UNAUTHORIZED)
+                    raise PermissionDenied
                 if system.enable_talkgroup_acls:
                     talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
                     if not transmission.talkgroup in talkgroups_allowed:
-                        return Response(status=status.HTTP_401_UNAUTHORIZED)
+                        raise PermissionDenied
             else:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
         serializer = TransmissionUnitSerializer(transmission)
         return Response(serializer.data)
@@ -169,7 +171,7 @@ class UnitView(APIView):
             transmission_unit = self.get_object(request_uuid)
             transmission_unit.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        raise PermissionDenied
 
 
 class FreqList(APIView):
@@ -195,13 +197,13 @@ class FreqList(APIView):
             if transmission.system in systems:
                 system: System = transmission.system
                 if not system in systems:
-                    return Response(status=status.HTTP_401_UNAUTHORIZED)
+                    raise PermissionDenied
                 if system.enable_talkgroup_acls:
                     talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
                     if not transmission.talkgroup in talkgroups_allowed:
-                        return Response(status=status.HTTP_401_UNAUTHORIZED)
+                        raise PermissionDenied
             else:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
         filterobject_fs = TransmissionFreqFilter(self.request.GET, queryset=freqs)
         serializer = TransmissionFreqSerializer(filterobject_fs.qs, many=True)
         return Response(serializer.data)
@@ -369,12 +371,12 @@ class View(APIView):
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
             if not transmission.system in systems:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
             system: System = transmission.system
             if system.enable_talkgroup_acls:
                 talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
                 if not transmission.talkgroup in talkgroups_allowed:
-                    return Response(status=status.HTTP_401_UNAUTHORIZED)
+                    raise PermissionDenied
 
         serializer = TransmissionSerializer(transmission)
         return Response(serializer.data)
@@ -387,7 +389,7 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
 
         if not user.site_admin:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            raise PermissionDenied
         transmission = self.get_object(request_uuid)
         transmission.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

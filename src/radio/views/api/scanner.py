@@ -9,6 +9,7 @@ from django.db.models import Q
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.core.exceptions import PermissionDenied
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 
@@ -160,7 +161,7 @@ class View(APIView):
         if not user.site_admin:
             if not scanner.owner == user:
                 if not scanner.public and not scanner.community_shared:
-                    return Response(status=status.HTTP_401_UNAUTHORIZED)
+                    raise PermissionDenied
         serializer = ScannerSerializer(Scanner)
         return Response(serializer.data)
 
@@ -201,7 +202,7 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             if not scanner.owner == user:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
         serializer = ScannerSerializer(scanner, data=data, partial=True)
         if serializer.is_valid():
@@ -219,7 +220,7 @@ class View(APIView):
 
         if not user.site_admin:
             if not scanner.owner == user:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
         scanner.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

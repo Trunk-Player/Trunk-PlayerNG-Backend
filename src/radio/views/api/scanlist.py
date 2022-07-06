@@ -4,6 +4,7 @@ import uuid
 
 from django.conf import settings
 from django.http import  Http404
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 
 from rest_framework.settings import api_settings
@@ -212,7 +213,7 @@ class View(APIView):
         if not user.site_admin:
             if not scanlist.owner == user:
                 if not scanlist.public and not scanlist.community_shared:
-                    return Response(status=status.HTTP_401_UNAUTHORIZED)
+                    raise PermissionDenied
 
         serializer = ScanListSerializer(scanlist)
         return Response(serializer.data)
@@ -255,7 +256,7 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             if not scanlist.owner == user:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
         if serializer.is_valid():
             serializer.save()
@@ -272,7 +273,7 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         if not user.site_admin:
             if not scanlist.owner == user:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                raise PermissionDenied
 
         scanlist.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
