@@ -255,6 +255,7 @@ class APIUserAlertTests(APITestCase):
         user1_response = view(user1_request)
         user1_response = user1_response.render()
 
+        payload["UUID"] = uuid.uuid4()
         request = self.factory.post(endpoint, payload, format='json')
         force_authenticate(request, user=self.privilaged_user)
         response = view(request)
@@ -430,7 +431,7 @@ class APIUserAlertTests(APITestCase):
         restricted_response = view(restricted_request, request_uuid=self.admin_alert1.UUID)
         restricted_response = restricted_response.render()
 
-        user_alerts = System.objects.all().count()
+        user_alerts = UserAlert.objects.all().count()
 
         self.assertEqual(user1_response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(user2_response.status_code, status.HTTP_403_FORBIDDEN)
