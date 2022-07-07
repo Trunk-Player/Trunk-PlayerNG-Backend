@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 
 from django.urls import reverse
@@ -10,7 +11,7 @@ from rest_framework import status
 
 from radio.models import System, SystemACL
 from radio.serializers import SystemSerializer
-from radio.views.api.system import Create, List, View
+from radio.views.api.system import Create, List, RRImport, View
 from radio.helpers.utils import UUIDEncoder
 from users.models import CustomUser
 
@@ -203,7 +204,7 @@ class APISystemTests(APITestCase):
         restricted2_system: System = System.objects.get(
             name="System3",
         )
-        restricted2_payload = SystemSerializer(restricted2_system).data
+        # restricted2_payload = SystemSerializer(restricted2_system).data
         endpoint = reverse('system_view',  kwargs={'request_uuid': restricted2_system.UUID})
 
         admin_restricted2_request = self.factory.get(endpoint)
@@ -297,3 +298,36 @@ class APISystemTests(APITestCase):
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(systems, 2)
+
+
+    def test_api_system_rrimport(self):
+        '''Test for the System RR import EP'''
+        view = RRImport.as_view()
+
+        system: System = System.objects.get(
+            name="System3"
+        )
+
+        payload = {
+            "siteid": 6699,
+            "username": os.getenv('RR_USER'),
+            "password": os.getenv('RR_PASS')
+        }
+        endpoint = reverse('system_rr_import_view',  kwargs={'request_uuid': system.UUID})
+
+        un_privilaged_request = self.factory.post(endpoint, payload, format='json')
+        force_authenticate(un_privilaged_request, user=self.user)
+        un_privilaged_response = view(un_privilaged_request, request_uuid=system.UUID)
+        un_privilaged_response = un_privilaged_response.render()
+
+        request = self.factory.post(endpoint, payload, format='json')
+        force_authenticate(request, user=self.privilaged_user)
+        response = view(request, request_uuid=system.UUID)
+        response = response.render()
+
+        # TODO: IDK something
+        #talkgroups = TalkGroup.objects.all().count()
+
+        self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        #self.assertGreater(talkgroups, 0)

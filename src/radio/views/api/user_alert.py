@@ -158,7 +158,8 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         user_alert: UserAlert = self.get_object(request_uuid)
         if not user_alert.user == user:
-            raise PermissionDenied
+            if not user.site_admin:
+                raise PermissionDenied
 
         serializer = UserAlertSerializer(user_alert)
         return Response(serializer.data)
@@ -212,7 +213,8 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         user_alert: UserAlert = self.get_object(request_uuid)
         if not user_alert.user == user:
-            raise PermissionDenied
+            if not user.site_admin:
+                raise PermissionDenied
         data = request.data
         if "user" in data:
             del data["user"]
@@ -231,6 +233,7 @@ class View(APIView):
         user: UserProfile = request.user.userProfile
         user_alert: UserAlert = self.get_object(request_uuid)
         if not user_alert.user == user:
-            raise PermissionDenied
+            if not user.site_admin:
+                raise PermissionDenied
         user_alert.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
