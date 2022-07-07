@@ -255,8 +255,22 @@ class APIUserAlertTests(APITestCase):
         user1_response = view(user1_request)
         user1_response = user1_response.render()
 
-        payload["UUID"] = uuid.uuid4()
-        request = self.factory.post(endpoint, payload, format='json')
+        to_create2: UserAlert = UserAlert(
+            name="Created",
+            user=self.user.userProfile,
+            enabled=False,
+            description="Created via API",
+            web_notification=True,
+            app_rise_notification=False,
+            app_rise_urls="<URL>,<URL>",
+            emergency_only=False,
+            count=5,
+            trigger_time=30
+        )
+        payload2 = UserAlertSerializer(
+            to_create2
+        ).data
+        request = self.factory.post(endpoint, payload2, format='json')
         force_authenticate(request, user=self.privilaged_user)
         response = view(request)
         response = response.render()
@@ -268,7 +282,7 @@ class APIUserAlertTests(APITestCase):
         self.assertEqual(user1_response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(total_useralerts, 7)
-        self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
+        self.assertEqual(json.dumps(data), json.dumps(payload2, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_user_alert_get(self):
