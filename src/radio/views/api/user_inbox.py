@@ -1,5 +1,3 @@
-import logging
-
 from django.conf import settings
 from django.http import Http404
 from django.core.exceptions import PermissionDenied
@@ -39,7 +37,7 @@ from radio.views.misc import (
 )
 
 if settings.SEND_TELEMETRY:
-    import sentry_sdk
+    import sentry_sdk # pylint: disable=unused-import
 
 
 
@@ -94,7 +92,7 @@ class DirectView(APIView):
         elif user_inbox.user.UUID == user.UUID:
             user_inbox = self.get_object(request_uuid)
         else:
-            return Response(status=401)
+            raise PermissionDenied
         serializer = UserInboxSerializer(user_inbox)
         return Response(serializer.data)
 
@@ -124,27 +122,27 @@ class DirectView(APIView):
         elif user_inbox.user.UUID == user.UUID:
             user_inbox = self.get_object(request_uuid)
         else:
-            return Response(status=401)
+            raise PermissionDenied
         serializer = UserInboxSerializer(user_inbox, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(tags=["UserInbox"])
-    def delete(self, request, request_uuid):
-        """
-        UserInbox Delete EP
-        """
-        user = request.user.userProfile
-        if user.site_admin:
-            user_inbox = self.get_object(request_uuid)
-        elif user_inbox.user.UUID == user.UUID:
-            user_inbox = self.get_object(request_uuid)
-        else:
-            return Response(status=401)
-        user_inbox.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    # @swagger_auto_schema(tags=["UserInbox"])
+    # def delete(self, request, request_uuid):
+    #     """
+    #     UserInbox Delete EP
+    #     """
+    #     user = request.user.userProfile
+    #     if user.site_admin:
+    #         user_inbox = self.get_object(request_uuid)
+    #     elif user_inbox.user.UUID == user.UUID:
+    #         user_inbox = self.get_object(request_uuid)
+    #     else:
+    #         raise PermissionDenied
+    #     user_inbox.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class View(APIView):
@@ -167,13 +165,13 @@ class View(APIView):
         UserInbox Get EP
         """
         user = request.user.userProfile
-        
+
         if user.site_admin:
             user_inbox = self.get_object(request_uuid)
         elif user_inbox.user.UUID == user.UUID:
             user_inbox = self.get_object(request_uuid)
         else:
-            return Response(status=401)
+            raise PermissionDenied
 
         serializer = UserInboxSerializer(user_inbox)
         return Response(serializer.data)
@@ -204,24 +202,24 @@ class View(APIView):
         elif user_inbox.user.UUID == user.UUID:
             user_inbox = self.get_object(request_uuid)
         else:
-            return Response(status=401)
+            raise PermissionDenied
         serializer = UserInboxSerializer(user_inbox, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(tags=["UserInbox"])
-    def delete(self, request, request_uuid):
-        """
-        UserInbox Delete EP
-        """
-        user = request.user.userProfile
-        if user.site_admin:
-            user_inbox = self.get_object(request_uuid)
-        elif user_inbox.user.UUID == user.UUID:
-            user_inbox = self.get_object(request_uuid)
-        else:
-            return Response(status=401)
-        user_inbox.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    # @swagger_auto_schema(tags=["UserInbox"])
+    # def delete(self, request, request_uuid):
+    #     """
+    #     UserInbox Delete EP
+    #     """
+    #     user = request.user.userProfile
+    #     if user.site_admin:
+    #         user_inbox = self.get_object(request_uuid)
+    #     elif user_inbox.user.UUID == user.UUID:
+    #         user_inbox = self.get_object(request_uuid)
+    #     else:
+    #         raise PermissionDenied
+    #     user_inbox.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)

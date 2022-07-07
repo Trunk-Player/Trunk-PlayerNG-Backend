@@ -4,6 +4,7 @@ from radio.views.api import (
     user_alert,
     user_profile,
     user_inbox,
+    user_message,
     system_acl,
     system,
     system_forwarder,
@@ -42,6 +43,7 @@ urlpatterns = [
     path("users/<uuid:request_uuid>/inbox", user_inbox.DirectView.as_view(), name="users_inbox_direct_view"),
     path("users/inbox/list", user_inbox.List.as_view(), name="users_inbox_list"),
     path("users/inbox/<uuid:request_uuid>", user_inbox.View.as_view(), name="users_inbox_view"),
+    path("users/message/<uuid:request_uuid>", user_message.View.as_view(), name="users_message_view"),
     path("systemacl/list", system_acl.List.as_view(), name="systemacl_list"),
     path(
         "systemacl/create",
