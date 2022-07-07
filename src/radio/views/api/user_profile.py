@@ -134,6 +134,6 @@ class View(APIView):
     #     if user.site_admin or user.UUID == request_uuid:
     #         user_profile = self.get_object(request_uuid)
     #     else:
-    #         return Response(status=401)
+    #         raise PermissionDenied
     #     user_profile.delete()
     #     return Response(status=status.HTTP_204_NO_CONTENT)

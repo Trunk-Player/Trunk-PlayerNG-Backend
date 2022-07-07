@@ -6,6 +6,7 @@ from django_filters.filters import OrderingFilter
 
 from radio.models import (
     UserInbox,
+    UserMessage,
     UserProfile,
     SystemACL,
     System,
@@ -66,6 +67,20 @@ class UserInboxFilter(filters.FilterSet):
             "user",
             "messages"
         ]
+
+class UserMessageFilter(filters.FilterSet):
+    class Meta:
+        model = UserMessage
+        fields = [
+            "UUID",
+            "urgent",
+            "read",
+            "time",
+            "title",
+            "body",
+            "source"
+        ]
+
 
 
 class SystemACLFilter(filters.FilterSet):
@@ -379,7 +394,6 @@ class IncidentFilter(filters.FilterSet):
         ]
 
 class ScanListFilter(filters.FilterSet):
-    
     name = django_filters.CharFilter(lookup_expr='icontains')
     description = django_filters.CharFilter(lookup_expr='icontains')
 

@@ -40,10 +40,12 @@ class APIUserProfileTests(APITestCase):
             many=True
         )
         user1_serializer = UserProfileSerializer(
-            self.user.userProfile
+            UserProfile.objects.filter(UUID=self.user.userProfile.UUID),
+            many=True
         )
         user2_serializer = UserProfileSerializer(
-            self.user2.userProfile
+            UserProfile.objects.filter(UUID=self.user2.userProfile.UUID),
+            many=True
         )
         endpoint = reverse('users_list')
 
