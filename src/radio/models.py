@@ -1,4 +1,3 @@
-from datetime import datetime
 import uuid
 
 from django.db import models
@@ -20,7 +19,7 @@ class UserProfile(models.Model):
             parent: CustomUser = CustomUser.objects.get(userProfile=self)
 
             return f"{parent.email}"
-        except Exception:
+        except Exception: # pylint: disable=broad-except
             return str(self.UUID)
 
 class UserMessage(models.Model):
@@ -45,13 +44,14 @@ class UserInbox(models.Model):
     messages = models.ManyToManyField(UserMessage)
 
     def number_unread(self):
+        '''Gets the number of unread messages'''
         return len(self.messages.filter(read=False))
 
     def __str__(self):
         try:
             parent: UserProfile = UserProfile.objects.get(userProfile=self.user)
             return f"{str(parent)}"
-        except Exception:
+        except Exception: # pylint: disable=broad-except
             return str(self.UUID)
 
 
@@ -320,8 +320,6 @@ class Incident(models.Model):
     name = models.CharField(max_length=30)
     description = models.TextField(blank=True, null=True)
     agency = models.ManyToManyField(Agency, blank=True)
-
-    
 
     class Meta:
         ordering = ["-time"]

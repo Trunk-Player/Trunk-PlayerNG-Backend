@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from django.conf import settings
@@ -44,6 +45,7 @@ from radio.views.misc import (
 )
 
 if settings.SEND_TELEMETRY:
+    # pylint: disable=unused-import
     import sentry_sdk
 
 class List(APIView, PaginationMixin):
@@ -252,17 +254,17 @@ class RRImport(APIView):
         tags=["System"],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=["username", "password"],
+            required=[],
             properties={
                 "siteid": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Radio Refrence Site ID - Only needed if not in DB"
                 ),
                 "username": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="Radio Refrence Username"
+                    type=openapi.TYPE_STRING, description="Radio Refrence Username - Only needed if not in the env"
                 ),
                 "password": openapi.Schema(
                     type=openapi.TYPE_STRING,
-                    description="Radio Refrence password",
+                    description="Radio Refrence password - Only needed if not in the env",
                 ),
             },
         ),
@@ -273,17 +275,23 @@ class RRImport(APIView):
         """
         data = JSONParser().parse(request)
 
-        system: System = System.objects.get(uuid=request_uuid)
+        system: System = System.objects.get(UUID=request_uuid)
         if system.rr_system_id:
-            site_id = system.rr_system_id
+            site_id = int(system.rr_system_id)
         elif "siteid" in data:
             site_id = data["siteid"]
         else:
             return Response({"message": "Please add 'siteid' to your request or add the rr id to the system"}, status=status.HTTP_400_BAD_REQUEST)
 
+        if os.getenv('RR_USER') and os.getenv('RR_pass'):
+            username = os.getenv('RR_USER')
+            password = os.getenv('RR_PASS')
+        else:
+            username = data["username"]
+            password = data["password"]
 
         import_radio_refrence.delay(
-            request_uuid, site_id, data["username"], data["password"]
+            request_uuid, site_id, username, password
         )
 
-        return Response({"message": "System Import from Radio Refrence Qued"})
+        return Response({"message": "System Import from Radio Refrence Qued"}, status=status.HTTP_200_OK)

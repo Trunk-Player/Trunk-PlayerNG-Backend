@@ -1,5 +1,4 @@
 from django.urls import path
-from radio import views
 from radio.views import misc
 from radio.views.api import (
     user_alert,
