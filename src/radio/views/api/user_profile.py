@@ -1,5 +1,3 @@
-import logging
-
 from django.conf import settings
 from django.http import  Http404
 from django.core.exceptions import PermissionDenied
@@ -38,7 +36,7 @@ from radio.views.misc import (
 )
 
 if settings.SEND_TELEMETRY:
-    import sentry_sdk
+    import sentry_sdk # pylint: disable=unused-import
 
 
 class List(APIView, PaginationMixin):
@@ -90,7 +88,7 @@ class View(APIView):
         if user.site_admin or user.UUID == request_uuid:
             user_profile = self.get_object(request_uuid)
         else:
-            return Response(status=401)
+            raise PermissionDenied
         serializer = UserProfileSerializer(user_profile)
         return Response(serializer.data)
 
@@ -120,22 +118,22 @@ class View(APIView):
         if user.site_admin or user.UUID == request_uuid:
             user_profile = self.get_object(request_uuid)
         else:
-            return Response(status=401)
+            raise PermissionDenied
         serializer = UserProfileSerializer(user_profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(tags=["UserProfile"])
-    def delete(self, request, request_uuid):
-        """
-        UserProfile Delete EP
-        """
-        user = request.user.userProfile
-        if user.site_admin or user.UUID == request_uuid:
-            user_profile = self.get_object(request_uuid)
-        else:
-            return Response(status=401)
-        user_profile.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    # @swagger_auto_schema(tags=["UserProfile"])
+    # def delete(self, request, request_uuid):
+    #     """
+    #     UserProfile Delete EP
+    #     """
+    #     user = request.user.userProfile
+    #     if user.site_admin or user.UUID == request_uuid:
+    #         user_profile = self.get_object(request_uuid)
+    #     else:
+    #         return Response(status=401)
+    #     user_profile.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)

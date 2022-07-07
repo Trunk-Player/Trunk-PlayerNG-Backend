@@ -257,7 +257,7 @@ class APIUserAlertTests(APITestCase):
 
         to_create2: UserAlert = UserAlert(
             name="Created",
-            user=self.user.userProfile,
+            user=self.privilaged_user.userProfile,
             enabled=False,
             description="Created via API",
             web_notification=True,
@@ -339,7 +339,6 @@ class APIUserAlertTests(APITestCase):
         self.assertEqual(json.dumps(data), json.dumps(user1_alert1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data), json.dumps(user1_alert1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(restricted_data), json.dumps(admin_alert1_payload, cls=UUIDEncoder))
-        
 
     def test_api_user_alert_update(self):
         '''Test for the User Alert Update EP'''
@@ -351,7 +350,7 @@ class APIUserAlertTests(APITestCase):
         payload["enabled"] = False
         payload["description"] = "Ahoy"
 
-        endpoint = reverse('system_view',  kwargs={'request_uuid': self.user2_alert1.UUID})
+        endpoint = reverse('users_alerts_view',  kwargs={'request_uuid': self.user2_alert1.UUID})
 
         user1_request = self.factory.put(endpoint, payload, format='json')
         force_authenticate(user1_request, user=self.user)
@@ -412,7 +411,7 @@ class APIUserAlertTests(APITestCase):
         '''Test for the User Alert Delete EP'''
         view = View.as_view()
 
-        endpoint = reverse('system_view',  kwargs={'request_uuid': self.user1_alert2.UUID})
+        endpoint = reverse('users_alerts_view',  kwargs={'request_uuid': self.user1_alert2.UUID})
 
         user2_request = self.factory.delete(endpoint)
         force_authenticate(user2_request, user=self.user2)
