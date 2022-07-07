@@ -1,4 +1,3 @@
-import logging
 import uuid
 
 from django.conf import settings
@@ -40,7 +39,7 @@ from radio.views.misc import (
 )
 
 if settings.SEND_TELEMETRY:
-    import sentry_sdk
+    import sentry_sdk # pylint: disable=unused-import
 
 
 class List(APIView, PaginationMixin):
