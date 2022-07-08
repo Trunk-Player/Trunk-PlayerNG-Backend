@@ -96,38 +96,38 @@ class DirectView(APIView):
         serializer = UserInboxSerializer(user_inbox)
         return Response(serializer.data)
 
-    @swagger_auto_schema(
-        tags=["UserInbox"],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                "messages": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="The users messages"
-                ),
-                "user": openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="The user"
-                ),
-            },
-        ),
-    )
-    def put(self, request, request_uuid):
-        """
-        UserInbox Update EP
-        """
-        user = request.user.userProfile
-        if user.site_admin:
-            user_inbox = self.get_object(request_uuid)
-        elif user_inbox.user.UUID == user.UUID:
-            user_inbox = self.get_object(request_uuid)
-        else:
-            raise PermissionDenied
-        serializer = UserInboxSerializer(user_inbox, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # @swagger_auto_schema(
+    #     tags=["UserInbox"],
+    #     request_body=openapi.Schema(
+    #         type=openapi.TYPE_OBJECT,
+    #         properties={
+    #             "messages": openapi.Schema(
+    #                 type=openapi.TYPE_STRING, description="The users messages"
+    #             ),
+    #             "user": openapi.Schema(
+    #                 type=openapi.TYPE_ARRAY,
+    #                 items=openapi.Items(type=openapi.TYPE_STRING),
+    #                 description="The user"
+    #             ),
+    #         },
+    #     ),
+    # )
+    # def put(self, request, request_uuid):
+    #     """
+    #     UserInbox Update EP
+    #     """
+    #     user = request.user.userProfile
+    #     if user.site_admin:
+    #         user_inbox = self.get_object(request_uuid)
+    #     elif user_inbox.user.UUID == user.UUID:
+    #         user_inbox = self.get_object(request_uuid)
+    #     else:
+    #         raise PermissionDenied
+    #     serializer = UserInboxSerializer(user_inbox, data=request.data, partial=True)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # @swagger_auto_schema(tags=["UserInbox"])
     # def delete(self, request, request_uuid):
@@ -165,49 +165,46 @@ class View(APIView):
         UserInbox Get EP
         """
         user = request.user.userProfile
-
-        if user.site_admin:
-            user_inbox = self.get_object(request_uuid)
-        elif user_inbox.user.UUID == user.UUID:
-            user_inbox = self.get_object(request_uuid)
-        else:
-            raise PermissionDenied
+        user_inbox = self.get_object(request_uuid)
+        if not user.site_admin:
+            if not user_inbox.user.UUID == user.UUID:
+                raise PermissionDenied
 
         serializer = UserInboxSerializer(user_inbox)
         return Response(serializer.data)
 
-    @swagger_auto_schema(
-        tags=["UserInbox"],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                "messages": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="The users messages"
-                ),
-                "user": openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="The user"
-                ),
-            },
-        ),
-    )
-    def put(self, request, request_uuid):
-        """
-        UserInbox Update EP
-        """
-        user = request.user.userProfile
-        if user.site_admin:
-            user_inbox = self.get_object(request_uuid)
-        elif user_inbox.user.UUID == user.UUID:
-            user_inbox = self.get_object(request_uuid)
-        else:
-            raise PermissionDenied
-        serializer = UserInboxSerializer(user_inbox, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # @swagger_auto_schema(
+    #     tags=["UserInbox"],
+    #     request_body=openapi.Schema(
+    #         type=openapi.TYPE_OBJECT,
+    #         properties={
+    #             "messages": openapi.Schema(
+    #                 type=openapi.TYPE_STRING, description="The users messages"
+    #             ),
+    #             "user": openapi.Schema(
+    #                 type=openapi.TYPE_ARRAY,
+    #                 items=openapi.Items(type=openapi.TYPE_STRING),
+    #                 description="The user"
+    #             ),
+    #         },
+    #     ),
+    # )
+    # def put(self, request, request_uuid):
+    #     """
+    #     UserInbox Update EP
+    #     """
+    #     user = request.user.userProfile
+    #     if user.site_admin:
+    #         user_inbox = self.get_object(request_uuid)
+    #     elif user_inbox.user.UUID == user.UUID:
+    #         user_inbox = self.get_object(request_uuid)
+    #     else:
+    #         raise PermissionDenied
+    #     serializer = UserInboxSerializer(user_inbox, data=request.data, partial=True)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # @swagger_auto_schema(tags=["UserInbox"])
     # def delete(self, request, request_uuid):

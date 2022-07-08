@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from radio.models import (
+    UserInbox,
     UserMessage,
     UserProfile,
     SystemACL,
@@ -60,8 +61,8 @@ class UserMessageSerializer(serializers.ModelSerializer):
 class UserInboxSerializer(serializers.ModelSerializer):
     messages = UserMessageSerializer(many=True)
     class Meta:
-        model = UserProfile
-        fields = ["UUID", "user", "messages", "site_theme"]
+        model = UserInbox
+        fields = ["UUID", "user", "messages"]
 
 
 
