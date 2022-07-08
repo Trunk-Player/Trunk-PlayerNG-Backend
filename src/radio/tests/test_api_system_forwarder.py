@@ -161,11 +161,6 @@ class APISystemForwarderTests(APITestCase):
         admin_response = view(admin_request)
         admin_response = admin_response.render()
 
-        user2_request = self.factory.get(endpoint)
-        force_authenticate(user2_request, user=self.user2)
-        user2_response = view(user2_request)
-        user2_response = user2_response.render()
-
         user1_request = self.factory.get(endpoint)
         force_authenticate(user1_request, user=self.user)
         user1_response = view(user1_request)
@@ -173,8 +168,7 @@ class APISystemForwarderTests(APITestCase):
 
         admin_data = json.loads(admin_response.content)
 
-        self.assertEqual(user1_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(user2_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(admin_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(admin_data["count"], 3)
         self.assertEqual(json.dumps(admin_data["results"]), json.dumps(admin_serializer.data,cls=UUIDEncoder))
@@ -195,7 +189,7 @@ class APISystemForwarderTests(APITestCase):
         ).data
 
         payload["forwarded_systems"] = [self.system1.UUID, self.system2.UUID]
-        payload["talkgroup_filter"] = [self.tg2]
+        payload["talkgroup_filter"] = [self.tg2.UUID]
 
         endpoint = reverse('systemforwarder_create')
 
@@ -289,5 +283,5 @@ class APISystemForwarderTests(APITestCase):
         total = SystemForwarder.objects.all().count()
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(total,2)
