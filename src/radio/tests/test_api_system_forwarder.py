@@ -169,7 +169,7 @@ class APISystemForwarderTests(APITestCase):
         admin_data = json.loads(admin_response.content)
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(admin_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
         self.assertEqual(admin_data["count"], 3)
         self.assertEqual(json.dumps(admin_data["results"]), json.dumps(admin_serializer.data,cls=UUIDEncoder))
       
