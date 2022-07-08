@@ -16,9 +16,9 @@ from radio.helpers.utils import UUIDEncoder
 from users.models import CustomUser
 
 
-class APIUserAlertTests(APITestCase):
+class APIUserMessageTests(APITestCase):
     """
-    Tests the User Alert API EP
+    Tests the User Message API EP
     """
     def setUp(self):
         self.factory = APIRequestFactory()
@@ -76,7 +76,7 @@ class APIUserAlertTests(APITestCase):
         user2_inbox: UserInbox = UserInbox.objects.get(user=self.user2.userProfile)
         user2_inbox.messages.add(self.user2_message1, self.user2_message2)
 
-    def test_api_user_alert_get(self):
+    def test_api_user_message_get(self):
         '''Test for the User Message Get EP'''
         view = View.as_view()
 
@@ -107,7 +107,7 @@ class APIUserAlertTests(APITestCase):
         self.assertEqual(json.dumps(data), json.dumps(user1_message1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data), json.dumps(user1_message1_payload, cls=UUIDEncoder))
 
-    def test_api_user_alert_update(self):
+    def test_api_user_message_update(self):
         '''Test for the User Message Update EP'''
         view = View.as_view()
 
@@ -146,7 +146,7 @@ class APIUserAlertTests(APITestCase):
         self.assertEqual(json.dumps(data), json.dumps(payload2, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_data), json.dumps(payload, cls=UUIDEncoder))
 
-    def test_api_user_alert_delete(self):
+    def test_api_user_message_delete(self):
         '''Test for the User Message Delete EP'''
         view = View.as_view()
 
