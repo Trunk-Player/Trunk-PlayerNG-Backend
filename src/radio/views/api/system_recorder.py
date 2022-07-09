@@ -1,5 +1,4 @@
 # import logging
-import logging
 import uuid
 
 from django.conf import settings
@@ -43,7 +42,7 @@ from radio.views.misc import (
 )
 
 if settings.SEND_TELEMETRY:
-    import sentry_sdk
+    import sentry_sdk # pylint: disable=unused-import
 
 class List(APIView, PaginationMixin):
     queryset = SystemRecorder.objects.all()
@@ -65,7 +64,7 @@ class List(APIView, PaginationMixin):
             system_recorders = SystemRecorder.objects.filter(user=user)
         else:
             system_recorders = SystemRecorder.objects.all()
-        
+
         filterobject_fs = SystemRecorderFilter(self.request.GET, queryset=system_recorders)
         page = self.paginate_queryset(filterobject_fs.qs)
         if page is not None:
@@ -208,4 +207,3 @@ class View(APIView):
         system_recorder = self.get_object(request_uuid)
         system_recorder.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
