@@ -1,5 +1,4 @@
 # import logging
-import logging
 import uuid
 
 from django.conf import settings
@@ -51,7 +50,7 @@ from radio.views.misc import (
 )
 
 if settings.SEND_TELEMETRY:
-    import sentry_sdk
+    import sentry_sdk # pylint: disable=unused-import
 
 class List(APIView, PaginationMixin):
     queryset = TalkGroup.objects.all()
@@ -130,12 +129,7 @@ class Create(APIView):
         data = JSONParser().parse(request)
 
         if not "UUID" in data:
-            data["UUID"] = (
-                uuid.uuid5(
-                    uuid.NAMESPACE_DNS,
-                    f"{str(data['system'])}+{str(data['decimal_id'])}",
-                ),
-            )
+            data["UUID"] = uuid.uuid4()
 
         serializer = TalkGroupSerializer(data=data)
         if serializer.is_valid():
@@ -171,6 +165,7 @@ class View(APIView):
         else:
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
+            del system_uuids
 
             allowed_talkgroups = []
             for system in systems:
