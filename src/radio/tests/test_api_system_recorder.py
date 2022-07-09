@@ -226,7 +226,7 @@ class APISystemRecorderTests(APITestCase):
 
         system_recorder1_payload = SystemRecorderSerializer(self.system_recorder1).data
         system_recorder2_payload = SystemRecorderSerializer(self.system_recorder2).data
-        endpoint = reverse('systemrecorder_view',  kwargs={'request_uuid': self.tg1.UUID})
+        endpoint = reverse('systemrecorder_view',  kwargs={'request_uuid': self.system_recorder1.UUID})
 
         admin_system_recorder1_request = self.factory.get(endpoint)
         force_authenticate(admin_system_recorder1_request, user=self.privilaged_user)
@@ -260,13 +260,13 @@ class APISystemRecorderTests(APITestCase):
         user2_system_recorder2_response = user2_system_recorder2_response.render()
 
 
-        admin_system_recorder1_data = json.loads(user2_system_recorder1_response.content)
+        admin_system_recorder1_data = json.loads(admin_system_recorder1_response.content)
         # user1_system_recorder1_data = json.loads(user2_system_recorder1_response.content)
-        user2_system_recorder1_data = json.loads(user2_system_recorder1_response.content)
+        # user2_system_recorder1_data = json.loads(user2_system_recorder1_response.content)
 
         admin_system_recorder2_data = json.loads(admin_system_recorder2_response.content)
         # user1_system_recorder2_data = json.loads(user1_system_recorder2_response.content)
-        # user2_system_recorder2_data = json.loads(user2_system_recorder2_response.content)
+        user2_system_recorder2_data = json.loads(user2_system_recorder2_response.content)
 
         self.assertEqual(admin_system_recorder1_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_system_recorder1_response.status_code, status.HTTP_403_FORBIDDEN)
@@ -275,8 +275,8 @@ class APISystemRecorderTests(APITestCase):
         self.assertEqual(user1_system_recorder2_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_system_recorder2_response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.dumps(admin_system_recorder1_data), json.dumps(system_recorder1_payload, cls=UUIDEncoder))
-        self.assertEqual(json.dumps(user2_system_recorder1_data), json.dumps(system_recorder1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(admin_system_recorder2_data), json.dumps(system_recorder2_payload, cls=UUIDEncoder))
+        self.assertEqual(json.dumps(user2_system_recorder2_data), json.dumps(system_recorder2_payload, cls=UUIDEncoder))
 
 
     def test_api_system_recorder_update(self):
