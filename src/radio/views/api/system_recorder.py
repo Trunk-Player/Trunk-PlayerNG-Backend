@@ -118,8 +118,8 @@ class Create(APIView):
 
         if not "UUID" in data:
             data["UUID"] = uuid.uuid4()
-
-        data["api_key"] = uuid.uuid4()
+        if not "api_key" in data:
+            data["api_key"] = uuid.uuid4()
 
         serializer = SystemRecorderSerializer(data=data, partial=True)
         if serializer.is_valid():
@@ -131,7 +131,7 @@ class Create(APIView):
 class View(APIView):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
-    permission_classes = [IsSiteAdmin]
+    permission_classes = [IsSAOrUser]
 
     def get_object(self, request_uuid):
         """
@@ -147,7 +147,11 @@ class View(APIView):
         """
         System Recorder Get EP
         """
+        user: UserProfile = request.user.userProfile
         system_recorder = self.get_object(request_uuid)
+        if not user.site_admin:
+            if not system_recorder.user == user:
+                raise PermissionDenied
         serializer = SystemRecorderSerializer(system_recorder)
         return Response(serializer.data)
 
@@ -182,6 +186,9 @@ class View(APIView):
         """
         System Recorder update EP
         """
+        user: UserProfile = request.user.userProfile
+        if not user.site_admin:
+            raise PermissionDenied
         data = JSONParser().parse(request)
         system_recorder = self.get_object(request_uuid)
         serializer = SystemRecorderSerializer(system_recorder, data=data, partial=True)
@@ -195,6 +202,9 @@ class View(APIView):
         """
         System Recorder delete EP
         """
+        user: UserProfile = request.user.userProfile
+        if not user.site_admin:
+            raise PermissionDenied
         system_recorder = self.get_object(request_uuid)
         system_recorder.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
