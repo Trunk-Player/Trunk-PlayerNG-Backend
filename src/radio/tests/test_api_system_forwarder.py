@@ -9,7 +9,7 @@ from rest_framework import status
 
 
 from radio.models import SystemACL, Unit, SystemForwarder, TalkGroup, System
-from radio.serializers import SystemForwarder, SystemForwarderSerializer
+from radio.serializers import SystemForwarderSerializer
 from radio.views.api.system_forwarder import Create, List, View
 from radio.helpers.utils import UUIDEncoder
 from users.models import CustomUser
@@ -153,7 +153,7 @@ class APISystemForwarderTests(APITestCase):
             SystemForwarder.objects.all(),
             many=True
         )
-       
+
         endpoint = reverse('systemforwarder_list')
 
         admin_request = self.factory.get(endpoint)
@@ -172,9 +172,9 @@ class APISystemForwarderTests(APITestCase):
         self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
         self.assertEqual(admin_data["count"], 3)
         self.assertEqual(json.dumps(admin_data["results"]), json.dumps(admin_serializer.data,cls=UUIDEncoder))
-      
+
     def test_api_system_forwarder_create(self):
-        '''Test for the User Alert Create EP'''
+        '''Test for the System Forwarder Create EP'''
         view = Create.as_view()
 
         to_create: SystemForwarder = SystemForwarder(
@@ -188,7 +188,7 @@ class APISystemForwarderTests(APITestCase):
             to_create
         ).data
 
-        payload["forwarded_systems"] = [self.system1.UUID, self.system2.UUID]
+        payload["forwarded_systems"] = [self.system1.UUID]
         payload["talkgroup_filter"] = [self.tg2.UUID]
 
         endpoint = reverse('systemforwarder_create')
@@ -210,7 +210,7 @@ class APISystemForwarderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(total, 4)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
-        
+
 
     def test_api_system_forwarder_get(self):
         '''Test for the System Forwarder Get EP'''
@@ -228,13 +228,13 @@ class APISystemForwarderTests(APITestCase):
         force_authenticate(user1_request, user=self.user)
         user1_response = view(user1_request, request_uuid=self.system_forwarder1.UUID)
 
-        
+
         data = json.loads(admin_response.content)
 
         self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(json.dumps(data), json.dumps(system_forwarder_payload, cls=UUIDEncoder))
- 
+
     def test_api_system_forwarder_update(self):
         '''Test for the System Forwarder Update EP'''
         view = View.as_view()
@@ -258,11 +258,11 @@ class APISystemForwarderTests(APITestCase):
 
 
         data = json.loads(response.content)
-       
+
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
-      
+
     def test_api_system_forwarder_delete(self):
         '''Test for the System Forwarder Delete EP'''
         view = View.as_view()

@@ -273,7 +273,6 @@ def get_user_allowed_talkgroups_for_systems(systems: list[System], user_uuid: st
     Gets the talkgroups that the user is allowed to access
     """
     non_acl_talkgroups = TalkGroup.objects.filter(system__in=systems, system__enable_talkgroup_acls=False)
-
     acls = TalkGroupACL.objects.filter(users__UUID=user_uuid)
     allowed = list(acls.values_list("allowed_talkgroups__UUID", flat=True))
     acl_talkgroups = TalkGroup.objects.filter(UUID__in=allowed)
