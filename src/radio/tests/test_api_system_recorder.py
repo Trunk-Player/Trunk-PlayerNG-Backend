@@ -9,7 +9,7 @@ from rest_framework import status
 
 
 from radio.models import SystemACL, SystemRecorder, TalkGroup, System
-from radio.serializers import SystemForwarderSerializer, SystemRecorderSerializer
+from radio.serializers import SystemRecorderSerializer
 from radio.views.api.system_recorder import Create, List, View
 from radio.helpers.utils import UUIDEncoder
 from users.models import CustomUser
@@ -128,8 +128,6 @@ class APISystemRecorderTests(APITestCase):
         self.system_recorder2.talkgroups_denyed.add(self.tg1)
         self.system_recorder2.save()
 
-        
-
     def test_api_system_recorder_list(self):
         '''Test for the System Recorder List EP'''
         view = List.as_view()
@@ -138,13 +136,13 @@ class APISystemRecorderTests(APITestCase):
             SystemRecorder.objects.all(),
             many=True
         )
-       
+
         user1_allowed_system_recorders = SystemRecorder.objects.filter(user=self.user.userProfile)
         user1_serializer = SystemRecorderSerializer(
             user1_allowed_system_recorders,
             many=True
         )
-        
+
         user2_allowed_system_recorders = SystemRecorder.objects.filter(user=self.user2.userProfile)
         user2_serializer = SystemRecorderSerializer(
             user2_allowed_system_recorders,
@@ -277,7 +275,6 @@ class APISystemRecorderTests(APITestCase):
         self.assertEqual(json.dumps(admin_system_recorder1_data), json.dumps(system_recorder1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(admin_system_recorder2_data), json.dumps(system_recorder2_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_system_recorder2_data), json.dumps(system_recorder2_payload, cls=UUIDEncoder))
-
 
     def test_api_system_recorder_update(self):
         '''Test for the System Recorder Update EP'''
