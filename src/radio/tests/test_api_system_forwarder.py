@@ -146,7 +146,7 @@ class APISystemForwarderTests(APITestCase):
         self.system_forwarder3.save()
 
     def test_api_system_forwarder_list(self):
-        '''Test for the Useralert List EP'''
+        '''Test for the System Forwarder List EP'''
         view = List.as_view()
 
         admin_serializer = SystemForwarderSerializer(
