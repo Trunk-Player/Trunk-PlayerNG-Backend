@@ -328,6 +328,23 @@ def user_allowed_to_download_transmission(
 
     return False
 
+def get_user_allowed_transmissions(user_uuid: str) -> list:
+    system_uuids, systems = get_user_allowed_systems(user_uuid)
+    del system_uuids
+    allowed_transmissions_non_acl = []
+    allowed_transmissions_acl = []
+
+    for system in systems:
+        if system.enable_talkgroup_acls:
+            talkgroups_allowed = get_user_allowed_talkgroups(system, user_uuid)
+            allowed_transmissions_acl = Transmission.objects.filter(
+                system=system, talkgroup__in=talkgroups_allowed
+            )
+        else:
+            allowed_transmissions_non_acl = Transmission.objects.filter(system=system)
+    allowed_transmissions = allowed_transmissions_acl | allowed_transmissions_non_acl
+    return allowed_transmissions
+
 def validate_upload(talkgroup_decimalid: str, recorder: SystemRecorder) -> bool:
     """
     Validate that user is allowed to post TG
