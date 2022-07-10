@@ -393,4 +393,3 @@ class View(APIView):
         transmission = self.get_object(request_uuid)
         transmission.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-

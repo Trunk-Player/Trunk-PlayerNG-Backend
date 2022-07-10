@@ -28,6 +28,7 @@ from radio.serializers import (
 )
 
 from radio.permission import (
+    IsSAOrReadOnly,
     IsSAOrUser,
     IsSiteAdmin
 )
@@ -130,7 +131,7 @@ class Create(APIView):
 class View(APIView):
     queryset = SystemRecorder.objects.all()
     serializer_class = SystemRecorderSerializer
-    permission_classes = [IsSAOrUser]
+    permission_classes = [IsSAOrReadOnly]
 
     def get_object(self, request_uuid):
         """
