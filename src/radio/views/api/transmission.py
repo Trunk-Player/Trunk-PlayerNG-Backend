@@ -254,18 +254,19 @@ class List(APIView, PaginationMixin):
             # pylint: disable=unused-variable
             system_uuids, systems = get_user_allowed_systems(user.UUID)
             del system_uuids
-            allowed_transmissions_non_acl = []
-            allowed_transmissions_acl = []
+            allowed_transmissions_non_acl = Transmission.objects.none()
+            allowed_transmissions_acl = Transmission.objects.none()
 
             for system in systems:
+                system: System
                 if system.enable_talkgroup_acls:
                     talkgroups_allowed = get_user_allowed_talkgroups(system, user.UUID)
-                    allowed_transmissions_acl = Transmission.objects.filter(
-                        system=system, talkgroup__in=talkgroups_allowed
-                    )
+                    allowed_transmissions_acl = allowed_transmissions_acl | Transmission.objects.filter(
+                            system=system, talkgroup__in=talkgroups_allowed
+                        )
                 else:
-                    allowed_transmissions_non_acl = Transmission.objects.filter(system=system)
-            allowed_transmissions = allowed_transmissions_acl | allowed_transmissions_non_acl
+                    allowed_transmissions_non_acl = allowed_transmissions_non_acl | Transmission.objects.filter(system=system)
+            allowed_transmissions = allowed_transmissions_acl | allowed_transmissions_non_acl 
 
         filterobject_fs = TransmissionFilter(self.request.GET, queryset=allowed_transmissions)
         page = self.paginate_queryset(filterobject_fs.qs)

@@ -1,4 +1,5 @@
 import json
+from time import sleep
 import uuid
 
 from django.urls import reverse
@@ -176,7 +177,7 @@ class APITransmissionTests(APITestCase):
             notes=""
         )
         self.tg2.save()
-        self.tg2.agency.add(self.agency, self.agency2)
+        self.tg2.agency.add(self.agency)
         self.tg2.save()
 
         self.tg3: TalkGroup = TalkGroup.objects.create(
@@ -253,9 +254,9 @@ class APITransmissionTests(APITestCase):
             encrypted=False,
             notes=""
         )
-        self.tg7.save()
-        self.tg7.agency.add(self.agency)
-        self.tg7.save()
+        self.tg8.save()
+        self.tg8.agency.add(self.agency)
+        self.tg8.save()
 
         self.talkgroup_acl1: TalkGroupACL = TalkGroupACL.objects.create(
             name="System1 user1 access",
@@ -288,10 +289,10 @@ class APITransmissionTests(APITestCase):
             download_allowed=True,
             transcript_allowed=False
         )
-        self.talkgroup_acl2.save()
-        self.talkgroup_acl2.users.add(self.user.userProfile)
-        self.talkgroup_acl2.allowed_talkgroups.add(self.tg7)
-        self.talkgroup_acl2.save()
+        self.talkgroup_acl3.save()
+        self.talkgroup_acl3.users.add(self.user.userProfile)
+        self.talkgroup_acl3.allowed_talkgroups.add(self.tg7)
+        self.talkgroup_acl3.save()
 
         self.unit1: Unit = Unit.objects.create(
             system=self.system1,
@@ -314,21 +315,23 @@ class APITransmissionTests(APITestCase):
         )
         self.unit3.save()
 
+        self.api_key1 = uuid.uuid4()
         self.recorder1: SystemRecorder = SystemRecorder.objects.create(
             system=self.system1,
             name="Site 1",
             site_id="1",
             enabled=True,
-            api_key=uuid.uuid4()
+            api_key=self.api_key1
         )
         self.recorder1.save()
 
+        self.api_key2 = uuid.uuid4()
         self.recorder2: SystemRecorder = SystemRecorder.objects.create(
             system=self.system2,
             name="Site 2",
             site_id="2",
             enabled=True,
-            api_key=uuid.uuid4()
+            api_key=self.api_key2
         )
         self.recorder2.save()
 
@@ -380,7 +383,7 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission1.save()
-        self.transmission1.units.add(self.transmission_unit2, self.transmission_unit1)
+        self.transmission1.units.add(self.transmission_unit2)
         self.transmission1.frequencys.add(self.transmission_frequency1)
         self.transmission1.save()
 
@@ -432,7 +435,7 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission2.save()
-        self.transmission2.units.add(self.transmission_unit3, self.transmission_unit4)
+        self.transmission2.units.add(self.transmission_unit3)
         self.transmission2.frequencys.add(self.transmission_frequency2)
         self.transmission2.save()
 
@@ -484,7 +487,7 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission3.save()
-        self.transmission3.units.add(self.transmission_unit4, self.transmission_unit5)
+        self.transmission3.units.add(self.transmission_unit4)
         self.transmission3.frequencys.add(self.transmission_frequency3)
         self.transmission3.save()
 
@@ -536,7 +539,7 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission4.save()
-        self.transmission4.units.add(self.transmission_unit6, self.transmission_unit7)
+        self.transmission4.units.add(self.transmission_unit6)
         self.transmission4.frequencys.add(self.transmission_frequency3)
         self.transmission4.save()
 
@@ -588,7 +591,7 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission5.save()
-        self.transmission5.units.add(self.transmission_unit8, self.transmission_unit9)
+        self.transmission5.units.add(self.transmission_unit8)
         self.transmission5.frequencys.add(self.transmission_frequency5)
         self.transmission5.save()
 
@@ -640,16 +643,89 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission6.save()
-        self.transmission6.units.add(self.transmission_unit10, self.transmission_unit11)
+        self.transmission6.units.add(self.transmission_unit10)
         self.transmission6.frequencys.add(self.transmission_frequency6)
         self.transmission6.save()
+
+        self.sample_json = {
+  "freq": 854187500,
+  "start_time": 1652817155,
+  "stop_time": 1652817172,
+  "emergency": 0,
+  "encrypted": 0,
+  "call_length": 8,
+  "talkgroup": 3071,
+  "talkgroup_tag": "Troop HQ Disp 1",
+  "audio_type": "digital",
+  "short_name": "nesr",
+  "freqList": [
+    {
+      "freq": 854187500,
+      "time": 1652817155,
+      "pos": 0,
+      "len": 8,
+      "error_count": 0,
+      "spike_count": 0
+    }
+  ],
+  "srcList": [
+    {
+      "src": 32526,
+      "time": 1652817155,
+      "pos": 0,
+      "emergency": 0,
+      "signal_system": "",
+      "tag": ""
+    },
+    {
+      "src": 32526,
+      "time": 1652817156,
+      "pos": 0,
+      "emergency": 0,
+      "signal_system": "",
+      "tag": ""
+    },
+    {
+      "src": 40033,
+      "time": 1652817157,
+      "pos": 1,
+      "emergency": 0,
+      "signal_system": "",
+      "tag": ""
+    },
+    {
+      "src": 40033,
+      "time": 1652817164,
+      "pos": 5,
+      "emergency": 0,
+      "signal_system": "",
+      "tag": ""
+    },
+    {
+      "src": 31526,
+      "time": 1652817165,
+      "pos": 6,
+      "emergency": 0,
+      "signal_system": "",
+      "tag": ""
+    },
+    {
+      "src": 31526,
+      "time": 1652817171,
+      "pos": 8,
+      "emergency": 0,
+      "signal_system": "",
+      "tag": ""
+    }
+  ]
+}
 
     def test_api_transmission_list(self):
         '''Test for the Transmission List EP'''
         view = List.as_view()
 
         admin_serializer = TransmissionListSerializer(
-            TalkGroup.objects.all(),
+            Transmission.objects.all(),
             many=True
         )
 
@@ -694,50 +770,48 @@ class APITransmissionTests(APITestCase):
         self.assertEqual(user2_response.status_code, status.HTTP_200_OK)
         self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
         self.assertEqual(admin_data["count"], 6)
-        self.assertEqual(user1_data["count"], 5)
-        self.assertEqual(user2_data["count"], 3)
+        self.assertEqual(user1_data["count"], 4)
+        self.assertEqual(user2_data["count"], 2)
         self.assertEqual(json.dumps(admin_data["results"]), json.dumps(admin_serializer.data,cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data["results"]), json.dumps(user1_serializer.data,cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_data["results"]), json.dumps(user2_serializer.data,cls=UUIDEncoder))
 
-    # def test_api_talkgroup_create(self):
-    #     '''Test for the Talkgroup Create EP'''
-    #     view = Create.as_view()
+    def test_api_transmission_create(self):
+        '''Test for the Transmission Create EP'''
+        view = Create.as_view()
 
-    #     to_create: TalkGroup = TalkGroup(
-    #         system=self.system2,
-    #         decimal_id=420,
-    #         alpha_tag="tg420",
-    #         description="Talkgroup 420",
-    #         mode="tdma",
-    #         encrypted=False,
-    #         notes=""
-    #     )
-    #     payload = TalkGroupSerializer(
-    #         to_create
-    #     ).data
-    #     payload["agency"] = [self.agency2.UUID]
+        to_create = {
+            "recorder": self.api_key1,
+            "json": self.sample_json,
+            "audio_file": "LITERLAY ANSY ARBATRARY STRING",
+            "name": "audio.wav"
+        }
 
-    #     endpoint = reverse('talkgroup_create')
+        endpoint = reverse('transmission_create')
 
-    #     user1_request = self.factory.post(endpoint, payload, format='json')
-    #     force_authenticate(user1_request, user=self.user)
-    #     user1_response = view(user1_request)
-    #     user1_response = user1_response.render()
+        authorized_request = self.factory.post(endpoint, to_create, format='json')
+        authorized_response = view(authorized_request)
+        authorized_response = authorized_response.render()
 
-    #     request = self.factory.post(endpoint, payload, format='json')
-    #     force_authenticate(request, user=self.privilaged_user)
-    #     response = view(request)
-    #     response = response.render()
+        to_create2 = {
+            "recorder": uuid.uuid4(),
+            "json": self.sample_json,
+            "audio_file": "ANY ARBATRARY STRING",
+            "name": "audio.wav"
+        }
+        unauthorized_request = self.factory.post(endpoint, to_create2, format='json')
+        unauthorized_response = view(unauthorized_request)
+        unauthorized_response = unauthorized_response.render()
 
-    #     data = json.loads(response.content)
-    #     # user1_data = json.loads(user1_response.content)
-    #     total = TalkGroup.objects.all().count()
+        data = json.loads(authorized_response.content)
+        # user1_data = json.loads(user1_response.content)
+        
+        # total = Transmission.objects.all().count()
 
-    #     self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(total, 6)
-    #     self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
+        self.assertEqual(authorized_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(unauthorized_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        # self.assertEqual(total, 7)
+        # self.assertEqual(json.dumps(data), json.dumps(to_create, cls=UUIDEncoder))
 
     # def test_api_talkgroup_get(self):
     #     '''Test for the Talkgroup Get EP'''
