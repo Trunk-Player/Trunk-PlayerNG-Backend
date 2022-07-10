@@ -321,9 +321,9 @@ class APITalkgroupTests(APITestCase):
             transcript=""
         )
         self.transmission2.save()
-        self.transmission2.units.add(self.transmission_unit3, self.transmission_unit4)
+        self.transmission2.units.add(self.transmission_unit3)
         self.transmission2.frequencys.add(self.transmission_frequency2)
-        self.transmission1.save()
+        self.transmission2.save()
 
         self.transmission_frequency3: TransmissionFreq = TransmissionFreq.objects.create(
             time=timezone.now(),
@@ -372,10 +372,10 @@ class APITalkgroupTests(APITestCase):
             locked=False,
             transcript=""
         )
-        self.transmission2.save()
-        self.transmission2.units.add(self.transmission_unit4, self.transmission_unit5)
-        self.transmission2.frequencys.add(self.transmission_frequency3)
-        self.transmission1.save()
+        self.transmission3.save()
+        self.transmission3.units.add(self.transmission_unit4, self.transmission_unit5)
+        self.transmission3.frequencys.add(self.transmission_frequency3)
+        self.transmission3.save()
 
     def test_api_talkgroup_list(self):
         '''Test for the Talkgroup List EP'''
