@@ -11,7 +11,7 @@ from rest_framework import status
 
 from radio.models import  UserInbox, UserMessage
 from radio.serializers import UserInboxSerializer
-from radio.views.api.user_inbox import View, List
+from radio.views.api.user_inbox import DirectView, View, List
 from radio.helpers.utils import UUIDEncoder
 from users.models import CustomUser
 
@@ -124,9 +124,9 @@ class APIUserMessageTests(APITestCase):
         self.assertEqual(json.dumps(user2_data["results"]), json.dumps(user2_serializer.data,cls=UUIDEncoder))
 
 
-    def test_api_user_inbox_get(self):
-        '''Test for the User Message Get EP'''
-        view = View.as_view()
+    def test_api_user_inbox_direct_get(self):
+        '''Test for the User Inbox Direct Get EP'''
+        view = DirectView.as_view()
 
         user1_inbox_payload = UserInboxSerializer(UserInbox.objects.get(user=self.user.userProfile)).data
         endpoint = reverse('users_inbox_direct_view',  kwargs={'request_uuid': self.user.userProfile.UUID})
@@ -146,8 +146,33 @@ class APIUserMessageTests(APITestCase):
         user2_response = view(user2_request, request_uuid=self.user.userProfile.UUID)
         user2_response = user2_response.render()
 
-        inbox_uuid = UserInbox.objects.get(user=self.user.userProfile).UUID
+        nonexistent_uuid = uuid.uuid4()
+        endpoint = reverse('users_inbox_direct_view',  kwargs={'request_uuid': nonexistent_uuid})
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.user2)
+        nonexistent_response = view(nonexistent_request, request_uuid=nonexistent_uuid)
+        nonexistent_response = nonexistent_response.render()
+
+        data = json.loads(admin_response.content)
+        user1_data = json.loads(user1_response.content)
+
+        self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user1_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user2_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(json.dumps(data), json.dumps(user1_inbox_payload, cls=UUIDEncoder))
+        self.assertEqual(json.dumps(user1_data), json.dumps(user1_inbox_payload, cls=UUIDEncoder))
+
+
+    def test_api_user_inbox_get(self):
+        '''Test for the User Inbox Get EP'''
+        view = View.as_view()
+
+        user1_inbox = UserInbox.objects.get(user=self.user.userProfile)
+        user1_inbox_payload = UserInboxSerializer(user1_inbox).data
+        inbox_uuid = user1_inbox.UUID
         endpoint = reverse('users_inbox_view',  kwargs={'request_uuid': inbox_uuid})
+
         admin_request = self.factory.get(endpoint)
         force_authenticate(admin_request, user=self.privilaged_user)
         admin_response = view(admin_request, request_uuid=inbox_uuid)
@@ -162,6 +187,14 @@ class APIUserMessageTests(APITestCase):
         force_authenticate(user2_request, user=self.user2)
         user2_response = view(user2_request, request_uuid=inbox_uuid)
         user2_response = user2_response.render()
+    
+        nonexistent_uuid = uuid.uuid4()
+        endpoint = reverse('users_inbox_view',  kwargs={'request_uuid': nonexistent_uuid})
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.user2)
+        nonexistent_response = view(nonexistent_request, request_uuid=nonexistent_uuid)
+        nonexistent_response = nonexistent_response.render()
+
 
         data = json.loads(admin_response.content)
         user1_data = json.loads(user1_response.content)
@@ -169,5 +202,6 @@ class APIUserMessageTests(APITestCase):
         self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user2_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(data), json.dumps(user1_inbox_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data), json.dumps(user1_inbox_payload, cls=UUIDEncoder))

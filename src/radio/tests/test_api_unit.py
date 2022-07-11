@@ -151,7 +151,7 @@ class APIUnitTests(APITestCase):
         payload = UnitSerializer(
             to_create
         ).data
-
+        del payload["UUID"]
         endpoint = reverse('unit_create')
 
         user1_request = self.factory.post(endpoint, payload, format='json')
@@ -164,11 +164,27 @@ class APIUnitTests(APITestCase):
         response = view(request)
         response = response.render()
 
+        malformed_unit: Unit = Unit(
+            system=self.system2,
+            decimal_id=5,
+            description=""
+        )
+        malformed_payload = UnitSerializer(
+            malformed_unit
+        ).data
+        malformed_payload["decimal_id"] = False
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
         total = Unit.objects.all().count()
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(total, 4)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
@@ -211,6 +227,14 @@ class APIUnitTests(APITestCase):
         user2_unit3_response = view(user2_unit3_request, request_uuid=self.unit3.UUID)
         user2_unit3_response = user2_unit3_response.render()
 
+        non_existent_uuid=uuid.uuid4()
+        endpoint = reverse('unit_view',  kwargs={'request_uuid': non_existent_uuid})
+
+        non_existent_request = self.factory.get(endpoint)
+        force_authenticate(non_existent_request, user=self.privilaged_user)
+        non_existent_response = view(non_existent_request, request_uuid=non_existent_uuid)
+        non_existent_response = non_existent_response.render()
+
 
         admin_unit1_data = json.loads(admin_unit1_response.content)
         user1_unit1_data = json.loads(user2_unit1_response.content)
@@ -226,6 +250,7 @@ class APIUnitTests(APITestCase):
         self.assertEqual(admin_unit3_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_unit3_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user2_unit3_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(non_existent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(admin_unit1_data), json.dumps(unit1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_unit1_data), json.dumps(unit1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_unit1_data), json.dumps(unit1_payload, cls=UUIDEncoder))
@@ -253,11 +278,21 @@ class APIUnitTests(APITestCase):
         response = view(request, request_uuid=self.unit2.UUID)
         response = response.render()
 
+        malformed_payload = UnitSerializer(
+            Unit.objects.get(decimal_id=2)
+        ).data
+        malformed_payload["description"] = False
+        
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=self.unit2.UUID)
+        malformed_response = malformed_response.render()
 
         data = json.loads(response.content)
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_unit_delete(self):

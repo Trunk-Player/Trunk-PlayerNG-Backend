@@ -85,12 +85,13 @@ class DirectView(APIView):
         UserInbox Get EP
         """
         user = request.user.userProfile
-        if user.site_admin:
-            user_inbox = self.get_object(request_uuid)
-        elif user_inbox.user.UUID == user.UUID:
-            user_inbox = self.get_object(request_uuid)
-        else:
-            raise PermissionDenied
+        user_inbox = self.get_object(request_uuid)
+        if not user.site_admin:            
+            if user_inbox.user.UUID == user.UUID:
+                user_inbox = self.get_object(request_uuid)
+            else:
+                raise PermissionDenied
+
         serializer = UserInboxSerializer(user_inbox)
         return Response(serializer.data)
 

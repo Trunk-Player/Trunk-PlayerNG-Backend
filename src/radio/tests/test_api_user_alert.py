@@ -247,7 +247,7 @@ class APIUserAlertTests(APITestCase):
         payload = UserAlertSerializer(
             to_create
         ).data
-
+        del payload["UUID"]
         endpoint = reverse('users_alerts_create')
 
         user1_request = self.factory.post(endpoint, payload, format='json')
@@ -275,12 +275,36 @@ class APIUserAlertTests(APITestCase):
         response = view(request)
         response = response.render()
 
+        malformed_to_create: UserAlert = UserAlert(
+            name="Created",
+            user=self.privilaged_user.userProfile,
+            enabled=False,
+            description="Created via API",
+            web_notification=True,
+            app_rise_notification=False,
+            app_rise_urls="<URL>,<URL>",
+            emergency_only=False,
+            count=5,
+            trigger_time=30
+        )
+        malformed_payload = UserAlertSerializer(
+            malformed_to_create
+        ).data
+        malformed_payload["nAme"]=False
+        malformed_payload["count"]="yes"
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
         user1_data = json.loads(user1_response.content)
+        del user1_data["UUID"]
         total_useralerts = UserAlert.objects.all().count()
 
         self.assertEqual(user1_response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(total_useralerts, 7)
         self.assertEqual(json.dumps(data), json.dumps(payload2, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data), json.dumps(payload, cls=UUIDEncoder))
@@ -391,6 +415,18 @@ class APIUserAlertTests(APITestCase):
         restricted_response = view(restricted_request, request_uuid=self.admin_alert1.UUID)
         restricted_response = restricted_response.render()
 
+
+        malformed_payload = UserAlertSerializer(
+            self.admin_alert1
+        ).data
+        malformed_payload["enabled"] = "LEARN A BOOK"
+        malformed_payload["description"] = True
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=self.admin_alert1.UUID)
+        malformed_response = malformed_response.render()
+
+
         data = json.loads(response.content)
         restricted_data = json.loads(restricted_response.content)
         user2_data = json.loads(response.content)
@@ -402,6 +438,7 @@ class APIUserAlertTests(APITestCase):
         self.assertEqual(user1_restricted_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_restricted_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(restricted_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(user_alerts, 5)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_data), json.dumps(payload, cls=UUIDEncoder))
