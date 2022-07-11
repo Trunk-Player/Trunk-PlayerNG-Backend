@@ -68,7 +68,7 @@ class APICityTests(APITestCase):
         self.assertEqual(data["results"], serializer.data)
 
     def test_api_city_create(self):
-        '''Test for the Agency Create EP'''
+        '''Test for the City Create EP'''
         view = Create.as_view()
 
         to_create: City = City(
@@ -78,7 +78,7 @@ class APICityTests(APITestCase):
         payload = CitySerializer(
             to_create
         ).data
-
+        del payload["UUID"]
         endpoint = reverse('city_create')
 
         un_privilaged_request = self.factory.post(endpoint, payload, format='json')
@@ -91,16 +91,28 @@ class APICityTests(APITestCase):
         response = view(request)
         response = response.render()
 
+
+        malformed_payload = CitySerializer(
+            to_create
+        ).data
+        malformed_payload["name"] = True
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
         cities = City.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(cities, 4)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_city_get(self):
-        '''Test for the Agency Get EP'''
+        '''Test for the City Get EP'''
         view = View.as_view()
 
         city: City = City.objects.get(
@@ -114,9 +126,17 @@ class APICityTests(APITestCase):
         response = view(request, request_uuid=city.UUID)
         response = response.render()
 
+        nonexistent_uuid = uuid.uuid4()
+        endpoint = reverse('city_view',  kwargs={'request_uuid': nonexistent_uuid})
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.user)
+        nonexistent_response = view(nonexistent_request, request_uuid=nonexistent_uuid)
+        nonexistent_response = nonexistent_response.render()
+
         data = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_city_update(self):
@@ -143,11 +163,21 @@ class APICityTests(APITestCase):
         response = view(request, request_uuid=to_update.UUID)
         response = response.render()
 
+        malformed_payload = CitySerializer(
+            to_update
+        ).data
+        malformed_payload["name"] = "THIS IS GOING TO BE A LOT LONGER THAN 30 CHARS... ALSO AHHH WHY IS THIS SO HARD TO TEST"
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=to_update.UUID)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
         cities = City.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(cities, 3)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 

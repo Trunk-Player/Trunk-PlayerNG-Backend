@@ -150,15 +150,6 @@ class View(APIView):
         except System.DoesNotExist:
             raise Http404 from System.DoesNotExist
 
-    def get_acl(self, request_uuid):
-        """
-        fetches SystemACL ORM OBJECT
-        """
-        try:
-            return SystemACL.objects.get(UUID=request_uuid)
-        except SystemACL.DoesNotExist:
-            raise Http404 from SystemACL.DoesNotExist
-
     @swagger_auto_schema(tags=["System"])
     def get(self, request, request_uuid):
         """
@@ -283,10 +274,12 @@ class RRImport(APIView):
         else:
             return Response({"message": "Please add 'siteid' to your request or add the rr id to the system"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if os.getenv('RR_USER') and os.getenv('RR_pass'):
-            username = os.getenv('RR_USER')
-            password = os.getenv('RR_PASS')
-        else:
+        
+        username = os.getenv('RR_USER')
+        password = os.getenv('RR_PASS')
+        if not username or not password:
+            if not 'username' in data or not 'password' in data:
+                return Response({"message": "Please add 'username' and 'password' to your request or add the rr env vars"}, status=status.HTTP_400_BAD_REQUEST)
             username = data["username"]
             password = data["password"]
 

@@ -194,7 +194,8 @@ class APISystemRecorderTests(APITestCase):
         payload = SystemRecorderSerializer(
             to_create
         ).data
-
+        del payload["UUID"]
+        del payload["api_key"]
         payload["talkgroups_allowed"] = [self.tg1.UUID]
         payload["talkgroups_denyed"] = [self.tg2.UUID]
 
@@ -210,11 +211,24 @@ class APISystemRecorderTests(APITestCase):
         response = view(request)
         response = response.render()
 
+
+        malformed_payload = SystemRecorderSerializer(
+            to_create
+        ).data
+        malformed_payload["system"] = uuid.uuid4()
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
+        del data["api_key"]
         total = SystemRecorder.objects.all().count()
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(total, 4)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
@@ -258,6 +272,12 @@ class APISystemRecorderTests(APITestCase):
         user2_system_recorder2_response = user2_system_recorder2_response.render()
 
 
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.user2)
+        nonexistent_response = view(nonexistent_request, request_uuid=uuid.uuid4())
+        nonexistent_response = nonexistent_response.render()
+
+
         admin_system_recorder1_data = json.loads(admin_system_recorder1_response.content)
         # user1_system_recorder1_data = json.loads(user2_system_recorder1_response.content)
         # user2_system_recorder1_data = json.loads(user2_system_recorder1_response.content)
@@ -272,6 +292,7 @@ class APISystemRecorderTests(APITestCase):
         self.assertEqual(admin_system_recorder2_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_system_recorder2_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_system_recorder2_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(admin_system_recorder1_data), json.dumps(system_recorder1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(admin_system_recorder2_data), json.dumps(system_recorder2_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_system_recorder2_data), json.dumps(system_recorder2_payload, cls=UUIDEncoder))
@@ -297,11 +318,20 @@ class APISystemRecorderTests(APITestCase):
         response = view(request, request_uuid=self.system_recorder2.UUID)
         response = response.render()
 
+        malformed_payload = SystemRecorderSerializer(
+            self.system_recorder2
+        ).data
+        malformed_payload["system"] = uuid.uuid4()
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=self.system_recorder2.UUID)
+        malformed_response = malformed_response.render()
 
         data = json.loads(response.content)
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_system_recorder_delete(self):

@@ -94,7 +94,7 @@ class APISystemACLTests(APITestCase):
         payload = SystemACLSerializer(
             to_create
         ).data
-
+        del payload["UUID"]
         endpoint = reverse('systemacl_create')
 
         un_privilaged_request = self.factory.post(endpoint, payload, format='json')
@@ -107,11 +107,22 @@ class APISystemACLTests(APITestCase):
         response = view(request)
         response = response.render()
 
+        malformed_payload = SystemACLSerializer(
+            to_create
+        ).data
+        malformed_payload["name"] = True
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
         system_acls = SystemACL.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(system_acls, 4)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
@@ -161,6 +172,12 @@ class APISystemACLTests(APITestCase):
         user2_restricted_response = view(user2_restricted_request, request_uuid=restricted_systemacl.UUID)
         user2_restricted_response = user2_restricted_response.render()
 
+
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.privilaged_user)
+        nonexistent_response = view(nonexistent_request, request_uuid=uuid.uuid4())
+        nonexistent_response = nonexistent_response.render()
+
         data = json.loads(admin_response.content)
         restricted_data = json.loads(admin_restricted_response.content)
 
@@ -170,6 +187,7 @@ class APISystemACLTests(APITestCase):
         self.assertEqual(admin_restricted_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_restricted_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_restricted_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(restricted_data), json.dumps(restricted_payload, cls=UUIDEncoder))
 
@@ -197,11 +215,21 @@ class APISystemACLTests(APITestCase):
         response = view(request, request_uuid=to_update.UUID)
         response = response.render()
 
+        malformed_payload = SystemACLSerializer(
+            to_update
+        ).data
+        malformed_payload["name"] = True
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=to_update.UUID)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
         system_acls = SystemACL.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(system_acls, 3)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
