@@ -213,11 +213,11 @@ class TransmissionUnitSerializer(serializers.ModelSerializer):
             "length",
         ]
 
-    def create(self, validated_data):
-        unit = validated_data.pop("unit")
-        # pylint: disable=unused-variable
-        unit_object, created = Unit.objects.get_or_create(decimal_id=int(unit))
-        return Transmission.objects.create(unit=unit_object, **validated_data)
+    # def create(self, validated_data):
+    #     unit = validated_data.pop("unit")
+    #     # pylint: disable=unused-variable
+    #     unit_object, created = Unit.objects.get_or_create(decimal_id=int(unit))
+    #     return Transmission.objects.create(unit=unit_object, **validated_data)
 
 
 class TransmissionFreqSerializer(serializers.ModelSerializer):

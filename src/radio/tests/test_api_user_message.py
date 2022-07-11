@@ -137,12 +137,22 @@ class APIUserMessageTests(APITestCase):
         response = view(request, request_uuid=self.user2_message2.UUID)
         response = response.render()
 
+        malformed_payload = UserMessageSerializer(
+            self.user2_message2
+        ).data
+        malformed_payload["read"] = "Duh"
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=self.user2_message2.UUID)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
         user2_data = json.loads(user2_response.content)
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.dumps(data), json.dumps(payload2, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_data), json.dumps(payload, cls=UUIDEncoder))
 

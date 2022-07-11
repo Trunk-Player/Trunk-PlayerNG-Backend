@@ -118,6 +118,15 @@ class APIUserProfileTests(APITestCase):
         user2_restricted_response = view(user2_restricted_request, request_uuid=self.privilaged_user.userProfile.UUID)
         user2_restricted_response = user2_restricted_response.render()
 
+        non_existent_uuid = uuid.uuid4()
+        endpoint = reverse('system_view',  kwargs={'request_uuid': non_existent_uuid})
+
+        non_existent_request = self.factory.get(endpoint)
+        force_authenticate(non_existent_request, user=self.privilaged_user)
+        non_existent_response = view(non_existent_request, request_uuid=non_existent_uuid)
+        non_existent_response = non_existent_response.render()
+
+
 
         data = json.loads(admin_response.content)
         user1_data = json.loads(user1_response.content)
@@ -129,6 +138,7 @@ class APIUserProfileTests(APITestCase):
         self.assertEqual(admin_restricted_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_restricted_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_restricted_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(non_existent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(data), json.dumps(user1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data), json.dumps(user1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(restricted_data), json.dumps(admin_payload, cls=UUIDEncoder))
@@ -184,6 +194,16 @@ class APIUserProfileTests(APITestCase):
         restricted_response = view(restricted_request, request_uuid=self.privilaged_user.userProfile.UUID)
         restricted_response = restricted_response.render()
 
+        malformed_payload = UserProfileSerializer(
+            self.privilaged_user.userProfile
+        ).data
+        malformed_payload["site_theme"] = False
+        malformed_payload["description"] = 1
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=self.privilaged_user.userProfile.UUID)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
         restricted_data = json.loads(restricted_response.content)
         user2_data = json.loads(response.content)
@@ -194,6 +214,7 @@ class APIUserProfileTests(APITestCase):
         self.assertEqual(user1_restricted_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_restricted_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(restricted_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_data), json.dumps(payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(restricted_data), json.dumps(restricted_payload, cls=UUIDEncoder))
