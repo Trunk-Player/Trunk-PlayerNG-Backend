@@ -149,8 +149,8 @@ class View(APIView):
         """
         try:
             return TalkGroup.objects.get(UUID=request_uuid)
-        except UserProfile.DoesNotExist:
-            raise Http404 from UserProfile.DoesNotExist
+        except TalkGroup.DoesNotExist:
+            raise Http404 from TalkGroup.DoesNotExist
 
     @swagger_auto_schema(tags=["TalkGroup"])
     def get(self, request, request_uuid):

@@ -40,6 +40,14 @@ class APITalkgroupTests(APITestCase):
         )
         self.system_acl1.save()
 
+        self.system_acl2: SystemACL = SystemACL.objects.create(
+            name="Restricted",
+            public=False
+        )
+        self.system_acl2.save()
+        self.system_acl2.users.add(self.user.userProfile)
+        self.system_acl2.save()
+
         self.system1: System = System.objects.create(
             name="System1",
             systemACL=self.system_acl1,
@@ -69,6 +77,16 @@ class APITalkgroupTests(APITestCase):
             notes=""
         )
         self.system3.save()
+
+        self.system4: System = System.objects.create(
+            name="System4",
+            systemACL=self.system_acl2,
+            rr_system_id="557",
+            enable_talkgroup_acls=False,
+            prune_transmissions=False,
+            notes=""
+        )
+        self.system4.save()
 
         self.city: City = City.objects.create(
             name="Dimsdale",
@@ -157,6 +175,19 @@ class APITalkgroupTests(APITestCase):
         self.tg5.save()
         self.tg5.agency.add(self.agency)
         self.tg5.save()
+
+        self.tg6: TalkGroup = TalkGroup.objects.create(
+            system=self.system4,
+            decimal_id=6,
+            alpha_tag="tg6",
+            description="Talk group 6",
+            mode="tdma",
+            encrypted=False,
+            notes=""
+        )
+        self.tg6.save()
+        self.tg6.agency.add(self.agency)
+        self.tg6.save()
 
         self.talkgroup_acl1: TalkGroupACL = TalkGroupACL.objects.create(
             name="System1 user1 access",
@@ -430,8 +461,8 @@ class APITalkgroupTests(APITestCase):
         self.assertEqual(user1_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user2_response.status_code, status.HTTP_200_OK)
         self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(admin_data["count"], 5)
-        self.assertEqual(user1_data["count"], 3)
+        self.assertEqual(admin_data["count"], 6)
+        self.assertEqual(user1_data["count"], 4)
         self.assertEqual(user2_data["count"], 3)
         self.assertEqual(json.dumps(admin_data["results"]), json.dumps(admin_serializer.data,cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data["results"]), json.dumps(user1_serializer.data,cls=UUIDEncoder))
@@ -454,7 +485,7 @@ class APITalkgroupTests(APITestCase):
             to_create
         ).data
         payload["agency"] = [self.agency2.UUID]
-
+        del payload["UUID"]
         endpoint = reverse('talkgroup_create')
 
         user1_request = self.factory.post(endpoint, payload, format='json')
@@ -467,13 +498,25 @@ class APITalkgroupTests(APITestCase):
         response = view(request)
         response = response.render()
 
+        malformed_payload = TalkGroupSerializer(
+            to_create
+        ).data
+        malformed_payload["encrypted"] = "no"
+        malformed_payload["mode"] = 420
+        malformed_request = self.factory.post(endpoint,  malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
         # user1_data = json.loads(user1_response.content)
         total = TalkGroup.objects.all().count()
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(total, 6)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(total, 7)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_talkgroup_get(self):
@@ -515,6 +558,13 @@ class APITalkgroupTests(APITestCase):
         user2_tg2_response = view(user2_tg2_request, request_uuid=self.tg2.UUID)
         user2_tg2_response = user2_tg2_response.render()
 
+        nonexistent_uuid = uuid.uuid4()
+        nonexistent_endpoint = reverse('talkgroup_view',  kwargs={'request_uuid': nonexistent_uuid})
+        nonexistent_request = self.factory.get(nonexistent_endpoint)
+        force_authenticate(nonexistent_request, user=self.privilaged_user)
+        nonexistent_response = view(nonexistent_request, request_uuid=nonexistent_uuid)
+        nonexistent_response = nonexistent_response.render()
+
 
         admin_tg1_data = json.loads(admin_tg1_response.content)
         user1_tg1_data = json.loads(user1_tg1_response.content)
@@ -530,6 +580,7 @@ class APITalkgroupTests(APITestCase):
         self.assertEqual(admin_tg2_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_tg2_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_tg2_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(admin_tg1_data), json.dumps(talkgroup1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_tg1_data), json.dumps(talkgroup1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(admin_tg2_data), json.dumps(talkgroup2_payload, cls=UUIDEncoder))
@@ -557,10 +608,21 @@ class APITalkgroupTests(APITestCase):
         response = view(request, request_uuid=self.tg4.UUID)
         response = response.render()
 
+        malformed_payload = TalkGroupSerializer(
+            self.tg4
+        ).data
+        malformed_payload["encrypted"] = "no"
+        malformed_payload["mode"] = 420
+        malformed_request = self.factory.put(endpoint,  malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=self.tg4.UUID)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_talkgroup_delete(self):
@@ -584,7 +646,7 @@ class APITalkgroupTests(APITestCase):
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(total,4)
+        self.assertEqual(total,5)
 
     def test_api_talkgroup_transmission_list(self):
         '''Test for the Talkgroup Transmission List EP'''
@@ -600,6 +662,10 @@ class APITalkgroupTests(APITestCase):
         ).data
         talkgroup4_payload = TransmissionListSerializer(
             Transmission.objects.filter(talkgroup=self.tg4),
+            many=True
+        ).data
+        talkgroup6_payload = TransmissionListSerializer(
+            Transmission.objects.filter(talkgroup=self.tg6),
             many=True
         ).data
         endpoint = reverse('talkgroup_transmissions',  kwargs={'request_uuid': self.tg1.UUID})
@@ -652,6 +718,28 @@ class APITalkgroupTests(APITestCase):
         user2_tg4_response = user2_tg4_response.render()
 
 
+        admin_tg6_request = self.factory.get(endpoint)
+        force_authenticate(admin_tg6_request, user=self.privilaged_user)
+        admin_tg6_response = view(admin_tg6_request, request_uuid=self.tg6.UUID)
+        admin_tg6_response = admin_tg6_response.render()
+
+        user1_tg6_request = self.factory.get(endpoint)
+        force_authenticate(user1_tg6_request, user=self.user)
+        user1_tg6_response = view(user1_tg6_request, request_uuid=self.tg6.UUID)
+        user1_tg6_response = user1_tg6_response.render()
+
+        user2_tg6_request = self.factory.get(endpoint)
+        force_authenticate(user2_tg6_request, user=self.user2)
+        user2_tg6_response = view(user2_tg6_request, request_uuid=self.tg6.UUID)
+        user2_tg6_response = user2_tg6_response.render()
+
+
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.user2)
+        nonexistent_response = view(nonexistent_request, request_uuid=uuid.uuid4())
+        nonexistent_response = nonexistent_response.render()
+
+
         admin_tg1_data = json.loads(admin_tg1_response.content)
         user1_tg1_data = json.loads(user1_tg1_response.content)
         # user2_tg1_data = json.loads(user2_tg1_response.content)
@@ -665,6 +753,10 @@ class APITalkgroupTests(APITestCase):
         # user1_tg2_data = json.loads(user1_tg2_response.content)
         user2_tg4_data = json.loads(user2_tg4_response.content)
 
+        admin_tg6_data = json.loads(admin_tg6_response.content)
+        user1_tg6_data = json.loads(user1_tg6_response.content)
+        # user2_tg6_data = json.loads(user2_tg4_response.content)
+
         self.assertEqual(admin_tg1_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_tg1_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user2_tg1_response.status_code, status.HTTP_403_FORBIDDEN)
@@ -674,9 +766,15 @@ class APITalkgroupTests(APITestCase):
         self.assertEqual(admin_tg4_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_tg4_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_tg4_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(admin_tg6_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user1_tg6_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user2_tg6_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(admin_tg1_data["results"]), json.dumps(talkgroup1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_tg1_data["results"]), json.dumps(talkgroup1_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(admin_tg2_data["results"]), json.dumps(talkgroup2_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_tg2_data["results"]), json.dumps(talkgroup2_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(admin_tg4_data["results"]), json.dumps(talkgroup4_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_tg4_data["results"]), json.dumps(talkgroup4_payload, cls=UUIDEncoder))
+        self.assertEqual(json.dumps(admin_tg6_data["results"]), json.dumps(talkgroup6_payload, cls=UUIDEncoder))
+        self.assertEqual(json.dumps(user1_tg6_data["results"]), json.dumps(talkgroup6_payload, cls=UUIDEncoder))
