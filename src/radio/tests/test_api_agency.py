@@ -142,7 +142,7 @@ class APIAgencyTests(APITestCase):
         data = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(nonexistent_response.status_code, status.nonexistent_response)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_agency_update(self):
@@ -174,9 +174,9 @@ class APIAgencyTests(APITestCase):
         ).data
         del malformed_payload["UUID"]
         malformed_payload["city"] = "SOMETHING SNARKY"
-        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
         force_authenticate(malformed_request, user=self.privilaged_user)
-        malformed_response = view(malformed_request)
+        malformed_response = view(malformed_request, request_uuid=agency_to_update.UUID)
         malformed_response = malformed_response.render()
 
         data = json.loads(response.content)

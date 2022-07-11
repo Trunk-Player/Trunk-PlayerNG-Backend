@@ -75,7 +75,7 @@ class APISystemTests(APITestCase):
         self.system3: System = System.objects.create(
             name="System3",
             systemACL=self.system_acl3,
-            rr_system_id="555",
+            rr_system_id=None,
             enable_talkgroup_acls=True,
             prune_transmissions=False,
             notes=""
@@ -134,6 +134,7 @@ class APISystemTests(APITestCase):
         payload = SystemSerializer(
             to_create
         ).data
+        del payload["UUID"]
 
         endpoint = reverse('system_create')
 
@@ -147,11 +148,22 @@ class APISystemTests(APITestCase):
         response = view(request)
         response = response.render()
 
+        malformed_payload = SystemSerializer(
+            to_create
+        ).data
+        malformed_payload["enable_talkgroup_acls"] = 6
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
         systems = System.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(systems, 4)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
@@ -222,6 +234,11 @@ class APISystemTests(APITestCase):
         user2_restricted2_response = view(user2_restricted2_request, request_uuid=restricted2_system.UUID)
         user2_restricted2_response = user2_restricted2_response.render()
 
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.user2)
+        nonexistent_response = view(nonexistent_request, request_uuid=uuid.uuid4())
+        nonexistent_response = nonexistent_response.render()
+
         data = json.loads(admin_response.content)
         user1_data = json.loads(user1_response.content)
         restricted_data = json.loads(admin_restricted_response.content)
@@ -236,6 +253,7 @@ class APISystemTests(APITestCase):
         self.assertEqual(admin_restricted2_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_restricted2_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(user2_restricted2_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user1_data), json.dumps(payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(restricted_data), json.dumps(restricted_payload, cls=UUIDEncoder))
@@ -265,11 +283,21 @@ class APISystemTests(APITestCase):
         response = view(request, request_uuid=to_update.UUID)
         response = response.render()
 
+        malformed_payload = SystemSerializer(
+            to_update
+        ).data
+        malformed_payload["systemACL"] = 6
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=to_update.UUID)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
         systems = System.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(systems, 3)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
@@ -325,9 +353,40 @@ class APISystemTests(APITestCase):
         response = view(request, request_uuid=system.UUID)
         response = response.render()
 
+        payload2 = {
+            "username": os.getenv('RR_USER'),
+            "password": os.getenv('RR_PASS')
+        }
+
+        request2 = self.factory.post(endpoint, payload2, format='json')
+        force_authenticate(request2, user=self.privilaged_user)
+        response2 = view(request2, request_uuid=self.system1.UUID)
+        response2 = response2.render()
+
+        payload3 = {}
+        request3 = self.factory.post(endpoint, payload3, format='json')
+        force_authenticate(request3, user=self.privilaged_user)
+        response3 = view(request3, request_uuid=system.UUID)
+        response3 = response3.render()
+
+        payload4 = {}
+        request4 = self.factory.post(endpoint, payload4, format='json')
+        force_authenticate(request4, user=self.privilaged_user)
+        response4 = view(request4, request_uuid=self.system1.UUID)
+        response4 = response4.render()
+
+        request5 = self.factory.post(endpoint, payload2, format='json')
+        force_authenticate(request5, user=self.privilaged_user)
+        response5 = view(request5, request_uuid=system.UUID)
+        response5 = response5.render()
+
         # TODO: IDK something
         #talkgroups = TalkGroup.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(response3.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response4.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response5.status_code, status.HTTP_400_BAD_REQUEST)
         #self.assertGreater(talkgroups, 0)
