@@ -83,6 +83,7 @@ class APIAgencyTests(APITestCase):
         payload = AgencySerializer(
             agency_to_create
         ).data
+        del payload["UUID"]
         payload["city"].append(self.city.UUID)
 
         endpoint = reverse('agency_create')
@@ -97,11 +98,24 @@ class APIAgencyTests(APITestCase):
         response = view(request)
         response = response.render()
 
+
+        malformed_payload = AgencySerializer(
+            agency_to_create
+        ).data
+        del malformed_payload["UUID"]
+        malformed_payload["city"] = "Bacon Boys"
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
         agencies = Agency.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(agencies, 3)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
@@ -120,9 +134,15 @@ class APIAgencyTests(APITestCase):
         response = view(request, request_uuid=agency.UUID)
         response = response.render()
 
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.user)
+        nonexistent_response = view(nonexistent_request, request_uuid=uuid.uuid4())
+        nonexistent_response = nonexistent_response.render()
+
         data = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(nonexistent_response.status_code, status.nonexistent_response)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_agency_update(self):
@@ -149,11 +169,22 @@ class APIAgencyTests(APITestCase):
         response = view(request, request_uuid=agency_to_update.UUID)
         response = response.render()
 
+        malformed_payload = AgencySerializer(
+            agency_to_update
+        ).data
+        del malformed_payload["UUID"]
+        malformed_payload["city"] = "SOMETHING SNARKY"
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
         agencies = Agency.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(agencies, 2)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
