@@ -188,6 +188,7 @@ class APISystemForwarderTests(APITestCase):
             to_create
         ).data
 
+        del payload["UUID"]
         payload["forwarded_systems"] = [self.system1.UUID]
         payload["talkgroup_filter"] = [self.tg2.UUID]
 
@@ -203,11 +204,23 @@ class APISystemForwarderTests(APITestCase):
         response = view(request)
         response = response.render()
 
+
+        malformed_payload = SystemForwarderSerializer(
+            to_create
+        ).data
+        malformed_payload["remote_url"] = True
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
         total = SystemForwarder.objects.all().count()
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(total, 4)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
@@ -229,10 +242,17 @@ class APISystemForwarderTests(APITestCase):
         user1_response = view(user1_request, request_uuid=self.system_forwarder1.UUID)
 
 
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.privilaged_user)
+        nonexistent_response = view(nonexistent_request, request_uuid=uuid.uuid4())
+        nonexistent_response = nonexistent_response.render()
+
+
         data = json.loads(admin_response.content)
 
         self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(data), json.dumps(system_forwarder_payload, cls=UUIDEncoder))
 
     def test_api_system_forwarder_update(self):
@@ -243,7 +263,7 @@ class APISystemForwarderTests(APITestCase):
             self.system_forwarder2
         ).data
         payload["enabled"] = False
-
+        payload["feedKey"] = uuid.uuid4()
         endpoint = reverse('systemforwarder_view',  kwargs={'request_uuid': self.system_forwarder2.UUID})
 
         user1_request = self.factory.put(endpoint, payload, format='json')
@@ -256,8 +276,17 @@ class APISystemForwarderTests(APITestCase):
         response = view(request, request_uuid=self.system_forwarder2.UUID)
         response = response.render()
 
+        malformed_payload = SystemForwarderSerializer(
+            self.system_forwarder2
+        ).data
+        malformed_payload["remote_url"] = True
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=self.system_forwarder2.UUID)
+        malformed_response = malformed_response.render()
 
         data = json.loads(response.content)
+        del payload["feedKey"]
 
         self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

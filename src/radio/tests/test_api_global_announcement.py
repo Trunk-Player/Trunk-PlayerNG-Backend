@@ -85,7 +85,7 @@ class APIGlobalAnnouncmentTests(APITestCase):
         payload = GlobalAnnouncementSerializer(
             to_create
         ).data
-
+        del payload["UUID"]
         endpoint = reverse('globalannouncement_create')
 
         un_privilaged_request = self.factory.post(endpoint, payload, format='json')
@@ -98,11 +98,22 @@ class APIGlobalAnnouncmentTests(APITestCase):
         response = view(request)
         response = response.render()
 
+        malformed_payload = GlobalAnnouncementSerializer(
+            to_create
+        ).data
+        malformed_payload["name"] = True
+        malformed_request = self.factory.post(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request)
+        malformed_response = malformed_response.render()
+
         data = json.loads(response.content)
+        del data["UUID"]
         global_announcements = GlobalAnnouncement.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(global_announcements, 3)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
@@ -121,9 +132,21 @@ class APIGlobalAnnouncmentTests(APITestCase):
         response = view(request, request_uuid=global_announcement.UUID)
         response = response.render()
 
+        disabled_request = self.factory.get(endpoint)
+        force_authenticate(disabled_request, user=self.user)
+        disabled_response = view(disabled_request, request_uuid=self.ga1.UUID)
+        disabled_response = disabled_response.render()
+
+        nonexistent_request = self.factory.get(endpoint)
+        force_authenticate(nonexistent_request, user=self.user)
+        nonexistent_response = view(nonexistent_request, request_uuid=uuid.uuid4())
+        nonexistent_response = nonexistent_response.render()
+
         data = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(disabled_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(nonexistent_response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
     def test_api_global_announcment_update(self):
@@ -150,11 +173,22 @@ class APIGlobalAnnouncmentTests(APITestCase):
         response = view(request, request_uuid=to_update.UUID)
         response = response.render()
 
+        malformed_payload = GlobalAnnouncementSerializer(
+            to_update
+        ).data
+        malformed_payload["name"] = True
+        malformed_request = self.factory.put(endpoint, malformed_payload, format='json')
+        force_authenticate(malformed_request, user=self.privilaged_user)
+        malformed_response = view(malformed_request, request_uuid=to_update.UUID)
+        malformed_response = malformed_response.render()
+
+
         data = json.loads(response.content)
         global_announcements = GlobalAnnouncement.objects.all().count()
 
         self.assertEqual(un_privilaged_response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(malformed_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(global_announcements, 2)
         self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
 
