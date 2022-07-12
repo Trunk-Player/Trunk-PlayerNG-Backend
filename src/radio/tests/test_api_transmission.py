@@ -26,25 +26,18 @@ from radio.models import (
 )
 
 from radio.serializers import (
-    TalkGroupSerializer,
-    TalkGroupViewListSerializer,
-    TransmissionListSerializer
+    TransmissionListSerializer,
+    TransmissionSerializer
 )
 
 from radio.views.api.transmission import (
     Create,
     List,
-    View,
-    UnitList,
-    UnitView,
-    FreqView,
-    FreqList
+    View
 )
 
 from radio.helpers.utils import (
     UUIDEncoder,
-    get_user_allowed_systems,
-    get_user_allowed_talkgroups_for_systems,
     get_user_allowed_transmissions
 )
 
@@ -817,9 +810,9 @@ class APITransmissionTests(APITestCase):
         '''Test for the Transmsion Get EP'''
         view = View.as_view()
 
-        transmission1_payload = TransmissionListSerializer(self.transmission1).data
-        transmission2_payload = TransmissionListSerializer(self.transmission2).data
-        endpoint = reverse('talkgroup_view',  kwargs={'request_uuid': self.transmission1.UUID})
+        transmission1_payload = TransmissionSerializer(self.transmission1).data
+        transmission2_payload = TransmissionSerializer(self.transmission2).data
+        endpoint = reverse('transmission_view',  kwargs={'request_uuid': self.transmission1.UUID})
 
         admin_tx1_request = self.factory.get(endpoint)
         force_authenticate(admin_tx1_request, user=self.privilaged_user)
@@ -872,56 +865,28 @@ class APITransmissionTests(APITestCase):
         self.assertEqual(json.dumps(admin_tx2_data), json.dumps(transmission2_payload, cls=UUIDEncoder))
         self.assertEqual(json.dumps(user2_tx2_data), json.dumps(transmission2_payload, cls=UUIDEncoder))
 
-    # def test_api_talkgroup_update(self):
-    #     '''Test for the Talkgroup Update EP'''
-    #     view = View.as_view()
+    def test_api_taransmission_delete(self):
+        '''Test for the Transmission Delete EP'''
+        view = View.as_view()
 
-    #     payload = TalkGroupSerializer(
-    #         self.tg4
-    #     ).data
-    #     payload["mode"] = "analog"
-    #     payload["agency"] = [self.agency.UUID]
+        endpoint = reverse('transmission_view',  kwargs={'request_uuid': self.tg2.UUID})
 
-    #     endpoint = reverse('talkgroup_view',  kwargs={'request_uuid': self.tg4.UUID})
+        user1_request = self.factory.delete(endpoint)
+        force_authenticate(user1_request, user=self.user)
+        user1_response = view(user1_request, request_uuid=self.tg2.UUID)
+        user1_response = user1_response.render()
 
-    #     user1_request = self.factory.put(endpoint, payload, format='json')
-    #     force_authenticate(user1_request, user=self.user)
-    #     user1_response = view(user1_request, request_uuid=self.tg4.UUID)
-    #     user1_response = user1_response.render()
-
-    #     request = self.factory.put(endpoint, payload, format='json')
-    #     force_authenticate(request, user=self.privilaged_user)
-    #     response = view(request, request_uuid=self.tg4.UUID)
-    #     response = response.render()
-
-    #     data = json.loads(response.content)
-
-    #     self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(json.dumps(data), json.dumps(payload, cls=UUIDEncoder))
-
-    # def test_api_talkgroup_delete(self):
-    #     '''Test for the Talkgroup Delete EP'''
-    #     view = View.as_view()
-
-    #     endpoint = reverse('talkgroup_view',  kwargs={'request_uuid': self.tg2.UUID})
-
-    #     user1_request = self.factory.delete(endpoint)
-    #     force_authenticate(user1_request, user=self.user)
-    #     user1_response = view(user1_request, request_uuid=self.tg2.UUID)
-    #     user1_response = user1_response.render()
-
-    #     request = self.factory.delete(endpoint)
-    #     force_authenticate(request, user=self.privilaged_user)
-    #     response = view(request, request_uuid=self.tg2.UUID)
-    #     response = response.render()
+        request = self.factory.delete(endpoint)
+        force_authenticate(request, user=self.privilaged_user)
+        response = view(request, request_uuid=self.tg2.UUID)
+        response = response.render()
 
 
-    #     total = TalkGroup.objects.all().count()
+        total = TalkGroup.objects.all().count()
 
-    #     self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
-    #     self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-    #     self.assertEqual(total,4)
+        self.assertEqual(user1_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(total,4)
 
     # def test_api_talkgroup_transmission_list(self):
     #     '''Test for the Talkgroup Transmission List EP'''
