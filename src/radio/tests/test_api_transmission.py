@@ -813,64 +813,64 @@ class APITransmissionTests(APITestCase):
         # self.assertEqual(total, 7)
         # self.assertEqual(json.dumps(data), json.dumps(to_create, cls=UUIDEncoder))
 
-    # def test_api_talkgroup_get(self):
-    #     '''Test for the Talkgroup Get EP'''
-    #     view = View.as_view()
+    def test_api_transmission_get(self):
+        '''Test for the Transmsion Get EP'''
+        view = View.as_view()
 
-    #     talkgroup1_payload = TalkGroupViewListSerializer(self.tg1).data
-    #     talkgroup2_payload = TalkGroupViewListSerializer(self.tg2).data
-    #     endpoint = reverse('talkgroup_view',  kwargs={'request_uuid': self.tg1.UUID})
+        transmission1_payload = TalkGroupViewListSerializer(self.transmission1).data
+        transmission2_payload = TalkGroupViewListSerializer(self.transmission2).data
+        endpoint = reverse('talkgroup_view',  kwargs={'request_uuid': self.transmission1.UUID})
 
-    #     admin_tg1_request = self.factory.get(endpoint)
-    #     force_authenticate(admin_tg1_request, user=self.privilaged_user)
-    #     admin_tg1_response = view(admin_tg1_request, request_uuid=self.tg1.UUID)
-    #     admin_tg1_response = admin_tg1_response.render()
+        admin_tx1_request = self.factory.get(endpoint)
+        force_authenticate(admin_tx1_request, user=self.privilaged_user)
+        admin_tx1_response = view(admin_tx1_request, request_uuid=self.transmission1.UUID)
+        admin_tx1_response = admin_tx1_response.render()
 
-    #     user1_tg1_request = self.factory.get(endpoint)
-    #     force_authenticate(user1_tg1_request, user=self.user)
-    #     user1_tg1_response = view(user1_tg1_request, request_uuid=self.tg1.UUID)
-    #     user1_tg1_response = user1_tg1_response.render()
+        user1_tx1_request = self.factory.get(endpoint)
+        force_authenticate(user1_tx1_request, user=self.user)
+        user1_tx1_response = view(user1_tx1_request, request_uuid=self.transmission1.UUID)
+        user1_tx1_response = user1_tx1_response.render()
 
-    #     user2_tg1_request = self.factory.get(endpoint)
-    #     force_authenticate(user2_tg1_request, user=self.user2)
-    #     user2_tg1_response = view(user2_tg1_request, request_uuid=self.tg1.UUID)
-    #     user2_tg1_response = user2_tg1_response.render()
-
-
-    #     admin_tg2_request = self.factory.get(endpoint)
-    #     force_authenticate(admin_tg2_request, user=self.privilaged_user)
-    #     admin_tg2_response = view(admin_tg2_request, request_uuid=self.tg2.UUID)
-    #     admin_tg2_response = admin_tg2_response.render()
-
-    #     user1_tg2_request = self.factory.get(endpoint)
-    #     force_authenticate(user1_tg2_request, user=self.user)
-    #     user1_tg2_response = view(user1_tg2_request, request_uuid=self.tg2.UUID)
-    #     user1_tg2_response = user1_tg2_response.render()
-
-    #     user2_tg2_request = self.factory.get(endpoint)
-    #     force_authenticate(user2_tg2_request, user=self.user2)
-    #     user2_tg2_response = view(user2_tg2_request, request_uuid=self.tg2.UUID)
-    #     user2_tg2_response = user2_tg2_response.render()
+        user2_tx1_request = self.factory.get(endpoint)
+        force_authenticate(user2_tx1_request, user=self.user2)
+        user2_tx1_response = view(user2_tx1_request, request_uuid=self.transmission1.UUID)
+        user2_tx1_response = user2_tx1_response.render()
 
 
-    #     admin_tg1_data = json.loads(admin_tg1_response.content)
-    #     user1_tg1_data = json.loads(user1_tg1_response.content)
-    #     # user2_tg1_data = json.loads(user2_tg1_response.content)
+        admin_tx2_request = self.factory.get(endpoint)
+        force_authenticate(admin_tx2_request, user=self.privilaged_user)
+        admin_tx2_response = view(admin_tx2_request, request_uuid=self.transmission2.UUID)
+        admin_tx2_response = admin_tx2_response.render()
 
-    #     admin_tg2_data = json.loads(admin_tg2_response.content)
-    #     # user1_tg2_data = json.loads(user1_tg2_response.content)
-    #     user2_tg2_data = json.loads(user2_tg2_response.content)
+        user1_tx2_request = self.factory.get(endpoint)
+        force_authenticate(user1_tx2_request, user=self.user)
+        user1_tx2_response = view(user1_tx2_request, request_uuid=self.transmission2.UUID)
+        user1_tx2_response = user1_tx2_response.render()
 
-    #     self.assertEqual(admin_tg1_response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(user1_tg1_response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(user2_tg1_response.status_code, status.HTTP_403_FORBIDDEN)
-    #     self.assertEqual(admin_tg2_response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(user1_tg2_response.status_code, status.HTTP_403_FORBIDDEN)
-    #     self.assertEqual(user2_tg2_response.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(json.dumps(admin_tg1_data), json.dumps(talkgroup1_payload, cls=UUIDEncoder))
-    #     self.assertEqual(json.dumps(user1_tg1_data), json.dumps(talkgroup1_payload, cls=UUIDEncoder))
-    #     self.assertEqual(json.dumps(admin_tg2_data), json.dumps(talkgroup2_payload, cls=UUIDEncoder))
-    #     self.assertEqual(json.dumps(user2_tg2_data), json.dumps(talkgroup2_payload, cls=UUIDEncoder))
+        user2_tx2_request = self.factory.get(endpoint)
+        force_authenticate(user2_tx2_request, user=self.user2)
+        user2_tx2_response = view(user2_tx2_request, request_uuid=self.transmission2.UUID)
+        user2_tx2_response = user2_tx2_response.render()
+
+
+        admin_tx1_data = json.loads(admin_tx1_response.content)
+        user1_tx1_data = json.loads(user1_tx1_response.content)
+        # user2_tx1_data = json.loads(user2_tx1_response.content)
+
+        admin_tx2_data = json.loads(admin_tx2_response.content)
+        # user1_tx2_data = json.loads(user1_tx2_response.content)
+        user2_tx2_data = json.loads(user2_tx2_response.content)
+
+        self.assertEqual(admin_tx1_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user1_tx1_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user2_tx1_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(admin_tx2_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(user1_tx2_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(user2_tx2_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.dumps(admin_tx1_data), json.dumps(transmission1_payload, cls=UUIDEncoder))
+        self.assertEqual(json.dumps(user1_tx1_data), json.dumps(transmission1_payload, cls=UUIDEncoder))
+        self.assertEqual(json.dumps(admin_tx2_data), json.dumps(transmission2_payload, cls=UUIDEncoder))
+        self.assertEqual(json.dumps(user2_tx2_data), json.dumps(transmission2_payload, cls=UUIDEncoder))
 
     # def test_api_talkgroup_update(self):
     #     '''Test for the Talkgroup Update EP'''
