@@ -817,8 +817,8 @@ class APITransmissionTests(APITestCase):
         '''Test for the Transmsion Get EP'''
         view = View.as_view()
 
-        transmission1_payload = TalkGroupViewListSerializer(self.transmission1).data
-        transmission2_payload = TalkGroupViewListSerializer(self.transmission2).data
+        transmission1_payload = TransmissionListSerializer(self.transmission1).data
+        transmission2_payload = TransmissionListSerializer(self.transmission2).data
         endpoint = reverse('talkgroup_view',  kwargs={'request_uuid': self.transmission1.UUID})
 
         admin_tx1_request = self.factory.get(endpoint)
