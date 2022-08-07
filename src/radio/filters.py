@@ -181,6 +181,7 @@ class AgencyFilter(filters.FilterSet):
         fields = ["UUID", "name", "description", "city"]
 
 class TalkGroupFilter(filters.FilterSet):
+    system__UUID = django_filters.CharFilter(lookup_expr='icontains')
     system__name = django_filters.CharFilter(lookup_expr='icontains')
     agency__name = django_filters.CharFilter(lookup_expr='icontains')
     agency__description = django_filters.CharFilter(lookup_expr='icontains')

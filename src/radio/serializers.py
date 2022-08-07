@@ -195,10 +195,27 @@ class UnitSerializer(serializers.ModelSerializer):
         fields = ["UUID", "system", "decimal_id", "description"]
 
 
+
 class TransmissionUnitSerializer(serializers.ModelSerializer):
     unit = serializers.SlugRelatedField(
         read_only=False, queryset=Unit.objects.all(), slug_field="decimal_id"
     )
+
+    class Meta:
+        model = TransmissionUnit
+        fields = [
+            "UUID",
+            "time",
+            "unit",
+            "pos",
+            "emergency",
+            "signal_system",
+            "tag",
+            "length",
+        ]
+
+class TransmissionUnitListSerializer(serializers.ModelSerializer):
+    unit = UnitSerializer(read_only=True)
 
     class Meta:
         model = TransmissionUnit
@@ -252,7 +269,7 @@ class TransmissionSerializer(serializers.ModelSerializer):
 
 class TransmissionListSerializer(serializers.ModelSerializer):
     talkgroup = TalkGroupSerializer()
-    units = TransmissionUnitSerializer(read_only=True, many=True)
+    units = TransmissionUnitListSerializer(read_only=True, many=True)
     frequencys = TransmissionFreqSerializer(read_only=True, many=True)
 
     system_name = serializers.SerializerMethodField()
