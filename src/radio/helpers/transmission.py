@@ -76,6 +76,20 @@ def _new_transmission_handler(data: dict) -> dict:
         return transmission.data
 
 
+def _get_transmission_parents(talkgroup_uuid: str) -> dict[list[dict[str, str]]]:
+    meet_the_parents = []
+
+    talkgroup:TalkGroup = TalkGroup.objects.filter(UUID=talkgroup_uuid)
+    meet_the_parents.append({'uuid': list(talkgroup.values_list("UUID", flat=True)), 'type': 'talkgroup'})
+
+    scanlists = ScanList.objects.filter(talkgroups__in=talkgroup)
+    meet_the_parents.append({'uuid':list(scanlists.values_list("UUID", flat=True)), 'type': 'scanlist'})
+
+    scanners = Scanner.objects.filter(scanlists__in=scanlists)
+    meet_the_parents.append({'uuid':list(scanners.values_list("UUID", flat=True)), 'type': 'scanner'})
+
+    return meet_the_parents
+
 def _send_transmission_to_web(data: dict) -> None:
     """
     Handles Forwarding New Transmissions
@@ -84,18 +98,24 @@ def _send_transmission_to_web(data: dict) -> None:
 
     logger.debug(f"[+] GOT NEW TX - {data['UUID']}")
 
-    talkgroup = TalkGroup.objects.filter(UUID=data["talkgroup"])
-    broadcast_transmission.delay(
-        f"tx_{data['talkgroup']}", f'tx_{data["talkgroup"]}', data
-    )
+    parents = _get_transmission_parents(data["talkgroup"])
+    payload = {'uuid': data['UUID'], 'parents': parents}
 
-    scanlists = ScanList.objects.filter(talkgroups__in=talkgroup)
-    for scanlist in scanlists:
-        broadcast_transmission.delay(f"tx_{scanlist.UUID}", f"tx_{scanlist.UUID}", data)
 
-    scanners = Scanner.objects.filter(scanlists__in=scanlists)
-    for scanner in scanners:
-        broadcast_transmission.delay(f"tx_{scanner.UUID}", f"tx_{scanner.UUID}", data)
+    broadcast_transmission.delay('transmission_party_bus', 'transmission_party_bus', payload)
+
+    # talkgroup = TalkGroup.objects.filter(UUID=data["talkgroup"])
+    # broadcast_transmission.delay(
+    #     f"tx_{data['talkgroup']}", f'tx_{data["talkgroup"]}', data
+    # )
+
+    # scanlists = ScanList.objects.filter(talkgroups__in=talkgroup)
+    # for scanlist in scanlists:
+    #     broadcast_transmission.delay(f"tx_{scanlist.UUID}", f"tx_{scanlist.UUID}", data)
+
+    # scanners = Scanner.objects.filter(scanlists__in=scanlists)
+    # for scanner in scanners:
+    #     broadcast_transmission.delay(f"tx_{scanner.UUID}", f"tx_{scanner.UUID}", data)
 
 
 def _forward_transmission(data, talkgroup_uuid: str) -> None:

@@ -290,7 +290,7 @@ class Transmission(models.Model):
     audio_type = models.CharField(max_length=50, null=True, default=None)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
-    audio_file = models.FileField(upload_to="audio/%Y/%m/%d/")
+    audio_file = models.FileField(upload_to="audio/%Y/%m/%d/", max_length=250)
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
     emergency = models.BooleanField(default=False, db_index=True)
