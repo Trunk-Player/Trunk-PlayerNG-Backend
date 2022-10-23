@@ -1,25 +1,6 @@
-import base64
 import logging
-import os
-import uuid
-import requests
-import sentry_sdk
-import socketio
 
 from django.conf import settings
-from django.core.files.base import ContentFile
-
-from radio.helpers.utils import TransmissionDetails
-from radio.models import (
-    ScanList,
-    Scanner,
-    System,
-    SystemRecorder,
-    SystemForwarder,
-    TalkGroup,
-)
-from radio.serializers import TransmissionUploadSerializer
-
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception

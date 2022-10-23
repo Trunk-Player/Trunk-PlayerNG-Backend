@@ -383,7 +383,7 @@ def exec_scanlist_mutation_notification(sender, instance, created, *args, **kwar
     Send mutations to webui
     """
     from radio.tasks import send_new_parental_mutation
-    
+
     e_type = 'created' if created else 'updated'
     i_type = 'scanlist'
     s_uuid = instance.UUID
