@@ -3,7 +3,7 @@ version: '3.8'
 services:
   nginx:
     restart: always
-    image: trunkplayer/trunkplayer-ng-nginx:latest
+    image: trunkplayer/trunkplayer-ng-backend-nginx:latest
     ports:
       - 80:80
       - 443:443
@@ -15,7 +15,7 @@ services:
 
   trunk-player:
     restart: always
-    image: trunkplayer/trunkplayer-ng:latest
+    image: trunkplayer/trunkplayer-ng-backend:latest
     command: "bash -c 'sleep 10; python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py createsuperuser --noinput; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
     environment:
       DEBUG: "${DEBUG}"
@@ -62,7 +62,7 @@ services:
 
   trunk-player-worker:
     restart: always
-    image: trunkplayer/trunkplayer-ng:latest
+    image: trunkplayer/trunkplayer-ng-backend:latest
     command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,radio_refrence,radio_alerts,transmission_ingest,tranmission_push
     environment:
       DEBUG: "${DEBUG}"
@@ -107,7 +107,7 @@ services:
 
   trunk-player-beat:
     restart: always
-    image: trunkplayer/trunkplayer-ng:latest
+    image: trunkplayer/trunkplayer-ng-backend:latest
     command: celery -A trunkplayer_ng beat -l info
     environment:
       DEBUG: "${DEBUG}"
