@@ -197,7 +197,7 @@ def _broadcast_web_notification(
         settings.CELERY_BROKER_URL
     )
     sio = socketio.Server(
-        async_mode="gevent", client_manager=mgr, logger=True, engineio_logger=True
+        async_mode="gevent", client_manager=mgr, logger=True, engineio_logger=True, cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS
     )
     data = {
         "trannsmission_uuid": trannsmission_uuid,

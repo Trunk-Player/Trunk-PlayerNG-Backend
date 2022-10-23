@@ -14,7 +14,7 @@ mgr = socketio.KombuManager(
     settings.CELERY_BROKER_URL
 )
 sio = socketio.Server(
-    async_mode="gevent_uwsgi", client_manager=mgr, logger=False, engineio_logger=False
+    async_mode="gevent_uwsgi", client_manager=mgr, logger=False, engineio_logger=False, cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS
 )
 
 
