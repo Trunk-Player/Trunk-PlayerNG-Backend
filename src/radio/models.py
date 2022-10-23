@@ -4,7 +4,7 @@ from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
 
-from radio.tasks import send_new_parental_mutation
+
 
 class UserProfile(models.Model):
     UUID = models.UUIDField(
@@ -382,6 +382,7 @@ def exec_scanlist_mutation_notification(sender, instance, created, *args, **kwar
     """
     Send mutations to webui
     """
+    from radio.tasks import send_new_parental_mutation
     
     e_type = 'created' if created else 'updated'
     i_type = 'scanlist'
@@ -395,11 +396,12 @@ def exec_scanlist_mutation_notification(sender, instance, created, *args, **kwar
 
  # pylint: disable=unused-argument
 @receiver(models.signals.post_delete, sender=ScanList)
-def exec_scanlist_mutation_notification(sender, instance, created, *args, **kwargs):
+def exec_scanlist_mutation_notification_delete(sender, instance, created, *args, **kwargs):
     """
     Send mutations to webui
     """
-    
+    from radio.tasks import send_new_parental_mutation
+
     e_type = 'eject_into_the_void'
     i_type = 'scanlist'
     s_uuid = instance.UUID
@@ -434,7 +436,8 @@ def exec_scanner_mutation_notification(sender, instance, created, *args, **kwarg
     """
     Send mutations to webui
     """
-    
+    from radio.tasks import send_new_parental_mutation
+
     e_type = 'created' if created else 'updated'
     i_type = 'scanner'
     s_uuid = instance.UUID
@@ -447,10 +450,11 @@ def exec_scanner_mutation_notification(sender, instance, created, *args, **kwarg
 
  # pylint: disable=unused-argument
 @receiver(models.signals.post_delete, sender=Scanner)
-def exec_scanner_mutation_notification(sender, instance, created, *args, **kwargs):
+def exec_scanner_mutation_notification_delete(sender, instance, created, *args, **kwargs):
     """
     Send mutations to webui
     """
+    from radio.tasks import send_new_parental_mutation
     
     e_type = 'eject_into_the_void'
     i_type = 'scanner'
