@@ -4,6 +4,7 @@ from celery import shared_task
 
 from radio.helpers.incident import _send_incident, _forward_incident
 from radio.helpers.cleanup import _prune_transmissions
+from radio.helpers.mutations import _send_new_parental_mutation
 
 from radio.helpers.notifications import (
     _broadcast_web_notification,
@@ -107,6 +108,14 @@ def send_transmission_notifications(transmission: dict, *args, **kwargs) -> None
     Does the logic to send user notifications
     """
     _send_transmission_notifications(transmission)
+
+
+@shared_task
+def send_new_parental_mutation(uuid: str, type: str, event: str, *args, **kwargs) -> None:
+    """
+    Does the logic to send user notifications
+    """
+    _send_new_parental_mutation(uuid, type, event)
 
 
 @shared_task

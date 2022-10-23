@@ -101,6 +101,7 @@ def connect(sid, environ, auth):
     logging.debug(f"[+] User {user.email} has connected to the socket")
     sio.enter_room(sid, "unicast")
     sio.enter_room(sid, "transmission_party_bus")
+    sio.enter_room(sid, "parents_rapid_genetic_mutations")
     sio.enter_room(sid, f"alert_{user.userProfile.UUID}")
     sio.emit("debug", {"data": "Connected"}, room=sid)
 
