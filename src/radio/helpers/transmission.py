@@ -180,7 +180,7 @@ def _broadcast_transmission(event: str, room: str, data: dict):
             settings.CELERY_BROKER_URL
         )
         sio = socketio.Server(
-            async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False
+            async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False, cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS
         )
         sio.emit(event, data, room=room)
         logger.debug(f"[+] BROADCASTING TO {room}")
