@@ -61,24 +61,24 @@ def tx_request(sid, message):
         )
 
 
-@sio.event
-def deregister_tx_source(sid, message):
-    """
-    Deregisters a user to a Transmision source room
-    """
-    for uuid in message["UUIDs"]:
-        sio.leave_room(sid, f"tx_{uuid}")
-        sio.emit("debug", {"data": f"disconnected to room tx_{uuid}"}, room=sid)
+# @sio.event
+# def deregister_tx_source(sid, message):
+#     """
+#     Deregisters a user to a Transmision source room
+#     """
+#     for uuid in message["UUIDs"]:
+#         sio.leave_room(sid, f"tx_{uuid}")
+#         sio.emit("debug", {"data": f"disconnected to room tx_{uuid}"}, room=sid)
 
 
-@sio.event
-def register_tx_source(sid, message):
-    """
-    Registers a user to a Transmision source room
-    """
-    for uuid in message["UUIDs"]:
-        sio.enter_room(sid, f"tx_{uuid}")
-        sio.emit("debug", {"data": f"connected to room tx_{uuid}"}, room=sid)
+# @sio.event
+# def register_tx_source(sid, message):
+#     """
+#     Registers a user to a Transmision source room
+#     """
+#     for uuid in message["UUIDs"]:
+#         sio.enter_room(sid, f"tx_{uuid}")
+#         sio.emit("debug", {"data": f"connected to room tx_{uuid}"}, room=sid)
 
 # pylint: disable=unused-argument
 @sio.event
@@ -100,6 +100,7 @@ def connect(sid, environ, auth):
     sio.save_session(sid, {"user": user})
     logging.debug(f"[+] User {user.email} has connected to the socket")
     sio.enter_room(sid, "unicast")
+    sio.enter_room(sid, "transmission_party_bus")
     sio.enter_room(sid, f"alert_{user.userProfile.UUID}")
     sio.emit("debug", {"data": "Connected"}, room=sid)
 
