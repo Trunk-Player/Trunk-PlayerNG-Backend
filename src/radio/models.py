@@ -4,6 +4,8 @@ from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
 
+from radio.tasks import send_new_parental_mutation
+
 class UserProfile(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -374,6 +376,41 @@ class ScanList(models.Model):
     def __str__(self):
         return self.name
 
+ # pylint: disable=unused-argument
+@receiver(models.signals.post_save, sender=ScanList)
+def exec_scanlist_mutation_notification(sender, instance, created, *args, **kwargs):
+    """
+    Send mutations to webui
+    """
+    
+    e_type = 'created' if created else 'updated'
+    i_type = 'scanlist'
+    s_uuid = instance.UUID
+
+    send_new_parental_mutation.delay(
+        s_uuid,
+        i_type,
+        e_type,
+    )
+
+ # pylint: disable=unused-argument
+@receiver(models.signals.post_delete, sender=ScanList)
+def exec_scanlist_mutation_notification(sender, instance, created, *args, **kwargs):
+    """
+    Send mutations to webui
+    """
+    
+    e_type = 'eject_into_the_void'
+    i_type = 'scanlist'
+    s_uuid = instance.UUID
+
+    send_new_parental_mutation.delay(
+        s_uuid,
+        i_type,
+        e_type,
+    )
+
+
 
 class Scanner(models.Model):
     UUID = models.UUIDField(
@@ -390,6 +427,40 @@ class Scanner(models.Model):
 
     def __str__(self):
         return self.name
+
+ # pylint: disable=unused-argument
+@receiver(models.signals.post_save, sender=Scanner)
+def exec_scanner_mutation_notification(sender, instance, created, *args, **kwargs):
+    """
+    Send mutations to webui
+    """
+    
+    e_type = 'created' if created else 'updated'
+    i_type = 'scanner'
+    s_uuid = instance.UUID
+
+    send_new_parental_mutation.delay(
+        s_uuid,
+        i_type,
+        e_type,
+    )
+
+ # pylint: disable=unused-argument
+@receiver(models.signals.post_delete, sender=Scanner)
+def exec_scanner_mutation_notification(sender, instance, created, *args, **kwargs):
+    """
+    Send mutations to webui
+    """
+    
+    e_type = 'eject_into_the_void'
+    i_type = 'scanner'
+    s_uuid = instance.UUID
+
+    send_new_parental_mutation.delay(
+        s_uuid,
+        i_type,
+        e_type,
+    )
 
 
 class GlobalAnnouncement(models.Model):
