@@ -1,0 +1,181 @@
+version: '3.8'
+
+services:
+  nginx:
+    restart: always
+    #image: trunkplayer/trunkplayer-ng-nginx:latest
+    build: nginx/
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - trunk-player
+    volumes:
+      - ${STATIC_VOLUME_PATH}:/code/static
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+
+  trunk-player:
+    restart: always
+    #image: trunkplayer/trunkplayer-ng:latest
+    build: .
+    command: "bash -c 'sleep 10; python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py createsuperuser --noinput; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
+    environment:
+      DEBUG: "${DEBUG}"
+      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
+      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
+      FORCE_SECURE: "${FORCE_SECURE}" #
+      SECRET_KEY: "${SECRET_KEY}"
+      MYSQL_DATABASE: "${SQL_DATABASE}"
+      MYSQL_USER: "${SQL_USER}"
+      MYSQL_PASSWORD: "${SQL_PASSWORD}"
+      MYSQL_HOST: "${SQL_HOST}"
+      TZ: "${TZ}"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
+      USE_S3: "${USE_S3}"
+      #CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS}
+      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
+      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
+      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
+      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
+      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
+      DJANGO_SUPERUSER_PASSWORD: "${DJANGO_SUPERUSER_PASSWORD}"
+      DJANGO_SUPERUSER_EMAIL: "${DJANGO_SUPERUSER_EMAIL}"
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_PORT: "${EMAIL_PORT}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      EMAIL_HOST_USER: "${EMAIL_HOST_USER}"
+      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
+      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
+      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
+      SPLUNK_HOST: "${SPLUNK_HOST}"
+      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
+      SPLUNK_PORT: "${SPLUNK_PORT}"
+      SPLUNK_INDEX: "${SPLUNK_INDEX}"
+      LOG_LEVEL:  "${LOG_LEVEL}"
+      RR_USER: "${RR_USER}"
+      RR_PASS: "${RR_PASS}"
+    volumes:
+      #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
+      - ${STATIC_VOLUME_PATH}:/code/static
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+    depends_on:
+      - database
+      - rabbitmq
+
+  trunk-player-worker:
+    restart: always
+    #image: trunkplayer/trunkplayer-ng:latest
+    build: .
+    command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,radio_refrence,radio_alerts,transmission_ingest,tranmission_push
+    environment:
+      DEBUG: "${DEBUG}"
+      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
+      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
+      FORCE_SECURE: "${FORCE_SECURE}" #
+      SECRET_KEY: "${SECRET_KEY}"
+      MYSQL_DATABASE: "${SQL_DATABASE}"
+      MYSQL_USER: "${SQL_USER}"
+      MYSQL_PASSWORD: "${SQL_PASSWORD}"
+      MYSQL_HOST: "${SQL_HOST}"
+      TZ: "${TZ}"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
+      USE_S3: "${USE_S3}"
+      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
+      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
+      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
+      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
+      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_PORT: "${EMAIL_PORT}"
+      EMAIL_HOST_USER: "${EMAIL_HOST_USER}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
+      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
+      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
+      SPLUNK_HOST: "${SPLUNK_HOST}"
+      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
+      SPLUNK_PORT: "${SPLUNK_PORT}"
+      SPLUNK_INDEX: "${SPLUNK_INDEX}"
+      LOG_LEVEL:  "${LOG_LEVEL}"
+      RR_USER: "${RR_USER}"
+      RR_PASS: "${RR_PASS}"
+    volumes:
+      #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
+      - ${STATIC_VOLUME_PATH}:/code/static
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+    depends_on:
+      - database
+      - rabbitmq
+
+  trunk-player-beat:
+    restart: always
+    #image: trunkplayer/trunkplayer-ng:latest
+    build: .
+    command: celery -A trunkplayer_ng beat -l info
+    environment:
+      DEBUG: "${DEBUG}"
+      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
+      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
+      FORCE_SECURE: "${FORCE_SECURE}" #
+      SECRET_KEY: "${SECRET_KEY}"
+      MYSQL_DATABASE: "${SQL_DATABASE}"
+      MYSQL_USER: "${SQL_USER}"
+      MYSQL_PASSWORD: "${SQL_PASSWORD}"
+      MYSQL_HOST: "${SQL_HOST}"
+      TZ: "${TZ}"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
+      USE_S3: "${USE_S3}"
+      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
+      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
+      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
+      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
+      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
+      EMAIL_HOST: "${EMAIL_HOST}"
+      EMAIL_PORT: "${EMAIL_PORT}"
+      EMAIL_HOST_USER: "${EMAIL_HOST_USER}"
+      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
+      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
+      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
+      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
+      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
+      SPLUNK_HOST: "${SPLUNK_HOST}"
+      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
+      SPLUNK_PORT: "${SPLUNK_PORT}"
+      SPLUNK_INDEX: "${SPLUNK_INDEX}"
+      LOG_LEVEL:  "${LOG_LEVEL}"
+      RR_USER: "${RR_USER}"
+      RR_PASS: "${RR_PASS}"
+    volumes:
+    #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql) 
+      - ${STATIC_VOLUME_PATH}:/code/static
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+    depends_on:
+      - database
+      - rabbitmq
+
+  database:
+    image: mysql
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${SQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${SQL_DATABASE}"
+      MYSQL_USER: "${SQL_USER}"
+      MYSQL_PASSWORD: "${SQL_PASSWORD}"
+    volumes:
+      - ${DATABASE_PATH}:/var/lib/mysql
+
+  rabbitmq:
+    image: 'rabbitmq:management'
+    restart: always
+    ports:
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+        
+  

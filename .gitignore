@@ -5,5 +5,5 @@ venv/
 *.pyc
 trunkplayer_ng/db.sqlite3
 pytpng.py
-docker-compose.yaml
+#docker-compose.yaml
 .env
