@@ -92,9 +92,9 @@ def connect(sid, environ, auth):
         jwt = environ["HTTP_AUTHORIZATION"]
         valid_jwt = jwt_authenticator.get_validated_token(jwt)
         user = jwt_authenticator.get_user(valid_jwt)
-    except InvalidToken:
-        raise ConnectionRefusedError("authentication failed") from InvalidToken
-    except AuthenticationFailed:
+    except: 
+        sio.emit("debug", {"data": "Token_Plz"}, room=sid)
+        sio.disconnect(sid)
         raise ConnectionRefusedError("authentication failed") from InvalidToken
 
     sio.save_session(sid, {"user": user})
