@@ -17,8 +17,6 @@ from radio.models import (
     SystemACL,
     SystemRecorder,
     TalkGroupACL,
-    TransmissionFreq,
-    TransmissionUnit,
     Unit,
     Transmission,
     TalkGroup,
@@ -328,37 +326,7 @@ class APITransmissionTests(APITestCase):
         )
         self.recorder2.save()
 
-        self.transmission_frequency1: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=856.2125,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency1.save()
-
-        self.transmission_unit1: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit1.save()
-
-        self.transmission_unit2: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit2,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit2.save()
+    
 
         self.transmission1: Transmission = Transmission.objects.create(
             system=self.system1,
@@ -376,41 +344,8 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission1.save()
-        self.transmission1.units.add(self.transmission_unit2)
-        self.transmission1.frequencys.add(self.transmission_frequency1)
-        self.transmission1.save()
 
-        self.transmission_frequency2: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=867.5309,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency2.save()
 
-        self.transmission_unit3: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit3,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit3.save()
-
-        self.transmission_unit4: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit4.save()
 
         self.transmission2: Transmission = Transmission.objects.create(
             system=self.system2,
@@ -428,41 +363,6 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission2.save()
-        self.transmission2.units.add(self.transmission_unit3)
-        self.transmission2.frequencys.add(self.transmission_frequency2)
-        self.transmission2.save()
-
-        self.transmission_frequency3: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=867.5309,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency3.save()
-
-        self.transmission_unit5: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit3,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit5.save()
-
-        self.transmission_unit6: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit6.save()
 
         self.transmission3: Transmission = Transmission.objects.create(
             system=self.system3,
@@ -480,41 +380,7 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission3.save()
-        self.transmission3.units.add(self.transmission_unit4)
-        self.transmission3.frequencys.add(self.transmission_frequency3)
-        self.transmission3.save()
 
-        self.transmission_frequency4: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=867.5309,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency4.save()
-
-        self.transmission_unit7: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit3,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit7.save()
-
-        self.transmission_unit8: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit8.save()
 
         self.transmission4: Transmission = Transmission.objects.create(
             system=self.system4,
@@ -532,41 +398,7 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission4.save()
-        self.transmission4.units.add(self.transmission_unit6)
-        self.transmission4.frequencys.add(self.transmission_frequency3)
-        self.transmission4.save()
 
-        self.transmission_frequency5: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=867.5309,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency5.save()
-
-        self.transmission_unit8: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit3,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit8.save()
-
-        self.transmission_unit9: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit9.save()
 
         self.transmission5: Transmission = Transmission.objects.create(
             system=self.system4,
@@ -584,41 +416,8 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission5.save()
-        self.transmission5.units.add(self.transmission_unit8)
-        self.transmission5.frequencys.add(self.transmission_frequency5)
-        self.transmission5.save()
 
-        self.transmission_frequency6: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=867.5309,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency5.save()
-
-        self.transmission_unit10: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit3,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit10.save()
-
-        self.transmission_unit11: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit11.save()
+    
 
         self.transmission6: Transmission = Transmission.objects.create(
             system=self.system5,
@@ -636,9 +435,7 @@ class APITransmissionTests(APITestCase):
             transcript=""
         )
         self.transmission6.save()
-        self.transmission6.units.add(self.transmission_unit10)
-        self.transmission6.frequencys.add(self.transmission_frequency6)
-        self.transmission6.save()
+
 
         self.sample_json = {
   "freq": 854187500,

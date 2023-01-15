@@ -12,8 +12,6 @@ from radio.models import (
     SystemForwarder,
     SystemRecorder,
     Unit,
-    TransmissionUnit,
-    TransmissionFreq,
     Transmission,
     Incident,
     TalkGroupACL,
@@ -23,8 +21,6 @@ from radio.models import (
     GlobalEmailTemplate,
     UserAlert
 )
-
-
 
 class UserAlertSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,18 +41,15 @@ class UserAlertSerializer(serializers.ModelSerializer):
             "trigger_time",
         ]
 
-
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ["UUID", "site_admin", "description", "site_theme"]
 
-
 class UserMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserMessage
         fields = ["UUID", "urgent", "read", "time", "title", "body", "source"]
-
 
 class UserInboxSerializer(serializers.ModelSerializer):
     messages = UserMessageSerializer(many=True)
@@ -64,13 +57,10 @@ class UserInboxSerializer(serializers.ModelSerializer):
         model = UserInbox
         fields = ["UUID", "user", "messages"]
 
-
-
 class SystemACLSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemACL
         fields = ["UUID", "name", "users", "public"]
-
 
 class SystemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -86,7 +76,6 @@ class SystemSerializer(serializers.ModelSerializer):
             "notes"
         ]
 
-
 class SystemForwarderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemForwarder
@@ -101,18 +90,15 @@ class SystemForwarderSerializer(serializers.ModelSerializer):
             "talkgroup_filter",
         ]
 
-
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = ["UUID", "name", "description"]
 
-
 class AgencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Agency
         fields = ["UUID", "name", "description", "city"]
-
 
 class AgencyViewListSerializer(serializers.ModelSerializer):
     city = CitySerializer(many=True)
@@ -120,7 +106,6 @@ class AgencyViewListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agency
         fields = ["UUID", "name", "description", "city"]
-
 
 class TalkGroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -153,7 +138,6 @@ class TalkGroupListSerializer(serializers.ModelSerializer):
             "notes"
         ]
 
-
 class TalkGroupViewListSerializer(serializers.ModelSerializer):
     agency = AgencyViewListSerializer(read_only=True, many=True)
     system = SystemSerializer(read_only=True)
@@ -172,7 +156,6 @@ class TalkGroupViewListSerializer(serializers.ModelSerializer):
             "notes"
         ]
 
-
 class SystemRecorderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemRecorder
@@ -188,60 +171,10 @@ class SystemRecorderSerializer(serializers.ModelSerializer):
             "api_key",
         ]
 
-
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Unit
         fields = ["UUID", "system", "decimal_id", "description"]
-
-
-
-class TransmissionUnitSerializer(serializers.ModelSerializer):
-    unit = serializers.SlugRelatedField(
-        read_only=False, queryset=Unit.objects.all(), slug_field="decimal_id"
-    )
-
-    class Meta:
-        model = TransmissionUnit
-        fields = [
-            "UUID",
-            "time",
-            "unit",
-            "pos",
-            "emergency",
-            "signal_system",
-            "tag",
-            "length",
-        ]
-
-class TransmissionUnitListSerializer(serializers.ModelSerializer):
-    unit = UnitSerializer(read_only=True)
-
-    class Meta:
-        model = TransmissionUnit
-        fields = [
-            "UUID",
-            "time",
-            "unit",
-            "pos",
-            "emergency",
-            "signal_system",
-            "tag",
-            "length",
-        ]
-
-    # def create(self, validated_data):
-    #     unit = validated_data.pop("unit")
-    #     # pylint: disable=unused-variable
-    #     unit_object, created = Unit.objects.get_or_create(decimal_id=int(unit))
-    #     return Transmission.objects.create(unit=unit_object, **validated_data)
-
-
-class TransmissionFreqSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TransmissionFreq
-        fields = ["UUID", "time", "freq", "pos", "len", "error_count", "spike_count"]
-
 
 class TransmissionSerializer(serializers.ModelSerializer):
     talkgroup = TalkGroupSerializer()
@@ -266,12 +199,8 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "transcript"
         ]
 
-
 class TransmissionListSerializer(serializers.ModelSerializer):
     talkgroup = TalkGroupSerializer()
-    units = TransmissionUnitListSerializer(read_only=True, many=True)
-    frequencys = TransmissionFreqSerializer(read_only=True, many=True)
-
     system_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -301,27 +230,11 @@ class TransmissionListSerializer(serializers.ModelSerializer):
         """
         return obj.system.name
 
-
 class TransmissionUploadSerializer(serializers.ModelSerializer):
     recorder = serializers.SlugRelatedField(
         read_only=False,
         queryset=SystemRecorder.objects.all(),
         slug_field="api_key",
-    )
-
-    units = serializers.SlugRelatedField(
-        read_only=False,
-        queryset=TransmissionUnit.objects.all(),
-        slug_field="UUID",
-        many=True,
-        required=False,
-    )
-    frequencys = serializers.SlugRelatedField(
-        read_only=False,
-        queryset=TransmissionFreq.objects.all(),
-        slug_field="UUID",
-        many=True,
-        required=False,
     )
 
     class Meta:

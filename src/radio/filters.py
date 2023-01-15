@@ -16,8 +16,6 @@ from radio.models import (
     SystemForwarder,
     SystemRecorder,
     Unit,
-    TransmissionUnit,
-    TransmissionFreq,
     Transmission,
     Incident,
     TalkGroupACL,
@@ -288,81 +286,6 @@ class UnitFilter(filters.FilterSet):
         model = Unit
         fields = ["UUID", "system", "decimal_id", "description"]
 
-class TransmissionUnitFilter(filters.FilterSet):
-    time = IsoDateTimeFromToRangeFilter()
-
-    units__decimal_id = django_filters.CharFilter(field_name='unit__decimal_id', lookup_expr='icontains')
-    units__description = django_filters.CharFilter(field_name='unit__description', lookup_expr='icontains')
-
-    length = django_filters.NumberFilter()
-    length__gt = django_filters.NumberFilter(field_name='length', lookup_expr='gt')
-    length__lt = django_filters.NumberFilter(field_name='length', lookup_expr='lt')
-
-    pos = django_filters.NumberFilter()
-    pos__gt = django_filters.NumberFilter(field_name='pos', lookup_expr='gt')
-    pos__lt = django_filters.NumberFilter(field_name='pos', lookup_expr='lt')
-
-    order_by_field = 'ordering'
-    ordering = OrderingFilter(
-        # fields(('model field name', 'parameter name'),)
-        fields=(
-            ('time', 'time'),
-            ('description', 'description'),
-            ('length', 'length'),
-        )
-    )
-
-    class Meta:
-        model = TransmissionUnit
-        fields = [
-            "UUID",
-            "time",
-            "unit",
-            "pos",
-            "emergency",
-            "signal_system",
-            "tag",
-            "length",
-        ]
-
-class TransmissionFreqFilter(filters.FilterSet):
-    time = IsoDateTimeFromToRangeFilter()
-
-    len = django_filters.NumberFilter()
-    len__gt = django_filters.NumberFilter(field_name='len', lookup_expr='gt')
-    len__lt = django_filters.NumberFilter(field_name='len', lookup_expr='lt')
-
-    pos = django_filters.NumberFilter()
-    pos__gt = django_filters.NumberFilter(field_name='pos', lookup_expr='gt')
-    pos__lt = django_filters.NumberFilter(field_name='pos', lookup_expr='lt')
-
-    freq = django_filters.NumberFilter()
-    freq__gt = django_filters.NumberFilter(field_name='freq', lookup_expr='gt')
-    freq__lt = django_filters.NumberFilter(field_name='freq', lookup_expr='lt')
-
-    error_count = django_filters.NumberFilter()
-    error_count__gt = django_filters.NumberFilter(field_name='error_count', lookup_expr='gt')
-    error_count__lt = django_filters.NumberFilter(field_name='error_count', lookup_expr='lt')
-
-    spike_count = django_filters.NumberFilter()
-    spike_count__gt = django_filters.NumberFilter(field_name='spike_count', lookup_expr='gt')
-    spike_count__lt = django_filters.NumberFilter(field_name='spike_count', lookup_expr='lt')
-
-    order_by_field = 'ordering'
-    ordering = OrderingFilter(
-        # fields(('model field name', 'parameter name'),)
-        fields=(
-            ('time', 'time'),
-            ('error_count', 'error_count'),
-            ('spike_count', 'spike_count'),
-            ('len', 'len'),
-        )
-    )
-
-    class Meta:
-        model = TransmissionFreq
-        fields = ["UUID", "time", "freq", "pos", "len", "error_count", "spike_count"]
-
 class IncidentFilter(filters.FilterSet):
     time = IsoDateTimeFromToRangeFilter()
     system__name = django_filters.CharFilter(lookup_expr='icontains')
@@ -455,9 +378,6 @@ class TransmissionFilter(filters.FilterSet):
 
     system__name = django_filters.CharFilter(lookup_expr='icontains')
     recorder__name = django_filters.CharFilter(lookup_expr='icontains')
-    units__decimal_id = django_filters.CharFilter(field_name='units__unit__decimal_id', lookup_expr='icontains')
-    units__description = django_filters.CharFilter(field_name='units__unit__description', lookup_expr='icontains')
-    frequencys__freq = django_filters.CharFilter(lookup_expr='icontains')
 
     talkgroup__alpha_tag = django_filters.CharFilter(field_name='talkgroup__alpha_tag', lookup_expr='icontains')
     talkgroup__decimal_id = django_filters.CharFilter(field_name='talkgroup__decimal_id', lookup_expr='exact')
@@ -493,9 +413,9 @@ class TransmissionFilter(filters.FilterSet):
             "end_time",
             "talkgroup",
             "encrypted",
-            "units",
+            #"units",
             "frequency",
-            "frequencys",
+            #"frequencys",
             "length",
             "locked",
             "transcript",

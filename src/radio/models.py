@@ -1,3 +1,4 @@
+from datetime import datetime
 import uuid
 
 from django.db import models
@@ -252,35 +253,10 @@ def execute_unit_dedup_check(sender, instance, created, *args, **kwargs):
                 instance.delete()
 
 
-class TransmissionUnit(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
-    time = models.DateTimeField(db_index=True)
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
-    pos = models.IntegerField(default=0)
-    emergency = models.BooleanField(default=0)
-    signal_system = models.CharField(default="", blank=True, max_length=50)
-    tag = models.CharField(default="", blank=True, max_length=255)
-    length = models.FloatField(default=0.0)
-
-    def __str__(self):
-        return f"{self.UUID}"
-
-
-class TransmissionFreq(models.Model):
-    UUID = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-    )
-    time = models.DateTimeField()
-    freq = models.IntegerField(default=0, db_index=True)
-    pos = models.IntegerField(default=0)
-    len = models.IntegerField(default=0)
-    error_count = models.IntegerField(default=0)
-    spike_count = models.IntegerField(default=0)
-
-    def __str__(self):
-        return f"{self.UUID}"
+def get_audio_path(instance, filename):
+    time_str = datetime.now().strftime('%Y/%m/%d')
+    safe_alpha_tag = "".join([c for c in instance.talkgroup.alpha_tag if c.isalpha() or c.isdigit() or c==' ']).rstrip()
+    return f"audio/{time_str}/{instance.talkgroup.system.name}_{str(instance.talkgroup.decimal_id)}_{safe_alpha_tag.replace(' ', '-')}/{filename}"
 
 
 class Transmission(models.Model):
@@ -292,12 +268,12 @@ class Transmission(models.Model):
     audio_type = models.CharField(max_length=50, null=True, default=None)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
-    audio_file = models.FileField(upload_to="audio/%Y/%m/%d/", max_length=250)
+    audio_file = models.FileField(upload_to=get_audio_path, max_length=250)
     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE, db_index=True)
     encrypted = models.BooleanField(default=False, db_index=True)
     emergency = models.BooleanField(default=False, db_index=True)
-    units = models.ManyToManyField(TransmissionUnit, blank=True)
-    frequencys = models.ManyToManyField(TransmissionFreq, blank=True)
+    units = models.JSONField(default=list, blank=True)
+    frequencys = models.JSONField(default=list, blank=True)
     frequency = models.FloatField(default=0.0)
     length = models.FloatField(default=0.0, null=True)
 
@@ -309,6 +285,25 @@ class Transmission(models.Model):
 
     def __str__(self):
         return f"[{self.system.name}][{self.talkgroup.alpha_tag}][{self.start_time}] {self.UUID}"
+
+
+@receiver(models.signals.post_delete, sender=Transmission)
+def auto_delete_file_on_delete(sender, instance:Transmission, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `MediaFile` object is deleted.
+    """
+    import os
+    from pathlib import Path
+    if instance.audio_file:
+        audio_path = Path(instance.audio_file.path)
+        parent:Path = audio_path.parent
+
+        if audio_path.exists():
+            os.remove(instance.audio_file.path)
+
+        if not any(Path(parent).iterdir()):
+            os.rmdir(parent)
 
 
 class Incident(models.Model):

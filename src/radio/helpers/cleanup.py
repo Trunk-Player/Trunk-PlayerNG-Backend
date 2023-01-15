@@ -4,14 +4,13 @@ from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
 
-from radio.models import System, Transmission, TransmissionUnit
+from radio.models import System, Transmission
 
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
-
 
 def _prune_transmissions() -> None:
     """
@@ -26,21 +25,6 @@ def _prune_transmissions() -> None:
                 days=system.prune_transmissions_after_days
             )
             TXs = Transmission.objects.filter(system=system, start_time__lte=prunetime)
-            for TX in TXs:
-                try:
-                    TX: Transmission
-
-                    Units = TX.units.all()
-                    Units.delete()
-
-                    freqs = TX.frequencys.all()
-                    freqs.delete()
-                except Exception as e:
-                    if settings.SEND_TELEMETRY:
-                        capture_exception(e)
-                    logging.error(
-                        f"[!] ERROR PRUNING TRANSMISSION CHILDREN {str(TX.UUID)}"
-                    )
 
             try:
                 TXs.delete()
