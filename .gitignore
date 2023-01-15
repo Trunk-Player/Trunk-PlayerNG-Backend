@@ -1,5 +1,6 @@
 venv/*
 venv/
+.database/
 *__pycache__/*
 *.pyc
 trunkplayer_ng/db.sqlite3
