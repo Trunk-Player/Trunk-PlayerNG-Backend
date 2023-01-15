@@ -6,6 +6,3 @@ trunkplayer_ng/db.sqlite3
 pytpng.py
 docker-compose.yaml
 .env
-
-git config --global user.email "maxw@maxwelldps.com"
-  git config --global user.name "Max Watermolen"
