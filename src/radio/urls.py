@@ -118,35 +118,16 @@ urlpatterns = [
     path("unit/list", unit.List.as_view(), name="unit_list"),
     path("unit/create", unit.Create.as_view(), name="unit_create"),
     path("unit/<uuid:request_uuid>", unit.View.as_view(), name="unit_view"),
-    path(
-        "transmission/unit/<uuid:request_uuid>",
-        transmission.UnitView.as_view(),
-        name="transmissionunit_view",
-    ),
-    path(
-        "transmission/freq/<uuid:request_uuid>",
-        transmission.FreqView.as_view(),
-        name="transmissionunit_view",
-    ),
+   
     path(
         "transmission/list",
         transmission.List.as_view(),
         name="transmission_list",
     ),
     path(
-        "transmission/<uuid:request_uuid>/units",
-        transmission.UnitList.as_view(),
-        name="transmissionunit_list",
-    ),
-    path(
-        "transmission/<uuid:request_uuid>/freqs",
-        transmission.FreqList.as_view(),
-        name="transmissionunit_list",
-    ),
-    path(
         "transmission/<uuid:request_uuid>/download",
         misc.transmission_download,
-        name="transmissionunit_list",
+        name="transmission_download",
     ),
     path(
         "transmission/create",

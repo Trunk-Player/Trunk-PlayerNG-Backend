@@ -10,7 +10,7 @@ from rest_framework.test import force_authenticate
 from rest_framework import status
 
 
-from radio.models import Agency, City, SystemACL, SystemRecorder, TalkGroupACL, TransmissionFreq, TransmissionUnit, Unit, Transmission, TalkGroup, System
+from radio.models import Agency, City, SystemACL, SystemRecorder, TalkGroupACL, Unit, Transmission, TalkGroup, System
 from radio.serializers import TalkGroupSerializer, TalkGroupViewListSerializer, TransmissionListSerializer
 from radio.views.api.talkgroup import Create, List, View
 from radio.views.api.talkgroup import TransmissionList
@@ -252,37 +252,6 @@ class APITalkgroupTests(APITestCase):
         )
         self.recorder2.save()
 
-        self.transmission_frequency1: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=856.2125,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency1.save()
-
-        self.transmission_unit1: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit1.save()
-
-        self.transmission_unit2: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit2,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit2.save()
 
         self.transmission1: Transmission = Transmission.objects.create(
             system=self.system1,
@@ -300,41 +269,7 @@ class APITalkgroupTests(APITestCase):
             transcript=""
         )
         self.transmission1.save()
-        self.transmission1.units.add(self.transmission_unit2, self.transmission_unit1)
-        self.transmission1.frequencys.add(self.transmission_frequency1)
         self.transmission1.save()
-
-        self.transmission_frequency2: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=867.5309,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency2.save()
-
-        self.transmission_unit3: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit3,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit3.save()
-
-        self.transmission_unit4: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit4.save()
 
         self.transmission2: Transmission = Transmission.objects.create(
             system=self.system2,
@@ -352,41 +287,9 @@ class APITalkgroupTests(APITestCase):
             transcript=""
         )
         self.transmission2.save()
-        self.transmission2.units.add(self.transmission_unit3)
-        self.transmission2.frequencys.add(self.transmission_frequency2)
         self.transmission2.save()
 
-        self.transmission_frequency3: TransmissionFreq = TransmissionFreq.objects.create(
-            time=timezone.now(),
-            freq=867.5309,
-            pos=1,
-            len=5.0,
-            error_count=0,
-            spike_count=1
-        )
-        self.transmission_frequency3.save()
-
-        self.transmission_unit5: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit3,
-            pos=1,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=1.2
-        )
-        self.transmission_unit5.save()
-
-        self.transmission_unit6: TransmissionUnit = TransmissionUnit.objects.create(
-            time=timezone.now(),
-            unit=self.unit1,
-            pos=2,
-            emergency=False,
-            signal_system="",
-            tag="",
-            length=3.8
-        )
-        self.transmission_unit6.save()
+    
 
         self.transmission3: Transmission = Transmission.objects.create(
             system=self.system3,
@@ -404,8 +307,6 @@ class APITalkgroupTests(APITestCase):
             transcript=""
         )
         self.transmission3.save()
-        self.transmission3.units.add(self.transmission_unit4, self.transmission_unit5)
-        self.transmission3.frequencys.add(self.transmission_frequency3)
         self.transmission3.save()
 
     def test_api_talkgroup_list(self):

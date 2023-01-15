@@ -13,14 +13,11 @@ from radio.models import (
     TalkGroup,
     TalkGroupACL,
     Transmission,
-    TransmissionFreq,
     Unit,
-    TransmissionUnit,
     UserProfile,
 )
 
 logger = logging.getLogger(__name__)
-
 
 class UUIDEncoder(json.JSONEncoder):
     def default(self, o):
@@ -28,106 +25,12 @@ class UUIDEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-
-class TransmissionSrc:
-    def __init__(self, payload) -> None:
-        """
-        Transmission Unit Object
-        """
-        self.src = payload.get("src")
-        self.pos = payload.get("pos")
-        self.emergency = payload.get("emergency") in ("true", "1", "t")
-        self.signal_system = payload.get("signal_system")
-        self.tag = payload.get("tag")
-        self.time = timezone.datetime.fromtimestamp(payload.get("time")).isoformat()
-
-    def to_json(self) -> dict:
-        """
-        Return Transission Unit as a dict
-        """
-        payload = {
-            "UUID": uuid.uuid4(),
-            "unit": self.src,
-            "time": self.time,
-            "emergency": self.emergency,
-            "signal_system": self.signal_system,
-            "tag": self.tag,
-        }
-        return payload
-
-    def create(self, system) -> str:
-        """
-        Creates a new Transmission Unit
-        """
-        unit, created = Unit.objects.get_or_create(
-            system=system, decimal_id=int(self.src)
-        )
-        del created
-        unit.save()
-        transmission = TransmissionUnit(
-            UUID=uuid.uuid4(),
-            unit=unit,
-            time=self.time,
-            pos=self.pos,
-            emergency=self.emergency,
-            signal_system=self.signal_system,
-            tag=self.tag,
-        )
-        transmission.save()
-        return str(transmission.UUID)
-
-
-class TransmissionFrequency:
-    def __init__(self, payload: dict) -> None:
-        """
-        Transmission Freq Object
-        """
-        self.freq = payload.get("freq")
-        self.pos = payload.get("pos")
-        self.len = payload.get("len")
-        self.error_count = payload.get("error_count")
-        self.spike_count = payload.get("spike_count")
-        self.time = timezone.datetime.fromtimestamp(payload.get("time"))
-
-    def to_json(self) -> dict:
-        """
-        Return Transission Freq as a dict
-        """
-        payload = {
-            "UUID": uuid.uuid4(),
-            "freq": self.freq,
-            "pos": self.pos,
-            "len": self.len,
-            "error_count": self.error_count,
-            "spike_count": self.spike_count,
-            "time": self.time,
-        }
-
-        return payload
-
-    def create(self) -> str:
-        """
-        Create a Transission Freq
-        """
-        transmission_freq = TransmissionFreq(
-            UUID=uuid.uuid4(),
-            time=self.time,
-            freq=self.freq,
-            pos=self.pos,
-            len=self.len,
-            error_count=self.error_count,
-            spike_count=self.spike_count,
-        )
-        transmission_freq.save()
-        return str(transmission_freq.UUID)
-
-
 class TransmissionDetails:
     def __init__(self, payload) -> None:
         """
         Transmission Details object
         """
-        self.system = payload.get("system")
+        self.system:System = System.objects.get(UUID=payload.get("system"))
         self.freq = payload.get("freq")
         self.audio_type = payload.get("audio_type")
         self.call_length = payload.get("call_length")
@@ -145,21 +48,22 @@ class TransmissionDetails:
         self.emergency = payload.get("emergency") in ("true", "1", "t")
         self.encrypted = payload.get("encrypted") in ("true", "1", "t")
 
-        self.freq_list = []
-        if "freqList" in payload:
-            self.freq_list = [
-                TransmissionFrequency(freq) for freq in payload["freqList"]
-            ]
+        self.freq_list =  payload["freqList"]
+        
+        self.src_list = payload["srcList"]
 
-        self.src_list = []
-        if "srcList" in payload:
-            self.src_list = [TransmissionSrc(src) for src in payload["srcList"]]
+        for src in self.src_list:
+            unit, created = Unit.objects.get_or_create(
+                system=self.system, decimal_id=int(src["src"])
+            )
+            unit.save()
+       
 
     def to_json(self) -> dict:
         """
         Convert Transmission Details object to dict
         """
-        system: System = System.objects.get(UUID=self.system)
+        system: System = self.system
 
         if self.talkgroup_tag == "-":
             alphatag = self.talkgroup
@@ -194,8 +98,8 @@ class TransmissionDetails:
             "length": self.call_length,
         }
 
-        payload["units"] = [unit.create(system) for unit in self.src_list]
-        payload["frequencys"] = [Freq.create() for Freq in self.freq_list]
+        payload["units"] = self.src_list
+        payload["frequencys"] = self.freq_list
 
         return payload
 

@@ -10,8 +10,6 @@ from radio.models import (
     SystemForwarder,
     SystemRecorder,
     Unit,
-    TransmissionUnit,
-    TransmissionFreq,
     Transmission,
     Incident,
     TalkGroupACL,
@@ -151,38 +149,8 @@ class UnitAdmin(admin.ModelAdmin):
     search_fields = ("decimal_id", "system", "description")
 
 
-class TransmissionUnitAdmin(admin.ModelAdmin):
-    ordering = ("-time",)
-    list_display = (
-        "UUID",
-        "unit",
-        "emergency",
-        "tag",
-        "length",
-        "pos",
-        "signal_system",
-    )
-    list_filter = ("emergency",)
-    search_fields = ("UUID",)
-
-
-class TransmissionFreqAdmin(admin.ModelAdmin):
-    ordering = ("-time",)
-    list_display = (
-        "UUID",
-        "time",
-        "freq",
-        "len",
-        "pos",
-        "error_count",
-        "spike_count",
-    )
-    search_fields = ("UUID",)
-
-
 class TransmissionAdmin(admin.ModelAdmin):
     ordering = ("-start_time",)
-    autocomplete_fields = ("units", "frequencys")
     list_display = (
         "UUID",
         "system",
@@ -306,8 +274,6 @@ admin.site.register(Agency, AgencyAdmin)
 admin.site.register(TalkGroup, TalkgroupAdmin)
 admin.site.register(SystemRecorder, SystemRecorderAdmin)
 admin.site.register(Unit, UnitAdmin)
-admin.site.register(TransmissionUnit, TransmissionUnitAdmin)
-admin.site.register(TransmissionFreq, TransmissionFreqAdmin)
 admin.site.register(Transmission, TransmissionAdmin)
 admin.site.register(Incident, IncidentAdmin)
 admin.site.register(TalkGroupACL, TalkgroupACLAdmin)
