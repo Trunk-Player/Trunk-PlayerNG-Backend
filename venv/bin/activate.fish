@@ -20,6 +20,7 @@ function deactivate  -d "Exit virtual environment and return to normal shell env
     end
 
     set -e VIRTUAL_ENV
+    set -e VIRTUAL_ENV_PROMPT
     if test "$argv[1]" != "nondestructive"
         # Self-destruct!
         functions -e deactivate
@@ -29,7 +30,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/opt/tp-ng/venv"
+set -gx VIRTUAL_ENV "/Users/maxwatermolen/source/Trunk-PlayerNG-Backend/venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
@@ -61,4 +62,5 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     end
 
     set -gx _OLD_FISH_PROMPT_OVERRIDE "$VIRTUAL_ENV"
+    set -gx VIRTUAL_ENV_PROMPT "(venv) "
 end

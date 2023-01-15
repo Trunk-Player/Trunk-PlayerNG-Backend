@@ -1,4 +1,4 @@
-#!/opt/tp-ng/venv/bin/python3
+#!/Users/maxwatermolen/source/Trunk-PlayerNG-Backend/venv/bin/python3.11
 # -*- coding: utf-8 -*-
 import re
 import sys
