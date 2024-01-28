@@ -11,7 +11,7 @@ WORKDIR /code
 RUN apt update && apt install -y rustc cargo
 
 # install dependencies
-RUN pip install --upgrade pip 
+RUN pip install --upgrade pip && pip install "setuptools<58.0.0"
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
 

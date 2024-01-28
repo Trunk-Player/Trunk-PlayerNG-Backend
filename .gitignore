@@ -1,9 +1,10 @@
-venv/*
 venv/
+
 .database/
-*__pycache__/*
+*__pycache__/
 *.pyc
 trunkplayer_ng/db.sqlite3
 pytpng.py
 #docker-compose.yaml
 .env
+.data/
