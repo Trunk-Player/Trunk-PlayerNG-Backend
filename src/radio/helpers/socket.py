@@ -1,28 +1,38 @@
 import logging
 import json
-import os
-import socketio
+
 
 
 from django.conf import settings
 
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
 
 
+# from trunkplayer_ng.wsgi import  sio
+# # sio = None
+
+import socketio
 mgr = socketio.KombuManager(
-    settings.CELERY_BROKER_URL
+    settings.SOCKETS_BROKER_URL
 )
 sio = socketio.Server(
-    async_mode="gevent_uwsgi", client_manager=mgr, logger=False, engineio_logger=False, cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS
+    async_mode="gevent",
+    client_manager=mgr,
+    logger=False,
+    engineio_logger=False,
+    cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS
 )
-
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
 
+@sio.event
+def ping(sid, message):
+    logger.info(f"PONG {sid}")
+    sio.emit(
+        "debug", {"pong": True}, room=sid
+    )
 
 @sio.event
 def tx_request(sid, message):
@@ -86,6 +96,9 @@ def connect(sid, environ, auth):
     """
     On user Connect
     """
+    from rest_framework_simplejwt.authentication import JWTAuthentication
+    from rest_framework_simplejwt.exceptions import InvalidToken
+
     jwt_authenticator = JWTAuthentication()
 
     try:

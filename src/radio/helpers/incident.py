@@ -9,7 +9,6 @@ if settings.SEND_TELEMETRY:
 
 logger = logging.getLogger(__name__)
 
-
 def _forward_incident(data: dict, created: bool) -> None:
     """
     Handles Forwarding New Inicidents

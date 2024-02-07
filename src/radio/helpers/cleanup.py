@@ -6,7 +6,6 @@ from django.utils import timezone
 
 from radio.models import System, Transmission
 
-
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
 

@@ -1,38 +1,92 @@
-FROM python:3.9
+#----------------------------------------------------------------------------------------------------------------------
+# Docker TrunkPlayerNG API v2
+#----------------------------------------------------------------------------------------------------------------------
+FROM python:3.11-alpine
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+#----------------------------------------------------------------------------------------------------------------------
+# SET DEFAULTS
+#----------------------------------------------------------------------------------------------------------------------
 
-# set work directory
-WORKDIR /code
+ARG APP_USER=chaotic
+ARG APP_UID=1000
 
-# install cryptography requirements
-RUN apt update && apt install -y rustc cargo
+ARG APP_GROUP=chaos
+ARG APP_GID=1000
 
-# install dependencies
-RUN pip install --upgrade pip && pip install "setuptools<58.0.0"
-COPY requirements.txt /code/
-RUN pip install -r requirements.txt
+ARG CODE_DIR=/opt/chaos.corp/tpng
 
-# is the codez
-COPY ./src/ /code/
+#----------------------------------------------------------------------------------------------------------------------
+# Setup User / Group
+#----------------------------------------------------------------------------------------------------------------------
+RUN addgroup -g ${APP_GID} ${APP_GROUP} && \
+  adduser --ingroup ${APP_GROUP} -D -u ${APP_UID} --home ${CODE_DIR} -s /bin/bash ${APP_USER}
 
-# Tests the codez
-COPY coverage.sh /code/
-RUN chmod +x coverage.sh
+#----------------------------------------------------------------------------------------------------------------------
+# Setup working dir
+#----------------------------------------------------------------------------------------------------------------------
+WORKDIR ${CODE_DIR}
+RUN mkdir ${CODE_DIR}/static && \
+  mkdir ${CODE_DIR}/staticfiles && \
+  mkdir ${CODE_DIR}/media
 
-# Some stuipid webserver bs ;)
-COPY uwsgi.conf /code/
+#----------------------------------------------------------------------------------------------------------------------
+# Install Deps
+#----------------------------------------------------------------------------------------------------------------------
 
-RUN mkdir /code/static
-RUN mkdir /code/staticfiles
-RUN mkdir /code/mediafiles
+# Install CAs
+RUN apk update && apk add ca-certificates
 
-VOLUME /code/static
-VOLUME /code/mediafiles
+#----------------------------------------------------------------------------------------------------------------------
+# Install Build libs
+#----------------------------------------------------------------------------------------------------------------------
+# Copy in your requirements file
+COPY src/requirements.txt /tmp/requirements.txt
+
+#----------------------------------------------------------------------------------------------------------------------
+# Install Python Packages
+#----------------------------------------------------------------------------------------------------------------------
+# Update PIP or risk the wrath of the python 
+# Install our packages and hope it dosent catch fire
+# get rid of our requirements file, I didnt like him anyhow
+RUN sh -c 'python -m pip install --upgrade pip --no-cache-dir && \
+  # python -m pip install --no-cache-dir "setuptools<58" && \
+  python -m pip install --upgrade --no-cache-dir -r /tmp/requirements.txt'
+
+#----------------------------------------------------------------------------------------------------------------------
+# Remove Build libs
+#----------------------------------------------------------------------------------------------------------------------
+# Trash that build junk
+RUN rm /tmp/requirements.txt
+
+#----------------------------------------------------------------------------------------------------------------------
+# Copy Code & primary files
+# Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
+#----------------------------------------------------------------------------------------------------------------------
+# Copy the main codebase
+COPY src/ ${CODE_DIR}/
+
+#----------------------------------------------------------------------------------------------------------------------
+# Set for Sekurity
+#----------------------------------------------------------------------------------------------------------------------
+RUN chown -R ${APP_USER}:${APP_GROUP} ${CODE_DIR}/* && \
+  chmod -R 540 ${CODE_DIR}/* && \
+  chmod -R 774 ${CODE_DIR}/static && \
+  chmod -R 774 ${CODE_DIR}/staticfiles && \
+  chmod -R 770 ${CODE_DIR}/media
 
 
-EXPOSE 8000
+# Change to a non-root user - Beacuse we dont want anybody being naughty if they ever manage to get in ;P
+USER ${APP_USER}:${APP_GROUP}
 
-#CMD ["python", "/code/manage.py", "runserver", "0.0.0.0:8000"]
+#----------------------------------------------------------------------------------------------------------------------
+# Set launch config
+#----------------------------------------------------------------------------------------------------------------------
+# Define Static files volume
+VOLUME ${CODE_DIR}/static
+VOLUME ${CODE_DIR}/media
+
+# Expose the HTTP TCP socket - this way Nginx can do all the hard work
+EXPOSE 40269
+
+# Start uWSGI
+CMD ["uwsgi", "--show-config"]

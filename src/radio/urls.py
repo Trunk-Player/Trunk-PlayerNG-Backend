@@ -223,25 +223,4 @@ urlpatterns = [
         global_email_template.View.as_view(),
         name="globalemailtemplate_view",
     ),
-    # path(
-    #     "systemreciverate/list",
-    #     views.SystemReciveRateList.as_view(),
-    #     name="systemreciverate_list",
-    # ),
-    # path(
-    #     "systemreciverate/create",
-    #     views.SystemReciveRateCreate.as_view(),
-    #     name="systemreciverate_create",
-    # ),
-    # path(
-    #     "systemreciverate/<uuid:request_uuid>",
-    #     views.SystemReciveRateView.as_view(),
-    #     name="systemreciverate_view",
-    # ),
-    # path("call/list", views.CallList.as_view(), name="call_list"),
-    # path("call/create", views.CallCreate.as_view(), name="call_create"),
-    # # path(
-    # #     "call/<uuid:request_uuid>/update", views.CallUpdate.as_view(), name="call_update"
-    # # ),
-    # path("call/<uuid:request_uuid>", views.CallView.as_view(), name="call_view"),
 ]

@@ -15,12 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import re_path, path, include
-#from django.conf.urls import url
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from allauth.account.views import confirm_email
 
+from users import views as user_views
 from users import views as user_views
 from users.views import unset_jwt_cookies
 
@@ -30,11 +29,11 @@ jwt_auth.unset_jwt_cookies = unset_jwt_cookies
 schema_view = get_schema_view(
     openapi.Info(
         title="TrunkPlayer API",
-        default_version="v1",
+        default_version="v2",
         description="",
         terms_of_service="",
         contact=openapi.Contact(email=""),
-        license=openapi.License(name="GPLv3 License"),
+        license=openapi.License(name="AGPLv3 License"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
@@ -49,30 +48,29 @@ urlpatterns = [
         name="schema-swagger-ui",
     ),
     path("api/v1/radio/", include("radio.urls"), name="Radio"),
-    path("api/v1/users/", include("users.urls"), name="Radio"),
-    path("api/v1/auth/", include("dj_rest_auth.urls")),
+    # path("api/v1/users/", include("users.urls"), name="Radio"),
+    path('api/v1/auth/user/', include("users.urls")),
     path(
         "api/v1/auth/token/",
         user_views.CookieTokenObtainPairView.as_view(),
         name="token_obtain_pair",
     ),
     path(
+        "auth/token/",
+        user_views.CookieTokenObtainPairView.as_view(),
+        name="token_obtain_pair",
+    ),
+    path(
+        "auth/token/refresh-token/",
+        user_views.CookieTokenRefreshViewCustom.as_view(),
+        name="token_refresh",
+    ),
+    path(
         "api/v1/auth/token/refresh-token/",
         user_views.CookieTokenRefreshViewCustom.as_view(),
         name="token_refresh",
     ),
-    path("api/v1/registration/", include("dj_rest_auth.registration.urls")),
-    re_path(r"^account/", include("allauth.urls")),
-    re_path(
-        r"^accounts-rest/registration/account-confirm-email/(?P<key>.+)/$",
-        confirm_email,
-        name="account_confirm_email",
-    ),
     path("swagger.json", schema_view.without_ui(cache_timeout=0), name="schema-json"),
-    path(
-        "swagger/",
-        schema_view.with_ui("swagger", cache_timeout=0),
-        name="schema-swagger-ui",
-    ),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    path('', include('django_prometheus.urls')),
 ]

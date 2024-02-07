@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 import logging
 import json
@@ -16,6 +17,7 @@ from radio.models import (
     Unit,
     UserProfile,
 )
+from radio.serializers import UnitSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +59,16 @@ class TransmissionDetails:
                 system=self.system, decimal_id=int(src["src"])
             )
             unit.save()
+
+            src["decimal_id"] = src["src"]
+            src["UUID"] = str(uuid.uuid5(
+                uuid.NAMESPACE_DNS,
+                hashlib.blake2b(json.dumps(src).encode()).hexdigest()
+            ))
+            unit_serializer = UnitSerializer(unit)
+            src["unit"] = json.loads(json.dumps(unit_serializer.data, cls=UUIDEncoder))
+
+            print(src)
        
 
     def to_json(self) -> dict:

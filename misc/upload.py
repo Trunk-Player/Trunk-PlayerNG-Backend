@@ -12,7 +12,7 @@
 #   --url URL      The url to TP-NG ie http://panik.io
 
 
-import sys, json, base64, requests, time, argparse
+import json, base64, requests, time, argparse
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--json', type=str, help='The json file to send', required=True)

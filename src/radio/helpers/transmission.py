@@ -1,9 +1,9 @@
+import json
+import uuid
 import base64
 import logging
-import os
-import uuid
+
 import requests
-import sentry_sdk
 import socketio
 
 from django.conf import settings
@@ -20,6 +20,15 @@ from radio.models import (
 )
 from radio.serializers import TransmissionUploadSerializer
 
+from uuid import UUID
+
+
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            # if the obj is uuid, we simply return the value of uuid
+            return obj.hex
+        return json.JSONEncoder.default(self, obj)
 
 if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
@@ -32,12 +41,15 @@ def _new_transmission_handler(data: dict) -> dict:
     Converts API call to DB format and stores file
     """
     from radio.tasks import forward_transmission, send_transmission_to_web, send_transmission_notifications
+    # from metrics.instrumenting.transmission import transmission_count
 
     logger.info(f"Got new transmission - {data['name'].split('.')[0]}", extra=data["json"])
     recorder_uuid = data["recorder"]
     jsonx = data["json"]
     audio = data["audio_file"]
     tx_uuid = data["UUID"]
+
+    # transmission_count.inc()
 
     recorder: SystemRecorder = SystemRecorder.objects.get(
         api_key=recorder_uuid
@@ -53,13 +65,13 @@ def _new_transmission_handler(data: dict) -> dict:
     else:
         return False
 
-    payload["UUID"] = tx_uuid
-    payload["recorder"] = recorder_uuid
+    payload["UUID"] = str(tx_uuid)
+    payload["recorder"] = str(recorder_uuid)
     payload["system"] = str(system.UUID)
 
     name = data["name"].split(".")
     payload["audio_file"] = ContentFile(
-        audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).rsplit("-", maxsplit=1)[-1]}.{name[1]}'
+        audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).rsplit("-", maxsplit=1)[-1]}.{name}.m4a'
     )
     
     transmission = TransmissionUploadSerializer(data=payload, partial=True)
@@ -67,9 +79,13 @@ def _new_transmission_handler(data: dict) -> dict:
     if transmission.is_valid(raise_exception=True):
         transmission.save()
         socket_data = {
-            "UUID": transmission.data["UUID"],
+            "UUID": str(transmission.data["UUID"]),
             "talkgroup": transmission.data["talkgroup"],
+            "transmission": None
         }
+        if not system.enable_talkgroup_acls:
+            socket_data["transmission"] = transmission.data
+
         send_transmission_to_web.delay(socket_data, payload["talkgroup"])
         send_transmission_notifications.delay(transmission.data)
         forward_transmission.delay(data, payload["talkgroup"])
@@ -99,7 +115,14 @@ def _send_transmission_to_web(data: dict) -> None:
     logger.debug(f"[+] GOT NEW TX - {data['UUID']}")
 
     parents = _get_transmission_parents(data["talkgroup"])
-    payload = {'uuid': data['UUID'], 'parents': parents}
+
+    parents = json.loads(json.dumps(parents, cls=UUIDEncoder))
+    payload = {'uuid': str(data['UUID']), 'parents': parents}
+
+    if data["transmission"]:
+        payload["transmission"] = data["transmission"]
+    
+    payload = json.loads(json.dumps(payload, cls=UUIDEncoder))
 
 
     broadcast_transmission.delay('transmission_party_bus', 'transmission_party_bus', payload)
@@ -177,11 +200,13 @@ def _forward_transmission_to_remote_instance(
 def _broadcast_transmission(event: str, room: str, data: dict):
     try:
         mgr = socketio.KombuManager(
-            settings.CELERY_BROKER_URL
+            settings.SOCKETS_BROKER_URL
         )
         sio = socketio.Server(
             async_mode="gevent", client_manager=mgr, logger=False, engineio_logger=False, cors_allowed_origins=settings.CORS_ALLOWED_ORIGINS
         )
+        # from trunkplayer_ng.wsgi import sio
+
         sio.emit(event, data, room=room)
         logger.debug(f"[+] BROADCASTING TO {room}")
     except Exception as error:

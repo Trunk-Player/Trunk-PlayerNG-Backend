@@ -12,7 +12,6 @@ if settings.SEND_TELEMETRY:
 
 logger = logging.getLogger(__name__)
 
-
 class RR:
     """
     Radio Refrence interface library

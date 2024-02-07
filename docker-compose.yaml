@@ -3,171 +3,121 @@ version: '3.8'
 services:
   nginx:
     restart: always
-    #image: trunkplayer/trunkplayer-ng-nginx:latest
+    image: trunkplayer/trunkplayer-ng-nginx:latest
     build: nginx/
     ports:
-      - 80:80
-      - 443:443
+      - 8080:80
+      - 8443:443
     depends_on:
-      - trunk-player
+      - gunicorn
     volumes:
       - ${STATIC_VOLUME_PATH}:/code/static
       - ${MEDIA_VOLUME_PATH}:/code/mediafiles
 
-  trunk-player:
+  trunk-player-frontend:
     restart: always
-    #image: trunkplayer/trunkplayer-ng:latest
-    build: .
-    command: "bash -c 'sleep 10; python -m gevent.monkey manage.py migrate; python -m gevent.monkey manage.py createsuperuser --noinput; python -m gevent.monkey manage.py collectstatic --no-input; uwsgi --ini /code/uwsgi.conf'"
+    image: trunkplayer/trunkplayer-ng-frontend:latest
+    build: ../Trunk-PlayerNG-Frontend/
     environment:
-      DEBUG: "${DEBUG}"
-      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
-      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
-      FORCE_SECURE: "${FORCE_SECURE}" #
-      SECRET_KEY: "${SECRET_KEY}"
-      MYSQL_DATABASE: "${SQL_DATABASE}"
-      MYSQL_USER: "${SQL_USER}"
-      MYSQL_PASSWORD: "${SQL_PASSWORD}"
-      MYSQL_HOST: "${SQL_HOST}"
-      TZ: "${TZ}"
-      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
-      USE_S3: "${USE_S3}"
-      #CORS_ALLOWED_HOSTS: ${CORS_ALLOWED_HOSTS}
-      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
-      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
-      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
-      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
-      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
-      DJANGO_SUPERUSER_PASSWORD: "${DJANGO_SUPERUSER_PASSWORD}"
-      DJANGO_SUPERUSER_EMAIL: "${DJANGO_SUPERUSER_EMAIL}"
-      EMAIL_HOST: "${EMAIL_HOST}"
-      EMAIL_PORT: "${EMAIL_PORT}"
-      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
-      EMAIL_HOST_USER: "${EMAIL_HOST_USER}"
-      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
-      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
-      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
-      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
-      SPLUNK_HOST: "${SPLUNK_HOST}"
-      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
-      SPLUNK_PORT: "${SPLUNK_PORT}"
-      SPLUNK_INDEX: "${SPLUNK_INDEX}"
-      LOG_LEVEL:  "${LOG_LEVEL}"
-      RR_USER: "${RR_USER}"
-      RR_PASS: "${RR_PASS}"
+      NEXT_PUBLIC_BASEAPIURL: "${NEXT_PUBLIC_BASEAPIURL}"
+      NEXT_PUBLIC_RECOMMENDEDBASEAPIURL: "${NEXT_PUBLIC_RECOMMENDEDBASEAPIURL}"
+
+  gunicorn:
+    restart: always
+    image: trunkplayer/trunkplayer-ng:latest
+    build: .
+    command: 
+      - /bin/sh
+      - '-c'
+      - |
+        sleep 5; \
+        python -m gevent.monkey manage.py migrate && \
+        python -m gevent.monkey manage.py createsuperuser --noinput; \
+        python -m gevent.monkey manage.py collectstatic --no-input; \
+        gunicorn -c trunkplayer_ng/gunicorn.conf.py
+    env_file:
+      - .env
+    environment:
+      DB_HOST: "database"
+      PROMETHEUS_MULTIPROC_DIR: /opt/chaos.corp/tpng/metrics
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
-      #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
-      - ${STATIC_VOLUME_PATH}:/code/static
-      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+      - ${STATIC_VOLUME_PATH}:/opt/chaos.corp/tpng/static
+      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
+      - metrics:/opt/chaos.corp/tpng/metrics
     depends_on:
       - database
       - rabbitmq
 
   trunk-player-worker:
     restart: always
-    #image: trunkplayer/trunkplayer-ng:latest
+    image: trunkplayer/trunkplayer-ng:latest
     build: .
-    command: celery -A trunkplayer_ng worker -l info --pool=gevent --concurrency 100 -Q default,transmission_forwarding,radio_refrence,radio_alerts,transmission_ingest,tranmission_push
+    deploy:
+      replicas: 2
+    command: 
+      - celery
+      - '-A'
+      - 'trunkplayer_ng'
+      - 'worker'
+      - '-l'
+      - 'info'
+      - '--pool'
+      - 'gevent'
+      - '--concurrency'
+      - '100' 
+      - '-E'
+      - '-Q'
+      - |-
+        default,transmission_forwarding,radio_refrence,radio_alerts,transmission_ingest,tranmission_push
+    env_file:
+      - .env
     environment:
-      DEBUG: "${DEBUG}"
-      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
-      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
-      FORCE_SECURE: "${FORCE_SECURE}" #
-      SECRET_KEY: "${SECRET_KEY}"
-      MYSQL_DATABASE: "${SQL_DATABASE}"
-      MYSQL_USER: "${SQL_USER}"
-      MYSQL_PASSWORD: "${SQL_PASSWORD}"
-      MYSQL_HOST: "${SQL_HOST}"
-      TZ: "${TZ}"
-      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
-      USE_S3: "${USE_S3}"
-      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
-      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
-      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
-      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
-      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
-      EMAIL_HOST: "${EMAIL_HOST}"
-      EMAIL_PORT: "${EMAIL_PORT}"
-      EMAIL_HOST_USER: "${EMAIL_HOST_USER}"
-      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
-      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
-      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
-      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
-      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
-      SPLUNK_HOST: "${SPLUNK_HOST}"
-      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
-      SPLUNK_PORT: "${SPLUNK_PORT}"
-      SPLUNK_INDEX: "${SPLUNK_INDEX}"
-      LOG_LEVEL:  "${LOG_LEVEL}"
-      RR_USER: "${RR_USER}"
-      RR_PASS: "${RR_PASS}"
+      DB_HOST: "database"
+      PROMETHEUS_MULTIPROC_DIR: /opt/chaos.corp/tpng/metrics
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
-      #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql)
-      - ${STATIC_VOLUME_PATH}:/code/static
-      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+      - ${STATIC_VOLUME_PATH}:/opt/chaos.corp/tpng/static
+      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
+      - metrics:/opt/chaos.corp/tpng/metrics
     depends_on:
       - database
       - rabbitmq
 
   trunk-player-beat:
     restart: always
-    #image: trunkplayer/trunkplayer-ng:latest
+    image: trunkplayer/trunkplayer-ng:latest
     build: .
-    command: celery -A trunkplayer_ng beat -l info
+    command:
+      - celery
+      - '-A'
+      - 'trunkplayer_ng'
+      - 'beat'
+      - '-l'
+      - 'info'
+    env_file:
+      - .env
     environment:
-      DEBUG: "${DEBUG}"
-      SEND_TELEMETRY: "${SEND_TELEMETRY}" # Turn True to help report new errors
-      # SENTRY_DSN: "${SENTRY_DSN}" Override TELEMETRY SENTRY DSN
-      FORCE_SECURE: "${FORCE_SECURE}" #
-      SECRET_KEY: "${SECRET_KEY}"
-      MYSQL_DATABASE: "${SQL_DATABASE}"
-      MYSQL_USER: "${SQL_USER}"
-      MYSQL_PASSWORD: "${SQL_PASSWORD}"
-      MYSQL_HOST: "${SQL_HOST}"
-      TZ: "${TZ}"
-      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/"
-      USE_S3: "${USE_S3}"
-      AUDIO_DOWNLOAD_HOST: "${AUDIO_DOWNLOAD_HOST}"
-      S3_ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID}"
-      S3_SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY}"
-      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
-      S3_ENDPOINT_URL: "${S3_ENDPOINT_URL}"
-      EMAIL_HOST: "${EMAIL_HOST}"
-      EMAIL_PORT: "${EMAIL_PORT}"
-      EMAIL_HOST_USER: "${EMAIL_HOST_USER}"
-      EMAIL_HOST_PASSWORD: "${EMAIL_HOST_PASSWORD}"
-      EMAIL_USE_TLS: "${EMAIL_USE_TLS}"
-      EMAIL_USE_SSL: "${EMAIL_USE_SSL}"
-      DEFAULT_FROM_EMAIL: "${DEFAULT_FROM_EMAIL}"
-      USE_SPLUNK_LOGGING: "${USE_SPLUNK_LOGGING}"
-      SPLUNK_HOST: "${SPLUNK_HOST}"
-      SPLUNK_TOKEN: "${SPLUNK_TOKEN}"
-      SPLUNK_PORT: "${SPLUNK_PORT}"
-      SPLUNK_INDEX: "${SPLUNK_INDEX}"
-      LOG_LEVEL:  "${LOG_LEVEL}"
-      RR_USER: "${RR_USER}"
-      RR_PASS: "${RR_PASS}"
+      DB_HOST: "database"
+      PROMETHEUS_MULTIPROC_DIR: /opt/chaos.corp/tpng/metrics
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
-    #  - /run/mysqld/mysqld.sock:/run/mysqld/mysqld.sock (Use me for system sql) 
-      - ${STATIC_VOLUME_PATH}:/code/static
-      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+      - ${STATIC_VOLUME_PATH}:/opt/chaos.corp/tpng/static
+      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
+      - metrics:/opt/chaos.corp/tpng/metrics
     depends_on:
       - database
       - rabbitmq
 
   database:
-    image: mysql
+    image: postgres:latest
     restart: always
-    command: --default-authentication-plugin=mysql_native_password
-    ports:
-      - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: "${SQL_ROOT_PASSWORD}"
-      MYSQL_DATABASE: "${SQL_DATABASE}"
-      MYSQL_USER: "${SQL_USER}"
-      MYSQL_PASSWORD: "${SQL_PASSWORD}"
+      POSTGRES_PASSWORD: "${DB_PASS}"
+      POSTGRES_DB: "${DB_NAME}"
+      POSTGRES_USER: "${DB_USER}"
     volumes:
-      - ${DATABASE_PATH}:/var/lib/mysql
+      - ${DATABASE_VOLUME_PATH}:/var/lib/postgresql/data
 
   rabbitmq:
     image: 'rabbitmq:management'
@@ -179,3 +129,5 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         
   
+volumes:
+  metrics:

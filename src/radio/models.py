@@ -1,10 +1,10 @@
-from datetime import datetime
 import uuid
+
+from datetime import datetime
 
 from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
-
 
 
 class UserProfile(models.Model):
@@ -57,7 +57,6 @@ class UserInbox(models.Model):
         except Exception: # pylint: disable=broad-except
             return str(self.UUID)
 
-
 class SystemACL(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -85,7 +84,6 @@ class SystemACL(models.Model):
 
         return data
 
-
 class System(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -106,7 +104,6 @@ class System(models.Model):
     def __str__(self):
         return self.name
 
-
 class City(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -116,7 +113,6 @@ class City(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class Agency(models.Model):
     UUID = models.UUIDField(
@@ -128,7 +124,6 @@ class Agency(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class TalkGroup(models.Model):
     MODE_OPTS = (
@@ -151,11 +146,16 @@ class TalkGroup(models.Model):
 
     notes = models.TextField(blank=True, default="")
 
+    @property
+    def transmission_count(self):
+       return Transmission.objects.filter(talkgroup=self).count() 
+
     def __str__(self):
         return f"[{self.system.name}] {self.alpha_tag}"
 
 
  # pylint: disable=unused-argument
+
 @receiver(models.signals.post_save, sender=TalkGroup)
 def execute_talkgroup_dedup_check(sender, instance, created, *args, **kwargs):
     """
@@ -179,7 +179,6 @@ def execute_talkgroup_dedup_check(sender, instance, created, *args, **kwargs):
             ).exclude(alpha_tag=""):
                 instance.delete()
 
-
 class SystemForwarder(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -195,7 +194,6 @@ class SystemForwarder(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class SystemRecorder(models.Model):
     UUID = models.UUIDField(
@@ -218,7 +216,6 @@ class SystemRecorder(models.Model):
 
     def __str__(self):
         return f"[{self.system.name}] {self.name}"
-
 
 class Unit(models.Model):
     UUID = models.UUIDField(
@@ -252,12 +249,10 @@ def execute_unit_dedup_check(sender, instance, created, *args, **kwargs):
             ):
                 instance.delete()
 
-
 def get_audio_path(instance, filename):
     time_str = datetime.now().strftime('%Y/%m/%d')
     safe_alpha_tag = "".join([c for c in instance.talkgroup.alpha_tag if c.isalpha() or c.isdigit() or c==' ']).rstrip()
     return f"audio/{time_str}/{instance.talkgroup.system.name}_{str(instance.talkgroup.decimal_id)}_{safe_alpha_tag.replace(' ', '-')}/{filename}"
-
 
 class Transmission(models.Model):
     UUID = models.UUIDField(
@@ -286,7 +281,6 @@ class Transmission(models.Model):
     def __str__(self):
         return f"[{self.system.name}][{self.talkgroup.alpha_tag}][{self.start_time}] {self.UUID}"
 
-
 @receiver(models.signals.post_delete, sender=Transmission)
 def auto_delete_file_on_delete(sender, instance:Transmission, **kwargs):
     """
@@ -304,7 +298,6 @@ def auto_delete_file_on_delete(sender, instance:Transmission, **kwargs):
 
         if not any(Path(parent).iterdir()):
             os.rmdir(parent)
-
 
 class Incident(models.Model):
     UUID = models.UUIDField(
@@ -338,7 +331,6 @@ def execute_after_save(sender, instance, created, *args, **kwargs):
     incident_data = IncidentSerializer(instance)
     forward_incidents.delay(incident_data.data, created)
 
-
 class TalkGroupACL(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -353,7 +345,6 @@ class TalkGroupACL(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class ScanList(models.Model):
     UUID = models.UUIDField(
@@ -372,6 +363,7 @@ class ScanList(models.Model):
         return self.name
 
  # pylint: disable=unused-argument
+
 @receiver(models.signals.post_save, sender=ScanList)
 def exec_scanlist_mutation_notification(sender, instance, created, *args, **kwargs):
     """
@@ -390,6 +382,7 @@ def exec_scanlist_mutation_notification(sender, instance, created, *args, **kwar
     )
 
  # pylint: disable=unused-argument
+
 @receiver(models.signals.post_delete, sender=ScanList)
 def exec_scanlist_mutation_notification_delete(sender, instance, created, *args, **kwargs):
     """
@@ -406,8 +399,6 @@ def exec_scanlist_mutation_notification_delete(sender, instance, created, *args,
         i_type,
         e_type,
     )
-
-
 
 class Scanner(models.Model):
     UUID = models.UUIDField(
@@ -426,6 +417,7 @@ class Scanner(models.Model):
         return self.name
 
  # pylint: disable=unused-argument
+
 @receiver(models.signals.post_save, sender=Scanner)
 def exec_scanner_mutation_notification(sender, instance, created, *args, **kwargs):
     """
@@ -444,6 +436,7 @@ def exec_scanner_mutation_notification(sender, instance, created, *args, **kwarg
     )
 
  # pylint: disable=unused-argument
+
 @receiver(models.signals.post_delete, sender=Scanner)
 def exec_scanner_mutation_notification_delete(sender, instance, created, *args, **kwargs):
     """
@@ -461,7 +454,6 @@ def exec_scanner_mutation_notification_delete(sender, instance, created, *args, 
         e_type,
     )
 
-
 class GlobalAnnouncement(models.Model):
     UUID = models.UUIDField(
         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
@@ -472,7 +464,6 @@ class GlobalAnnouncement(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class GlobalEmailTemplate(models.Model):
     mailTypes = (
@@ -490,7 +481,6 @@ class GlobalEmailTemplate(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class UserAlert(models.Model):
     UUID = models.UUIDField(
@@ -513,42 +503,3 @@ class UserAlert(models.Model):
 
     def __str__(self):
         return f"{self.name}"
-
-
-# class SystemReciveRate(models.Model):
-#     UUID = models.UUIDField(
-#         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-#     )
-
-#     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
-#     time = models.DateTimeField(default=timezone.now())
-#     rate = models.FloatField()
-
-#     def __str__(self):
-#         return f'{self.time.strftime("%c")} - {str(self.rate)}'
-
-
-# class Call(models.Model):
-#     UUID = models.UUIDField(
-#         primary_key=True, default=uuid.uuid4, db_index=True, unique=True
-#     )
-#     trunkRecorderID = models.CharField(max_length=30, unique=True)
-#     start_time = models.DateTimeField(db_index=True)
-#     end_time = models.DateTimeField(null=True, blank=True)
-#     units = models.ForeignKey(
-#         Unit,
-#         related_name="TG_UNITS",
-#         blank=True,
-#         null=True,
-#         on_delete=models.DO_NOTHING,
-#     )
-#     active = models.BooleanField(default=True)
-#     emergency = models.BooleanField(default=True)
-#     encrypted = models.BooleanField(default=True)
-#     frequency = models.FloatField()
-#     phase2 = models.CharField(max_length=30)
-#     talkgroup = models.ForeignKey(TalkGroup, on_delete=models.CASCADE)
-#     recorder = models.ForeignKey(SystemRecorder, on_delete=models.CASCADE)
-
-#     def __str__(self):
-#         return f"{self.trunkRecorderID}"

@@ -50,16 +50,17 @@ def unlock_transmssions(modeladmin, request, queryset):
 #             system.uuid, system.rr_system_id, data["username"], data["password"]
 #         )
 
+@admin.register(UserAlert)
 class UserAlertAdmin(admin.ModelAdmin):
     ordering = ("-user",)
     list_display = ("name", "user", "web_notification", "app_rise_notification", "emergency_only", "count", "trigger_time")
     list_filter = ("web_notification", "app_rise_notification")
 
-
+@admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_filter = ("site_admin",)
 
-
+@admin.register(SystemACL)
 class SystemACLAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = (
@@ -68,7 +69,7 @@ class SystemACLAdmin(admin.ModelAdmin):
     )
     list_filter = ("public",)
 
-
+@admin.register(System)
 class SystemAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = (
@@ -86,13 +87,13 @@ class SystemAdmin(admin.ModelAdmin):
         "prune_transmissions_after_days",
     )
 
-
+@admin.register(SystemForwarder)
 class SystemForwarderAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = ("name", "enabled", "forward_incidents", "remote_url", "recorder_key")
     list_filter = ("enabled", "forward_incidents")
 
-
+@admin.register(City)
 class CityAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = (
@@ -100,7 +101,7 @@ class CityAdmin(admin.ModelAdmin):
         "description",
     )
 
-
+@admin.register(Agency)
 class AgencyAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = (
@@ -108,7 +109,7 @@ class AgencyAdmin(admin.ModelAdmin):
         "description",
     )
 
-
+@admin.register(TalkGroup)
 class TalkgroupAdmin(admin.ModelAdmin):
     ordering = ("-decimal_id",)
     list_display = (
@@ -122,7 +123,7 @@ class TalkgroupAdmin(admin.ModelAdmin):
     list_filter = ("system", "mode", "encrypted")
     search_fields = ("UUID", "alpha_tag", "decimal_id")
 
-
+@admin.register(SystemRecorder)
 class SystemRecorderAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = (
@@ -137,7 +138,7 @@ class SystemRecorderAdmin(admin.ModelAdmin):
         "enabled",
     )
 
-
+@admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
     ordering = ("-decimal_id",)
     list_display = (
@@ -148,7 +149,7 @@ class UnitAdmin(admin.ModelAdmin):
     list_filter = ("system",)
     search_fields = ("decimal_id", "system", "description")
 
-
+@admin.register(Transmission)
 class TransmissionAdmin(admin.ModelAdmin):
     ordering = ("-start_time",)
     list_display = (
@@ -169,14 +170,14 @@ class TransmissionAdmin(admin.ModelAdmin):
     search_fields = ("UUID", "talkgroup__alpha_tag", "frequency")
     actions = [lock_transmssions, unlock_transmssions]
 
-
+@admin.register(Incident)
 class IncidentAdmin(admin.ModelAdmin):
     ordering = ("-time",)
     autocomplete_fields = ("transmission",)
     list_display = ("name", "time", "system", "description")
     list_filter = ("system",)
 
-
+@admin.register(TalkGroupACL)
 class TalkgroupACLAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     # autocomplete_fields = ("transmission",)
@@ -194,7 +195,7 @@ class TalkgroupACLAdmin(admin.ModelAdmin):
         "transcript_allowed",
     )
 
-
+@admin.register(ScanList)
 class ScanlistAdmin(admin.ModelAdmin):
     # ordering = ("-owner",)
     # autocomplete_fields = ("transmission",)
@@ -204,7 +205,7 @@ class ScanlistAdmin(admin.ModelAdmin):
         "community_shared",
     )
 
-
+@admin.register(Scanner)
 class ScannerAdmin(admin.ModelAdmin):
     # ordering = ("-owner",)
     # autocomplete_fields = ("transmission",)
@@ -214,14 +215,14 @@ class ScannerAdmin(admin.ModelAdmin):
         "community_shared",
     )
 
-
+@admin.register(GlobalAnnouncement)
 class GlobalAnnouncementAdmin(admin.ModelAdmin):
     # ordering = ("-owner",)
     # autocomplete_fields = ("transmission",)
     list_display = ("name", "enabled", "description")
     list_filter = ("enabled",)
 
-
+@admin.register(GlobalEmailTemplate)
 class GlobalEmailTemplateAdmin(admin.ModelAdmin):
     # ordering = ("-owner",)
     # autocomplete_fields = ("transmission",)
@@ -231,53 +232,3 @@ class GlobalEmailTemplateAdmin(admin.ModelAdmin):
         "enabled",
     )
     list_filter = ("enabled",)
-
-
-# class SystemReciveRateAdmin(admin.ModelAdmin):
-#     ordering = ("-time",)
-#     # autocomplete_fields = ("transmission",)
-#     list_display = (
-#         "UUID",
-#         "time",
-#         "recorder",
-#         "rate",
-#     )
-#     list_filter = ("recorder",)
-
-
-# class CallAdmin(admin.ModelAdmin):
-#     ordering = ("-start_time",)
-#     # autocomplete_fields = ("transmission",)
-#     list_display = (
-#         "trunkRecorderID",
-#         "talkgroup",
-#         "recorder",
-#         "start_time",
-#         "end_time",
-#         "active",
-#         "encrypted",
-#         "emergency",
-#         "frequency",
-#         "phase2",
-#         "emergency",
-#     )
-#     list_filter = ("emergency", "active", "encrypted")
-
-
-admin.site.register(UserAlert, UserAlertAdmin)
-admin.site.register(UserProfile, UserProfileAdmin)
-admin.site.register(SystemACL, SystemACLAdmin)
-admin.site.register(System, SystemAdmin)
-admin.site.register(SystemForwarder, SystemForwarderAdmin)
-admin.site.register(City, CityAdmin)
-admin.site.register(Agency, AgencyAdmin)
-admin.site.register(TalkGroup, TalkgroupAdmin)
-admin.site.register(SystemRecorder, SystemRecorderAdmin)
-admin.site.register(Unit, UnitAdmin)
-admin.site.register(Transmission, TransmissionAdmin)
-admin.site.register(Incident, IncidentAdmin)
-admin.site.register(TalkGroupACL, TalkgroupACLAdmin)
-admin.site.register(ScanList, ScanlistAdmin)
-admin.site.register(Scanner, ScannerAdmin)
-admin.site.register(GlobalAnnouncement, GlobalAnnouncementAdmin)
-admin.site.register(GlobalEmailTemplate, GlobalEmailTemplateAdmin)

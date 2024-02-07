@@ -122,14 +122,17 @@ class View(APIView):
     serializer_class = UnitSerializer
     permission_classes = [IsSAOrReadOnly]
 
-    def get_object(self, request_uuid):
+    def get_object(self, request_id):
         """
         UFetches Unit ORM Object
         """
         try:
-            return Unit.objects.get(UUID=request_uuid)
+            return Unit.objects.get(UUID=request_id)
         except Unit.DoesNotExist:
-            raise Http404 from Unit.DoesNotExist
+            try:
+                return Unit.objects.get(decimal_id=request_id)
+            except:
+                raise Http404 from Unit.DoesNotExist
 
     @swagger_auto_schema(tags=["Unit"])
     def get(self, request, request_uuid):

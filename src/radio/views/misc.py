@@ -1,9 +1,8 @@
 from django.conf import settings
-from django.http import ( Http404, HttpResponse )
-
-from radio.helpers.utils import user_allowed_to_download_transmission
+from django.http import Http404, HttpResponse
 
 from radio.models import Transmission
+from radio.helpers.utils import user_allowed_to_download_transmission
 
 if settings.SEND_TELEMETRY:
     import sentry_sdk
@@ -38,7 +37,6 @@ class PaginationMixin(object):
         assert self.paginator is not None
         return self.paginator.get_paginated_response(data)
 
-
 def transmission_download(request, transmission_uuid):
     """
     Handles Transmission download URL
@@ -56,7 +54,6 @@ def transmission_download(request, transmission_uuid):
             return HttpResponse("UNAUTHORIZED", status=401)
 
     file_url = transmission.audio_file.url
-    # file_size = transmission.audio_file.size
 
     if not settings.USE_S3:
         file_url = f"{settings.AUDIO_DOWNLOAD_HOST}{file_url}"

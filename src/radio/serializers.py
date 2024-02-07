@@ -108,6 +108,9 @@ class AgencyViewListSerializer(serializers.ModelSerializer):
         fields = ["UUID", "name", "description", "city"]
 
 class TalkGroupSerializer(serializers.ModelSerializer):
+    def transmission_count(self, obj: TalkGroup):
+        return obj.transmission_count
+    
     class Meta:
         model = TalkGroup
         fields = [
@@ -119,11 +122,16 @@ class TalkGroupSerializer(serializers.ModelSerializer):
             "mode",
             "encrypted",
             "agency",
-            "notes"
+            "notes",
+            "transmission_count"
         ]
 
 class TalkGroupListSerializer(serializers.ModelSerializer):
     system = SystemSerializer(read_only=True)
+
+    def transmission_count(self, obj: TalkGroup):
+        return obj.transmission_count
+    
     class Meta:
         model = TalkGroup
         fields = [
@@ -135,13 +143,17 @@ class TalkGroupListSerializer(serializers.ModelSerializer):
             "mode",
             "encrypted",
             "agency",
-            "notes"
+            "notes",
+            "transmission_count"
         ]
 
 class TalkGroupViewListSerializer(serializers.ModelSerializer):
     agency = AgencyViewListSerializer(read_only=True, many=True)
     system = SystemSerializer(read_only=True)
 
+    def transmission_count(self, obj: TalkGroup):
+        return obj.transmission_count
+
     class Meta:
         model = TalkGroup
         fields = [
@@ -153,7 +165,8 @@ class TalkGroupViewListSerializer(serializers.ModelSerializer):
             "mode",
             "encrypted",
             "agency",
-            "notes"
+            "notes",
+            "transmission_count"
         ]
 
 class SystemRecorderSerializer(serializers.ModelSerializer):
@@ -348,72 +361,3 @@ class GlobalEmailTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalEmailTemplate
         fields = ["UUID", "name", "template_type", "enabled", "HTML"]
-
-
-# class SystemReciveRateSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = SystemReciveRate
-#         fields = ["UUID", "time", "rate", "recorder"]
-
-
-# class SystemReciveRateCreateSerializer(serializers.ModelSerializer):
-#     recorder = serializers.SlugRelatedField(
-#         read_only=False,
-#         queryset=SystemRecorder.objects.all(),
-#         slug_field="api_key",
-#     )
-
-#     class Meta:
-#         model = SystemReciveRate
-#         fields = ["UUID", "time", "rate", "recorder"]
-
-
-# class CallSerializer(serializers.ModelSerializer):
-#     units = UnitSerializer(many=True)
-
-#     class Meta:
-#         model = Call
-#         fields = [
-#             "UUID",
-#             "trunkRecorderID",
-#             "start_time",
-#             "end_time",
-#             "units",
-#             "active",
-#             "emergency",
-#             "encrypted",
-#             "frequency",
-#             "phase2",
-#             "talkgroup",
-#         ]
-
-
-# class CallUpdateCreateSerializer(serializers.ModelSerializer):
-#     # talkgroup = serializers.SlugRelatedField(
-#     #     read_only=False, queryset=TalkGroup.objects.all(), slug_field="decimal_id"
-#     # )
-#     units = serializers.SlugRelatedField(
-#         many=True, read_only=False, queryset=Unit.objects.all(), slug_field="decimal_id"
-#     )
-#     recorder = serializers.SlugRelatedField(
-#         read_only=False,
-#         queryset=SystemRecorder.objects.all(),
-#         slug_field="api_key",
-#     )
-
-#     class Meta:
-#         model = Call
-#         fields = [
-#             "UUID",
-#             "trunkRecorderID",
-#             "start_time",
-#             "end_time",
-#             "units",
-#             "active",
-#             "emergency",
-#             "encrypted",
-#             "frequency",
-#             "phase2",
-#             "talkgroup",
-#             "recorder",
-#         ]

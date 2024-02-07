@@ -2,8 +2,8 @@ import logging
 
 from datetime import timedelta
 
-from django.utils import timezone
 from django.conf import settings
+from django.utils import timezone
 
 import apprise
 import socketio
@@ -14,7 +14,6 @@ if settings.SEND_TELEMETRY:
     from sentry_sdk import capture_exception
 
 logger = logging.getLogger(__name__)
-
 
 def format_message(
     msg_type: str, value: str, url: str, emergency: bool, title: str, body: str
@@ -33,7 +32,6 @@ def format_message(
     body = body.replace("%U", url)
 
     return title, body
-
 
 def _send_transmission_notifications(transmission: dict) -> None:
     """

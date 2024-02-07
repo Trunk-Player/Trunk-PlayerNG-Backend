@@ -184,6 +184,21 @@ class TalkGroupFilter(filters.FilterSet):
     agency__name = django_filters.CharFilter(lookup_expr='icontains')
     agency__description = django_filters.CharFilter(lookup_expr='icontains')
 
+
+    # transmission_count__gt = django_filters.NumberFilter(method='transmission_count__gt')
+    # transmission_count__lt = django_filters.NumberFilter(method='transmission_count__lt')
+
+    # def transmission_count__gt(self, queryset, value, *args, **kwargs):
+    #     try:
+    #         if args:
+    #             count = args[0]
+    #             transmission_count__lt
+                
+    #             queryset = queryset.filter(id__in=ids)
+    #     except ValueError:
+    #         pass
+    #     return queryset
+
     order_by_field = 'ordering'
     ordering = OrderingFilter(
         # fields(('model field name', 'parameter name'),)
