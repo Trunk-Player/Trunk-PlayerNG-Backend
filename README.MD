@@ -26,10 +26,6 @@ An S3 compatable provider can be used to store the audio for Trunk-Player. S3 is
 ### Connect to Trunk-Recorder
 See the [Trunk-Recoder Plugin](https://github.com/robotastic/trunk-recorder/blob/master/docs/Plugins.md#trunk-player-next-gen-plugin)
 
-## 🚧 TrunkPlayer-NG is still under active development 🚧
-
-![image](https://user-images.githubusercontent.com/11069376/152628284-ec1ba428-c8e4-4ba3-bac4-6ca13ed5ea59.png)
-
 Planned Features 🎁
 Please note some of these may change
 

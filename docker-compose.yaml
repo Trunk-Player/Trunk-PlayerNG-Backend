@@ -24,7 +24,7 @@ services:
 
   gunicorn:
     restart: always
-    image: trunkplayer/trunkplayer-ng:latest
+    image: trunkplayer/trunkplayer-ng-api:latest
     build: .
     command: 
       - /bin/sh
@@ -51,7 +51,7 @@ services:
 
   trunk-player-worker:
     restart: always
-    image: trunkplayer/trunkplayer-ng:latest
+    image: trunkplayer/trunkplayer-ng-api:latest
     build: .
     deploy:
       replicas: ${WORKER_REPLICAS}
@@ -86,7 +86,7 @@ services:
 
   trunk-player-beat:
     restart: always
-    image: trunkplayer/trunkplayer-ng:latest
+    image: trunkplayer/trunkplayer-ng-api:latest
     build: .
     command:
       - celery
