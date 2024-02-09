@@ -218,13 +218,7 @@ if DEBUG:
 INSTALLED_APPS = [
     "radio",
     "users",
-    "rest_framework_simplejwt",
-
     "corsheaders",
-    'django_celery_results',
-    "django_celery_beat",
-    "rest_framework",
-    "rest_framework.authtoken",
     # "django.contrib.sites",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -232,11 +226,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django_celery_results',
+    "django_celery_beat",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "rest_framework_simplejwt",
     "drf_yasg",
     'django_filters',
     "storages",
-    'dj_rest_auth'
-    #    'django_prometheus',
+    # 'dj_rest_auth'
+    # 'django_prometheus',
 
 ]
 

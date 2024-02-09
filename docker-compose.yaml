@@ -54,7 +54,7 @@ services:
     image: trunkplayer/trunkplayer-ng:latest
     build: .
     deploy:
-      replicas: 2
+      replicas: ${WORKER_REPLICAS}
     command: 
       - celery
       - '-A'
@@ -128,6 +128,5 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         
-  
 volumes:
   metrics:

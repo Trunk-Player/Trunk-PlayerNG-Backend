@@ -41,15 +41,12 @@ def _new_transmission_handler(data: dict) -> dict:
     Converts API call to DB format and stores file
     """
     from radio.tasks import forward_transmission, send_transmission_to_web, send_transmission_notifications
-    # from metrics.instrumenting.transmission import transmission_count
 
     logger.info(f"Got new transmission - {data['name'].split('.')[0]}", extra=data["json"])
     recorder_uuid = data["recorder"]
     jsonx = data["json"]
     audio = data["audio_file"]
     tx_uuid = data["UUID"]
-
-    # transmission_count.inc()
 
     recorder: SystemRecorder = SystemRecorder.objects.get(
         api_key=recorder_uuid
