@@ -209,7 +209,12 @@ class TransmissionSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
-            "transcript"
+            "transcript",
+            "has_tones",
+            "is_dispatch",
+            "tones_detected",
+            "tones_meta",
+            
         ]
 
 class TransmissionListSerializer(serializers.ModelSerializer):
@@ -234,7 +239,11 @@ class TransmissionListSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
-            "transcript"
+            "transcript",
+            "has_tones",
+            "is_dispatch",
+            "tones_detected",
+            "tones_meta"
         ]
 
     def get_system_name(self, obj):
@@ -268,7 +277,11 @@ class TransmissionUploadSerializer(serializers.ModelSerializer):
             "frequencys",
             "length",
             "locked",
-            "transcript"
+            "transcript",
+            "has_tones",
+            "is_dispatch",
+            "tones_detected",
+            "tones_meta",
         ]
 
 

@@ -119,6 +119,24 @@ class Create(APIView):
                 "audio_file": openapi.Schema(
                     type=openapi.TYPE_STRING, description="M4A Base64"
                 ),
+                "tones": openapi.Schema(
+                    type=openapi.TYPE_OBJECT, description="Tones Info",
+                    required=[],
+                    properties={
+                        "has_tones": openapi.Schema(
+                            type=openapi.TYPE_BOOLEAN, description="Has Tones"
+                        ),
+                        "is_dispatch": openapi.Schema(
+                            type=openapi.TYPE_BOOLEAN, description="Is a Dispatch"
+                        ),
+                        "tones_detected": openapi.Schema(
+                            type=openapi.TYPE_STRING, description="Tones Detected"
+                        ),
+                        "tones_meta": openapi.Schema(
+                             type=openapi.TYPE_OBJECT, description="Any Arbatray extra data",
+                        )
+                    }
+                ),
                 "name": openapi.Schema(
                     type=openapi.TYPE_STRING, description="Audio File Name"
                 ),

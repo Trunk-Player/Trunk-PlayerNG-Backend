@@ -43,10 +43,13 @@ def _new_transmission_handler(data: dict) -> dict:
     from radio.tasks import forward_transmission, send_transmission_to_web, send_transmission_notifications
 
     logger.info(f"Got new transmission - {data['name'].split('.')[0]}", extra=data["json"])
-    recorder_uuid = data["recorder"]
-    jsonx = data["json"]
-    audio = data["audio_file"]
-    tx_uuid = data["UUID"]
+    recorder_uuid: str = data["recorder"]
+    jsonx: dict = data["json"]
+    audio: str = data["audio_file"]
+    tx_uuid: str = data["UUID"]
+    tones: dict = data.get("tones", None)
+
+
 
     recorder: SystemRecorder = SystemRecorder.objects.get(
         api_key=recorder_uuid
@@ -66,11 +69,14 @@ def _new_transmission_handler(data: dict) -> dict:
     payload["recorder"] = str(recorder_uuid)
     payload["system"] = str(system.UUID)
 
+    if tones and isinstance(tones, dict):
+        payload["tones"] = tones
+
     name = data["name"].split(".")
     payload["audio_file"] = ContentFile(
         audio_bytes, name=f'{name[0]}_{str(uuid.uuid4()).rsplit("-", maxsplit=1)[-1]}.{name}.m4a'
     )
-    
+
     transmission = TransmissionUploadSerializer(data=payload, partial=True)
 
     if transmission.is_valid(raise_exception=True):

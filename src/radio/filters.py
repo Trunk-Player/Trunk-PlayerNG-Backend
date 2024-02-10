@@ -391,6 +391,8 @@ class TransmissionFilter(filters.FilterSet):
     start_time = IsoDateTimeFromToRangeFilter()
     end_time = IsoDateTimeFromToRangeFilter()
 
+    tones_detected = django_filters.CharFilter(lookup_expr='icontains')
+
     system__name = django_filters.CharFilter(lookup_expr='icontains')
     recorder__name = django_filters.CharFilter(lookup_expr='icontains')
 
@@ -434,6 +436,9 @@ class TransmissionFilter(filters.FilterSet):
             "length",
             "locked",
             "transcript",
+            "has_tones",
+            "is_dispatch",
+            "tones_detected",
         ]
 
 class GlobalAnnouncementFilter(filters.FilterSet):

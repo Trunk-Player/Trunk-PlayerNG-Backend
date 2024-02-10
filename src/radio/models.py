@@ -272,6 +272,13 @@ class Transmission(models.Model):
     frequency = models.FloatField(default=0.0)
     length = models.FloatField(default=0.0, null=True)
 
+    # @kcwebby <3 
+    # https://github.com/Trunk-Player/Trunk-PlayerNG-Backend/issues/26
+    has_tones = models.BooleanField(default=False, db_index=True)
+    is_dispatch = models.BooleanField(default=False, db_index=True)
+    tones_detected = models.CharField(max_length=255, blank=True, null=True)
+    tones_meta = models.JSONField(default=dict, blank=True)
+
     locked = models.BooleanField(default=False, db_index=True)
     transcript = models.TextField(null=True, blank=True)
 
