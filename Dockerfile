@@ -64,7 +64,7 @@ RUN sh -c 'python -m pip install --upgrade pip --no-cache-dir && \
 #----------------------------------------------------------------------------------------------------------------------
 # Trash that build junk
 RUN rm /tmp/requirements.txt
-RUN apk remove --virtual build-dependencies
+RUN apk del build-dependencies
 #----------------------------------------------------------------------------------------------------------------------
 # Copy Code & primary files
 # Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
