@@ -33,8 +33,14 @@ RUN mkdir ${CODE_DIR}/static && \
 # Install Deps
 #----------------------------------------------------------------------------------------------------------------------
 
-# Install CAs
-RUN apk update && apk add ca-certificates
+# Install CAs abd build deps
+RUN apk update && apk add ca-certificates && \
+  apk add --virtual build-dependencies \
+    build-base \
+    gcc \
+    wget \
+    git
+  
 
 #----------------------------------------------------------------------------------------------------------------------
 # Install Build libs
@@ -57,7 +63,7 @@ RUN sh -c 'python -m pip install --upgrade pip --no-cache-dir && \
 #----------------------------------------------------------------------------------------------------------------------
 # Trash that build junk
 RUN rm /tmp/requirements.txt
-
+RUN apk remove --virtual build-dependencies
 #----------------------------------------------------------------------------------------------------------------------
 # Copy Code & primary files
 # Copy your application code to the container (make sure you create a .dockerignore file if any large files or directories should be excluded)
