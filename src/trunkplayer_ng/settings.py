@@ -122,7 +122,7 @@ SESSION_TIMEOUT_REDIRECT = '/'
 # https://github.com/adamchainz/django-cors-headers
 ######################################################################
 # https://github.com/adamchainz/django-cors-headers?tab=readme-ov-file#cors_allowed_origins-sequencestr
-CORS_ALLOWED_ORIGINS =              os.getenv("CORS_ALLOWED_HOSTS", "").split(" ")
+CORS_ALLOWED_ORIGINS =              os.getenv("CORS_ALLOWED_HOSTS", "https://localhost").split(" ")
 
 # https://github.com/adamchainz/django-cors-headers?tab=readme-ov-file#cors_allowed_origins-sequencestr
 CORS_ALLOW_ALL_ORIGINS =            False
