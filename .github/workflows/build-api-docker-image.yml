@@ -19,4 +19,4 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: trunkplayer/trunkplayer-ng-backend:latest , trunkplayer/trunkplayer-ng-backend:develop
+          tags: trunkplayer/trunkplayer-ng-api:latest , trunkplayer/trunkplayer-ng-api:develop
