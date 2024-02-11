@@ -1,0 +1,161 @@
+#!/bin/bash
+
+#!/bin/bash
+
+THREADS=${THREADS:-100}
+LOG_LEVEL=${LOG_LEVEL:-info}
+
+INSTALL_DIR=${INSTALL_DIR:-/opt/chaos.corp/tpng}
+
+# Function to display help message
+show_help() {
+  echo "Chaos Control"
+  echo "Usage: chaosctl [command]"
+  echo ""
+  echo "Setup Commands:"
+  echo "  install                Install (SUDO)"
+  echo "  start                  Start the Trunk-PlayerNG Stack"
+  echo "  stop                   Stop the compose"
+  echo "  destroy                Destroy instance"
+  echo "  build                  Build the compose stack"
+  echo "  logs                   Follow logs"
+  echo "----------------------------------------------------------------------------------"
+  echo "Launch Commands: [AT YOUR OWN RISK - NON-DOCKER]"
+  echo "  migrate                Run database migrations"
+  echo "  createsuperuser        Create a superuser"
+  echo "  staticfiles            Collect static files"
+  echo "  web [--init]           Launch the web application, add --init to migrate"
+  echo "  worker                 Launch the bacground worker"
+  echo "  beat                   Launch the beat timer"
+}
+
+# Check if at least one argument is provided
+if [ $# -lt 1 ]; then
+  echo "Error: No command provided."
+  show_help
+  exit 1
+fi
+
+start_docker() {
+  CURR_DIR=`pwd`
+  cd $INSTALL_DIR
+  docker-compose up -d
+  cd $CURR_DIR
+}
+
+build_docker() {
+  CURR_DIR=`pwd`
+  cd $INSTALL_DIR
+  docker-compose up -d --build
+  cd $CURR_DIR
+}
+
+stop_docker() {
+  CURR_DIR=`pwd`
+  cd $INSTALL_DIR
+  docker-compose stop
+  cd $CURR_DIR
+}
+
+destroy_docker() {
+  CURR_DIR=`pwd`
+  cd $INSTALL_DIR
+  docker-compose down -v
+  cd $CURR_DIR
+}
+
+logs_docker() {
+  CURR_DIR=`pwd`
+  cd $INSTALL_DIR
+  docker-compose logs -f --tail=100
+}
+
+createsuperuser() {
+    echo -e "\n[+] Creating a superuser for environment..."
+    python $INSTALL_DIR/manage.py createsuperuser --noinput;
+}
+
+migrate() {
+    echo -e "\n[+]Running database migrations..."
+    python $INSTALL_DIR/manage.py migrate
+}
+
+collect_static() {
+    echo -e "\n[+] Collecting static files..."
+    python $INSTALL_DIR/manage.py collectstatic --noinput
+}
+
+start_gunicorn() {
+    echo -e "\n[+] Starting gunicorn..."
+    gunicorn -c $INSTALL_DIR/trunkplayer_ng/gunicorn.conf.py
+}
+
+start_beat() {
+    echo -e "\n[+] Starting Celery beat..."
+    cd $INSTALL_DIR
+    celery -A trunkplayer_ng beat -l $LOG_LEVEL
+}
+
+start_worker() {
+    echo -e "\n[+] Starting celerry worker $THREADS:THREADS..."
+    cd $INSTALL_DIR
+    celery -A trunkplayer_ng worker -l $LOG_LEVEL --pool gevent --concurrency $THREADS -E -Q default,transmission_forwarding,radio_refrence,radio_alerts,transmission_ingest,tranmission_push
+}
+
+# Process commands
+case "$1" in
+  web)
+    if [[ "$2" == "--init" ]]; then
+        migrate
+        createsuperuser
+        collect_static 
+        start_gunicorn
+    else
+      start_gunicorn
+    fi
+    ;;
+
+  install)
+    install
+    ;;
+
+  start)
+    start_docker
+    ;;
+
+  stop)
+    stop_docker
+    ;;
+
+  destroy)
+    destroy_docker
+    ;;
+
+  build)
+    build_docker
+    ;;
+
+  logs)
+    logs_docker
+    ;;
+
+  beat)
+    start_beat
+    ;;
+
+  worker)
+    start_worker
+    ;;
+
+  help)
+    show_help
+    exit 0
+    ;;
+
+  *)
+    echo "Error: Unknown command '$1'."
+    show_help 
+    exit 1
+    ;;
+esac
+

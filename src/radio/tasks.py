@@ -10,7 +10,10 @@ from radio.helpers.notifications import (
     _broadcast_web_notification,
     _broadcast_user_notification,
     _send_transmission_notifications,
+)
 
+from radio.helpers.signals import (
+    _send_transmission_signal
 )
 
 from radio.helpers.transmission import (
@@ -107,6 +110,13 @@ def send_transmission_notifications(transmission: dict, *args, **kwargs) -> None
     Does the logic to send user notifications
     """
     _send_transmission_notifications(transmission)
+
+@shared_task
+def send_transmission_signal(transmission: dict, *args, **kwargs) -> None:
+    """
+    Does the logic to send user notifications
+    """
+    _send_transmission_signal(transmission)
 
 
 @shared_task

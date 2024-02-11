@@ -5,6 +5,7 @@ services:
     restart: always
     image: trunkplayer/trunkplayer-ng-nginx:latest
     build: nginx/
+    #user: 1000:1000
     ports:
       - 8080:80
       - 8443:443
@@ -13,6 +14,19 @@ services:
     volumes:
       - static:/code/static
       - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+
+  emqx:
+    image: emqx/emqx:latest
+    ports:
+      - "1883:1883"
+      - "18083:18083"
+    environment:
+      - EMQX_LISTENER__TCP__EXTERNAL=1883
+      - EMQX_LISTENER__WS__EXTERNAL=8083
+      - EMQX_DASHBOARD__LISTENER__HTTP=18083
+    restart: always
+    volumes:
+      - emqx_data:/opt/emqx
 
   trunk-player-frontend:
     restart: always
@@ -26,6 +40,7 @@ services:
     restart: always
     image: trunkplayer/trunkplayer-ng-api:latest
     build: .
+    user: 1000:1000
     command: 
       - chaosctl
       - web
@@ -46,6 +61,7 @@ services:
     restart: always
     image: trunkplayer/trunkplayer-ng-api:latest
     build: .
+    user: 1000:1000
     deploy:
       replicas: ${WORKER_REPLICAS}
     command: 
@@ -67,6 +83,7 @@ services:
     restart: always
     image: trunkplayer/trunkplayer-ng-api:latest
     build: .
+    user: 1000:1000
     command: 
       - chaosctl
       - beat
@@ -103,3 +120,4 @@ services:
         
 volumes:
   static:
+  emqx_data:

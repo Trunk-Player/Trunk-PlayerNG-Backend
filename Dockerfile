@@ -14,6 +14,7 @@ ARG APP_GROUP=chaos
 ARG APP_GID=1000
 
 ARG CODE_DIR=/opt/chaos.corp/tpng
+ENV INSTALL_DIR=${CODE_DIR}
 
 #----------------------------------------------------------------------------------------------------------------------
 # Setup User / Group
@@ -69,6 +70,7 @@ RUN apk del build-dependencies
 #----------------------------------------------------------------------------------------------------------------------
 # Copy the main codebase
 COPY src/ ${CODE_DIR}/
+COPY chaosctl ${CODE_DIR}/
 RUN ln -s ${CODE_DIR}/chaosctl /usr/bin/chaosctl && chmod +x /usr/bin/chaosctl
 
 #----------------------------------------------------------------------------------------------------------------------

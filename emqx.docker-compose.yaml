@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  emqx:
+    image: emqx/emqx:latest
+    ports:
+      - "1883:1883"
+      - "18083:18083"
+    environment:
+      - EMQX_LISTENER__TCP__EXTERNAL=1883
+      - EMQX_LISTENER__WS__EXTERNAL=8083
+      - EMQX_DASHBOARD__LISTENER__HTTP=18083
+    restart: always
+    volumes:
+      - emqx_data:/opt/emqx
+
+volumes:
+  emqx_data:
+
+

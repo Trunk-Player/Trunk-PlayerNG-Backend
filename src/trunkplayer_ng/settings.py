@@ -218,6 +218,7 @@ if DEBUG:
 INSTALLED_APPS = [
     "radio",
     "users",
+    "mqtt",
     "corsheaders",
     # "django.contrib.sites",
     "django.contrib.admin",
@@ -234,8 +235,6 @@ INSTALLED_APPS = [
     "drf_yasg",
     'django_filters',
     "storages",
-    # 'dj_rest_auth'
-
 ]
 
 ######################################################################
@@ -749,12 +748,17 @@ CELERY_TASK_ROUTES = {
     "radio.tasks.broadcast_transmission": {
         "queue": "tranmission_push"
     },
+    "radio.tasks.send_transmission_signal": {
+        "queue": "tranmission_push"
+    },
 }
 
 REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_COOKIE': 'jwt-auth',
 }
+
+MQTT_AMQP_QUQUE = "tpng_mqtt"
 
 # URL for the message broker. Environment variable 'CELERY_BROKER_URL' is used to configure this.
 # The message broker is a service used to queue and distribute tasks.
