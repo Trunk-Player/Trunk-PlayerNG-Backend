@@ -59,7 +59,7 @@ class MqttSystemClient():
             for talkgroup in talkgroups:
                 self.topicz.append(
                     f"system/{talkgroup.system.UUID}/talkgroup/{talkgroup.UUID}",
-                    f"system/{talkgroup.system.name}/talkgroup/{talkgroup.decimal_id}",
+                    f"system/{talkgroup.system.name}/talkgroup/{talkgroup.alpha_tag}",
                 )
         else: 
             for system in System.objects.all():
@@ -71,7 +71,7 @@ class MqttSystemClient():
             for talkgroup in TalkGroup.objects.all():
                 self.topicz.append(
                     f"system/{talkgroup.system.UUID}/talkgroup/{talkgroup.UUID}",
-                    f"system/{talkgroup.system.name}/talkgroup/{talkgroup.decimal_id}",
+                    f"system/{talkgroup.system.name}/talkgroup/{talkgroup.alpha_tag}",
                 )
 
         if self.agencies:
@@ -98,7 +98,7 @@ class MqttSystemClient():
                     f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["site_id"]}",
                     f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["name"]}",
                     f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
-                    f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["decimal_id"]}",
+                    f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["alpha_tag"]}",
                     
                 ]
         else:
@@ -108,7 +108,7 @@ class MqttSystemClient():
                 f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["site_id"]}",
                 f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["name"]}",
                 f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
-                f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["decimal_id"]}",
+                f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["alpha_tag"]}",
             ]
 
         if self.agencies and _transmission["talkgroup"]["talkgroup"]["agency"]:
