@@ -34,14 +34,13 @@ RUN mkdir ${CODE_DIR}/static && \
 #----------------------------------------------------------------------------------------------------------------------
 
 # Install CAs abd build deps
-RUN apk update && apk add ca-certificates && \
+RUN apk update && apk add ca-certificates bash && \
   apk add --virtual build-dependencies \
     build-base \
     gcc \
     wget \
     git \
     libffi-dev
-  
 
 #----------------------------------------------------------------------------------------------------------------------
 # Install Build libs
@@ -55,9 +54,8 @@ COPY src/requirements.txt /tmp/requirements.txt
 # Update PIP or risk the wrath of the python 
 # Install our packages and hope it dosent catch fire
 # get rid of our requirements file, I didnt like him anyhow
-RUN sh -c 'python -m pip install --upgrade pip --no-cache-dir && \
-  # python -m pip install --no-cache-dir "setuptools<58" && \
-  python -m pip install --upgrade --no-cache-dir -r /tmp/requirements.txt'
+RUN python -m pip install --upgrade pip --no-cache-dir && \
+  python -m pip install --upgrade --no-cache-dir -r /tmp/requirements.txt
 
 #----------------------------------------------------------------------------------------------------------------------
 # Remove Build libs
@@ -71,6 +69,7 @@ RUN apk del build-dependencies
 #----------------------------------------------------------------------------------------------------------------------
 # Copy the main codebase
 COPY src/ ${CODE_DIR}/
+RUN ln -s ${CODE_DIR}/chaosctl /usr/bin/chaosctl && chmod +x /usr/bin/chaosctl
 
 #----------------------------------------------------------------------------------------------------------------------
 # Set for Sekurity
@@ -95,5 +94,5 @@ VOLUME ${CODE_DIR}/media
 # Expose the HTTP TCP socket - this way Nginx can do all the hard work
 EXPOSE 40269
 
-# Start uWSGI
-CMD ["uwsgi", "--show-config"]
+# Start
+CMD ["chaosctl", "help"]

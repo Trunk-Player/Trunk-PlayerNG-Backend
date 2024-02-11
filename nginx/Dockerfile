@@ -1,15 +1,21 @@
 FROM nginx:stable-alpine
 
 #----------------------------------------------------------------------------------------------------------------------
-# Create Users / Groups 
+# SET DEFAULTS
 #----------------------------------------------------------------------------------------------------------------------
 
-# Set the user to the www-data user
 ARG APP_USER=www-data
-ARG AUX_GROUP=low_orbit_intel_satellite
-RUN addgroup -g 69 ${AUX_GROUP} && \
-    adduser --ingroup ${APP_USER} -u 69 -D --no-create-home ${APP_USER} && \
-    adduser nginx ${AUX_GROUP}
+ARG APP_UID=1000
+
+ARG APP_GROUP=chaos
+ARG APP_GID=1000
+
+#----------------------------------------------------------------------------------------------------------------------
+# Setup User / Group
+#----------------------------------------------------------------------------------------------------------------------
+RUN addgroup -g ${APP_GID} ${APP_GROUP} && \
+  adduser --ingroup ${APP_GROUP} -D -u ${APP_UID} --no-create-home -s /bin/bash ${APP_USER} && \
+  adduser nginx ${AUX_GROUP}
 
 # --------------------------------------------------------
 # NGINX CONFIG SETUP
@@ -71,7 +77,7 @@ RUN touch /var/run/nginx.pid && \
 EXPOSE 80
 EXPOSE 443
 
-VOLUME [ "/code/mediafiles", "/code/static" ]
+VOLUME [ "/code/mediafiles", "/code/static", "/etc/nginx/ssl/" ]
 
 # Make sure we kill Nginx with no mercy
 STOPSIGNAL SIGTERM
