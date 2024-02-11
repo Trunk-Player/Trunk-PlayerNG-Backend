@@ -25,3 +25,4 @@ boto3
 splunk_handler
 zeep # RR Client
 paho-mqtt # MQTT
+pika

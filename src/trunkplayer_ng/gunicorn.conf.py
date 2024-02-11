@@ -31,15 +31,10 @@ max_requests=150000
 
 wsgi_app='trunkplayer_ng.wsgi'
 
-def launch_mqtt():
-    from mqtt.utils.mqtt import MqttClientManager
-    mqtt_system = MqttClientManager()
-    mqtt_system.launch()
 
 def post_fork(server, worker):
     patch_psycopg()
     worker.log.info("Monkey Patched Thread 🙊")
-    launch_mqtt()
 
 
 

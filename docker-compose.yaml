@@ -13,7 +13,7 @@ services:
       - gunicorn
     volumes:
       - static:/code/static
-      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
+      - media:/code/mediafiles
 
   emqx:
     image: emqx/emqx:latest
@@ -52,7 +52,7 @@ services:
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
       - static:/opt/chaos.corp/tpng/static
-      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
+      - media:/opt/chaos.corp/tpng/mediafiles
     depends_on:
       - database
       - rabbitmq
@@ -74,7 +74,27 @@ services:
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
       - static:/opt/chaos.corp/tpng/static
-      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
+      - media:/opt/chaos.corp/tpng/mediafiles
+    depends_on:
+      - database
+      - rabbitmq
+
+  trunk-player-mqtt:
+    restart: always
+    image: trunkplayer/trunkplayer-ng-api:latest
+    build: .
+    user: 1000:1000
+    command: 
+      - chaosctl
+      - mqtt
+    env_file:
+      - .env
+    environment:
+      DB_HOST: "database"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
+    volumes:
+      - static:/opt/chaos.corp/tpng/static
+      - media:/opt/chaos.corp/tpng/mediafiles
     depends_on:
       - database
       - rabbitmq
@@ -94,7 +114,7 @@ services:
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
       - static:/opt/chaos.corp/tpng/static
-      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
+      - media:/opt/chaos.corp/tpng/mediafiles
     depends_on:
       - database
       - rabbitmq
@@ -107,7 +127,8 @@ services:
       POSTGRES_DB: "${DB_NAME}"
       POSTGRES_USER: "${DB_USER}"
     volumes:
-      - ${DATABASE_VOLUME_PATH}:/var/lib/postgresql/data
+      - database:/var/lib/postgresql/data
+     #- ${DATABASE_VOLUME_PATH}:/var/lib/postgresql/data
 
   rabbitmq:
     image: 'rabbitmq:management'
@@ -120,4 +141,6 @@ services:
         
 volumes:
   static:
+  media:
   emqx_data:
+  database:

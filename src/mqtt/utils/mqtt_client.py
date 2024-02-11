@@ -25,10 +25,7 @@ def _send_mqtt_message_signal(sender, client, userdata, msg) -> None:
         userdata=userdata, 
         msg=msg
     )
-
-def 
-
-
+ 
 
 class MqttSystemClient():
     def __init__(self, mqtt_server) -> None:

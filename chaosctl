@@ -27,6 +27,7 @@ show_help() {
   echo "  web [--init]           Launch the web application, add --init to migrate"
   echo "  worker                 Launch the bacground worker"
   echo "  beat                   Launch the beat timer"
+  echo "  mqtt                   Launch the mqtt worker"
 }
 
 # Check if at least one argument is provided
@@ -70,10 +71,16 @@ logs_docker() {
   docker-compose logs -f --tail=100
 }
 
+launch_mqtt() {
+    echo -e "\n[+] Launching MQTT..."
+    python $INSTALL_DIR/manage.py launch_mqtt --noinput;
+}
+
 createsuperuser() {
     echo -e "\n[+] Creating a superuser for environment..."
     python $INSTALL_DIR/manage.py createsuperuser --noinput;
 }
+
 
 migrate() {
     echo -e "\n[+]Running database migrations..."
@@ -137,6 +144,10 @@ case "$1" in
 
   logs)
     logs_docker
+    ;;
+
+  mqtt)
+    launch_mqtt
     ;;
 
   beat)
