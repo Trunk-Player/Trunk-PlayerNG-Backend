@@ -34,7 +34,7 @@ RUN mkdir ${CODE_DIR}/static && \
 #----------------------------------------------------------------------------------------------------------------------
 
 # Install CAs abd build deps
-RUN apk update && apk add ca-certificates bash && \
+RUN apk update && apk add ca-certificates postgresql-dev libxml2 libxml2-dev libxslt libxslt-dev bash && \
   apk add --virtual build-dependencies \
     build-base \
     gcc \
