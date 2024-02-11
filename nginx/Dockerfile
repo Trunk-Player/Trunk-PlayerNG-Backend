@@ -15,7 +15,7 @@ ARG APP_GID=1000
 #----------------------------------------------------------------------------------------------------------------------
 RUN addgroup -g ${APP_GID} ${APP_GROUP} && \
   adduser --ingroup ${APP_GROUP} -D -u ${APP_UID} --no-create-home -s /bin/bash ${APP_USER} && \
-  adduser nginx ${AUX_GROUP}
+  addgroup nginx ${APP_GROUP} 
 
 # --------------------------------------------------------
 # NGINX CONFIG SETUP

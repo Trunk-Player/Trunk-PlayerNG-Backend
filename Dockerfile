@@ -72,9 +72,16 @@ COPY src/ ${CODE_DIR}/
 RUN ln -s ${CODE_DIR}/chaosctl /usr/bin/chaosctl && chmod +x /usr/bin/chaosctl
 
 #----------------------------------------------------------------------------------------------------------------------
+# Set launch config
+#----------------------------------------------------------------------------------------------------------------------
+# Define Static files volume
+VOLUME ${CODE_DIR}/static
+VOLUME ${CODE_DIR}/media
+
+#----------------------------------------------------------------------------------------------------------------------
 # Set for Sekurity
 #----------------------------------------------------------------------------------------------------------------------
-RUN chown -R ${APP_USER}:${APP_GROUP} ${CODE_DIR}/* && \
+RUN chown -R ${APP_USER}:${APP_GROUP} ${CODE_DIR}/ && \
   chmod -R 540 ${CODE_DIR}/* && \
   chmod -R 774 ${CODE_DIR}/static && \
   chmod -R 774 ${CODE_DIR}/staticfiles && \
@@ -83,13 +90,6 @@ RUN chown -R ${APP_USER}:${APP_GROUP} ${CODE_DIR}/* && \
 
 # Change to a non-root user - Beacuse we dont want anybody being naughty if they ever manage to get in ;P
 USER ${APP_USER}:${APP_GROUP}
-
-#----------------------------------------------------------------------------------------------------------------------
-# Set launch config
-#----------------------------------------------------------------------------------------------------------------------
-# Define Static files volume
-VOLUME ${CODE_DIR}/static
-VOLUME ${CODE_DIR}/media
 
 # Expose the HTTP TCP socket - this way Nginx can do all the hard work
 EXPOSE 40269

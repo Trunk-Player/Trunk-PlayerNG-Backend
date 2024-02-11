@@ -11,7 +11,7 @@ services:
     depends_on:
       - gunicorn
     volumes:
-      - ${STATIC_VOLUME_PATH}:/code/static
+      - static:/code/static
       - ${MEDIA_VOLUME_PATH}:/code/mediafiles
 
   trunk-player-frontend:
@@ -27,24 +27,17 @@ services:
     image: trunkplayer/trunkplayer-ng-api:latest
     build: .
     command: 
-      - /bin/sh
-      - '-c'
-      - |
-        sleep 5; \
-        python -m gevent.monkey manage.py migrate && \
-        python -m gevent.monkey manage.py createsuperuser --noinput; \
-        python -m gevent.monkey manage.py collectstatic --no-input; \
-        gunicorn -c trunkplayer_ng/gunicorn.conf.py
+      - chaosctl
+      - web
+      # - --init
     env_file:
       - .env
     environment:
       DB_HOST: "database"
-      PROMETHEUS_MULTIPROC_DIR: /opt/chaos.corp/tpng/metrics
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
-      - ${STATIC_VOLUME_PATH}:/opt/chaos.corp/tpng/static
+      - static:/opt/chaos.corp/tpng/static
       - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
-      - metrics:/opt/chaos.corp/tpng/metrics
     depends_on:
       - database
       - rabbitmq
@@ -56,30 +49,16 @@ services:
     deploy:
       replicas: ${WORKER_REPLICAS}
     command: 
-      - celery
-      - '-A'
-      - 'trunkplayer_ng'
-      - 'worker'
-      - '-l'
-      - 'info'
-      - '--pool'
-      - 'gevent'
-      - '--concurrency'
-      - '100' 
-      - '-E'
-      - '-Q'
-      - |-
-        default,transmission_forwarding,radio_refrence,radio_alerts,transmission_ingest,tranmission_push
+      - chaosctl
+      - worker
     env_file:
       - .env
     environment:
       DB_HOST: "database"
-      PROMETHEUS_MULTIPROC_DIR: /opt/chaos.corp/tpng/metrics
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
-      - ${STATIC_VOLUME_PATH}:/opt/chaos.corp/tpng/static
+      - static:/opt/chaos.corp/tpng/static
       - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
-      - metrics:/opt/chaos.corp/tpng/metrics
     depends_on:
       - database
       - rabbitmq
@@ -88,23 +67,17 @@ services:
     restart: always
     image: trunkplayer/trunkplayer-ng-api:latest
     build: .
-    command:
-      - celery
-      - '-A'
-      - 'trunkplayer_ng'
-      - 'beat'
-      - '-l'
-      - 'info'
+    command: 
+      - chaosctl
+      - beat
     env_file:
       - .env
     environment:
       DB_HOST: "database"
-      PROMETHEUS_MULTIPROC_DIR: /opt/chaos.corp/tpng/metrics
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
-      - ${STATIC_VOLUME_PATH}:/opt/chaos.corp/tpng/static
+      - static:/opt/chaos.corp/tpng/static
       - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
-      - metrics:/opt/chaos.corp/tpng/metrics
     depends_on:
       - database
       - rabbitmq
@@ -129,4 +102,4 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         
 volumes:
-  metrics:
+  static:

@@ -23,6 +23,5 @@ python-json-logger
 django-storages
 boto3
 splunk_handler
-zeep
-django-prometheus
-prometheus-client
+zeep # RR Client
+paho-mqtt # MQTT
