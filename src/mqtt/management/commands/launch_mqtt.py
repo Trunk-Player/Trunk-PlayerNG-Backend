@@ -21,7 +21,7 @@ class Command(BaseCommand):
         self.rabbitmq_queue = settings.MQTT_AMQP_QUQUE
         self.broker_url = settings.CELERY_BROKER_URL
         
-        from mqtt.utils.mqtt import MqttClientManager
+        from mqtt.utils.mqtt_client import MqttClientManager
         self.mqtt_system = MqttClientManager()
         self.mqtt_system.launch()
     
@@ -34,7 +34,6 @@ class Command(BaseCommand):
         except KeyboardInterrupt:
             print('Stopping...')
         finally:
-            self.mqtt_client.disconnect()
             print('Disconnected from MQTT.')
 
     def start_rabbitmq_consumer(self):
@@ -50,7 +49,7 @@ class Command(BaseCommand):
             else:
                 # Check if we should stop consuming (based on some condition or external signal)
                 # If so, break from the loop and close RabbitMQ connection
-                pass
+                continue
 
             try:
                 message = json.loads(message)

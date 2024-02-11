@@ -44,7 +44,7 @@ services:
     command: 
       - chaosctl
       - web
-      # - --init
+      - --init
     env_file:
       - .env
     environment:

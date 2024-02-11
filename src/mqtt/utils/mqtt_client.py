@@ -167,7 +167,7 @@ class MqttClientManager():
     def __init__(self) -> None:
         from mqtt.models import MqttServer
 
-        self.mqtt_servers = MqttServer.objects.get(enabled=True)
+        self.mqtt_servers = MqttServer.objects.filter(enabled=True)
         self.mqtt_clients: list[MqttSystemClient] = []
 
         self._setup_agency_clients()

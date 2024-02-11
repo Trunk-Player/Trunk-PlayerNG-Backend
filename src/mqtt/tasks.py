@@ -23,8 +23,10 @@ def send_mqtt_message_signal(sender, client, userdata, msg) -> None:
     """
     _send_mqtt_message_signal(sender, client, userdata, msg)
 
-
 @receiver(new_transmission)
+def _dispatcher(sender, transmission, _transmission: dict):
+    dispatch_transmission(sender, transmission, _transmission)
+
 @shared_task
 def dispatch_transmission(sender, transmission, _transmission: dict) -> None:
     """

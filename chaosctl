@@ -73,7 +73,7 @@ logs_docker() {
 
 launch_mqtt() {
     echo -e "\n[+] Launching MQTT..."
-    python $INSTALL_DIR/manage.py launch_mqtt --noinput;
+    python $INSTALL_DIR/manage.py launch_mqtt;
 }
 
 createsuperuser() {
