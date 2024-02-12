@@ -21,7 +21,7 @@ def _send_transmission_mqtt(_transmission: dict) -> None:
     transmission:Transmission = Transmission.objects.get(
         UUID=_transmission["UUID"]
     )
-    _transmission = json.loads(json.dumps(_transmission, cls=UUIDEncoder))
+    
     logging.debug(f'[+] Handling Signal for TX:{transmission.UUID}')
     _transmission["recorder"] = {
         "site_id": transmission.recorder.site_id,
@@ -33,20 +33,22 @@ def _send_transmission_mqtt(_transmission: dict) -> None:
     for agency in transmission.talkgroup.agency.all():
         _agency.append({
             "UUID": agency.UUID,
-            "name": agency.name,
-            "description": agency.description,
+            "name": agency.name if agency.name else "",
+            "description": agency.description  if agency.description else "",
             "city": [ 
                 {
-                    "name": city.name,
+                    "name": city.name if city.name else "",
                     "UUID": city.UUID,
-                    "description": city.description,
+                    "description": city.description if city.description else "",
                 }
                 for city in agency.city.all()
             ]
         })
-    _transmission["talkgroup"] = { "agency":  _agency }
 
+    if "talkgroup" in _transmission["talkgroup"]:
+        _transmission["talkgroup"]["agency"] =  _agency
 
+    _transmission = json.dumps(_transmission, cls=UUIDEncoder)
     dispatch_transmission.delay(
         _transmission
     )

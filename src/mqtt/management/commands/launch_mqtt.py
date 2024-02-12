@@ -54,8 +54,8 @@ class Command(BaseCommand):
             try:
                 message = json.loads(message)
                 self.mqtt_system.dispatch(message)
-            except:
-                print("ERROR")
+            except Exception as err:
+                print(f"ERROR: {err}")
                 print(message)
 
         channel.cancel()

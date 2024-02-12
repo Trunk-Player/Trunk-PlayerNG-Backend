@@ -92,35 +92,46 @@ class MqttSystemClient():
                     f"system/{_transmission["system_name"]}",
                     f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["site_id"]}",
                     f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["name"]}",
-                    f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
-                    f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["alpha_tag"]}",
-                    
                 ]
+
+                if "talkgroup" in _transmission:
+                    if "alpha_tag" in _transmission["talkgroup"]:
+                        targets += [
+                            f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
+                            f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["alpha_tag"]}",
+                        ]
         else:
             targets += [
                 f"system/{_transmission["system"]}",
                 f"system/{_transmission["system_name"]}",
                 f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["site_id"]}",
                 f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["name"]}",
-                f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
-                f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["alpha_tag"]}",
             ]
 
-        if self.agencies and _transmission["talkgroup"]["talkgroup"]["agency"]:
-            for agency in _transmission["talkgroup"]["talkgroup"]["agency"]:
-                agency: Agency
-                if agency in [ str(agency.UUID) for agency in self.agencies.all()]:
+            if "talkgroup" in _transmission:
+                if "alpha_tag" in _transmission["talkgroup"]:
+                    targets += [
+                        f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
+                        f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["alpha_tag"]}",
+                    ]
+
+        
+        if "talkgroup" in _transmission:
+            if self.agencies and _transmission["talkgroup"]["agency"]:
+                for agency in _transmission["talkgroup"]["agency"]:
+                    agency: Agency
+                    if agency in [ str(agency.UUID) for agency in self.agencies.all()]:
+                        targets += [
+                            f"agency/{agency.UUID}",
+                            f"agency/{agency.name}",
+                        ]
+            else:
+                for agency in _transmission["talkgroup"]["agency"]:
+                    agency: Agency
                     targets += [
                         f"agency/{agency.UUID}",
                         f"agency/{agency.name}",
                     ]
-        else:
-            for agency in _transmission["talkgroup"]["talkgroup"]["agency"]:
-                agency: Agency
-                targets += [
-                    f"agency/{agency.UUID}",
-                    f"agency/{agency.name}",
-                ]
         
         for topic in targets:
             self.client.publish(
