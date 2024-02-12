@@ -20,6 +20,21 @@ from radio.models import (
     UserAlert
 )
 
+# pylint: disable=unused-argument
+@admin.action(description="Enable")
+def _enable(modeladmin, request, queryset):
+    """
+    Bulk Enables Servers
+    """
+    queryset.update(enabled=True)
+
+# pylint: disable=unused-argument
+@admin.action(description="Disable")
+def _disable(modeladmin, request, queryset):
+    """
+    Bulk Disables Servers
+    """
+    queryset.update(enabled=False)
 
 # pylint: disable=unused-argument
 @admin.action(description="Lock selected Transmissions")
@@ -55,6 +70,11 @@ class UserAlertAdmin(admin.ModelAdmin):
     ordering = ("-user",)
     list_display = ("name", "user", "web_notification", "app_rise_notification", "emergency_only", "count", "trigger_time")
     list_filter = ("web_notification", "app_rise_notification")
+
+    actions = [
+        _enable,
+        _disable
+    ]
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -92,6 +112,11 @@ class SystemForwarderAdmin(admin.ModelAdmin):
     ordering = ("-name",)
     list_display = ("name", "enabled", "forward_incidents", "remote_url", "recorder_key")
     list_filter = ("enabled", "forward_incidents")
+
+    actions = [
+        _enable,
+        _disable
+    ]
 
 @admin.register(City)
 class CityAdmin(admin.ModelAdmin):
@@ -137,6 +162,11 @@ class SystemRecorderAdmin(admin.ModelAdmin):
         "system",
         "enabled",
     )
+
+    actions = [
+        _enable,
+        _disable
+    ]
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
@@ -222,6 +252,11 @@ class GlobalAnnouncementAdmin(admin.ModelAdmin):
     list_display = ("name", "enabled", "description")
     list_filter = ("enabled",)
 
+    actions = [
+        _enable,
+        _disable
+    ]
+
 @admin.register(GlobalEmailTemplate)
 class GlobalEmailTemplateAdmin(admin.ModelAdmin):
     # ordering = ("-owner",)
@@ -232,3 +267,8 @@ class GlobalEmailTemplateAdmin(admin.ModelAdmin):
         "enabled",
     )
     list_filter = ("enabled",)
+
+    actions = [
+        _enable,
+        _disable
+    ]

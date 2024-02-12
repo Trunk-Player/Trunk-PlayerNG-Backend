@@ -13,7 +13,7 @@ services:
       - gunicorn
     volumes:
       - static:/code/static
-      - media:/code/mediafiles
+      - ${MEDIA_VOLUME_PATH}:/code/mediafiles
 
   emqx:
     image: emqx/emqx:latest
@@ -25,8 +25,7 @@ services:
       - EMQX_LISTENER__WS__EXTERNAL=8083
       - EMQX_DASHBOARD__LISTENER__HTTP=18083
     restart: always
-    volumes:
-      - emqx_data:/opt/emqx
+
 
   trunk-player-frontend:
     restart: always
@@ -52,7 +51,7 @@ services:
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
       - static:/opt/chaos.corp/tpng/static
-      - media:/opt/chaos.corp/tpng/mediafiles
+      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
     depends_on:
       - database
       - rabbitmq
@@ -74,27 +73,7 @@ services:
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
       - static:/opt/chaos.corp/tpng/static
-      - media:/opt/chaos.corp/tpng/mediafiles
-    depends_on:
-      - database
-      - rabbitmq
-
-  trunk-player-mqtt:
-    restart: always
-    image: trunkplayer/trunkplayer-ng-api:latest
-    build: .
-    user: 1000:1000
-    command: 
-      - chaosctl
-      - mqtt
-    env_file:
-      - .env
-    environment:
-      DB_HOST: "database"
-      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
-    volumes:
-      - static:/opt/chaos.corp/tpng/static
-      - media:/opt/chaos.corp/tpng/mediafiles
+      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
     depends_on:
       - database
       - rabbitmq
@@ -114,7 +93,24 @@ services:
       CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     volumes:
       - static:/opt/chaos.corp/tpng/static
-      - media:/opt/chaos.corp/tpng/mediafiles
+      - ${MEDIA_VOLUME_PATH}:/opt/chaos.corp/tpng/mediafiles
+    depends_on:
+      - database
+      - rabbitmq
+
+  trunk-player-mqtt:
+    restart: always
+    image: trunkplayer/trunkplayer-ng-api:latest
+    build: .
+    user: 1000:1000
+    command: 
+      - chaosctl
+      - mqtt
+    env_file:
+      - .env
+    environment:
+      DB_HOST: "database"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
     depends_on:
       - database
       - rabbitmq
@@ -127,8 +123,7 @@ services:
       POSTGRES_DB: "${DB_NAME}"
       POSTGRES_USER: "${DB_USER}"
     volumes:
-      - database:/var/lib/postgresql/data
-     #- ${DATABASE_VOLUME_PATH}:/var/lib/postgresql/data
+      - ${DATABASE_VOLUME_PATH}:/var/lib/postgresql/data
 
   rabbitmq:
     image: 'rabbitmq:management'
@@ -141,6 +136,3 @@ services:
         
 volumes:
   static:
-  media:
-  emqx_data:
-  database:
