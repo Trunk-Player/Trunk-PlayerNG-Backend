@@ -44,7 +44,7 @@ def _send_transmission_mqtt(_transmission: dict) -> None:
                 for city in agency.city.all()
             ]
         })
-    _transmission["talkgroup"]["agency"] = _agency
+    _transmission["talkgroup"] = { "agency":  _agency }
 
 
     dispatch_transmission.delay(
