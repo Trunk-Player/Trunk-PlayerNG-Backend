@@ -38,20 +38,20 @@ class MqttSystemClient():
 
         self.topicz: list[str] = []
 
-        self.client = mqtt.Client(client_id=self.client_id)
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=self.client_id)
         self._setup_callbacks()
         self._setup_topics()
 
     def _setup_topics(self) -> None:
         if self.systems:
-            for system in self.systems:
+            for system in self.systems.all():
                 self.topicz.append(
                     f"system/{system.UUID}",
                     f"system/{system.name}",
                 )
 
             talkgroups = TalkGroup.objects.filter(
-                system__in=self.mqtt_server.systems
+                system__in=self.mqtt_server.systems.all()
             )
             for talkgroup in talkgroups:
                 self.topicz.append(
@@ -72,7 +72,7 @@ class MqttSystemClient():
                 )
 
         if self.agencies:
-            for agency in self.agencies:
+            for agency in self.agencies.all():
                 self.topicz.append(
                     f"agency/{agency.UUID}",
                     f"agency/{agency.name}",
@@ -88,7 +88,7 @@ class MqttSystemClient():
         targets = []
 
         if self.systems:
-            if _transmission["system"] in [ str(sys.UUID) for sys in self.systems]:
+            if _transmission["system"] in [ str(sys.UUID) for sys in self.systems.all()]:
                 targets += [
                     f"system/{_transmission["system"]}",
                     f"system/{_transmission["system_name"]}",
@@ -111,7 +111,7 @@ class MqttSystemClient():
         if self.agencies and _transmission["talkgroup"]["talkgroup"]["agency"]:
             for agency in _transmission["talkgroup"]["talkgroup"]["agency"]:
                 agency: Agency
-                if agency in [ str(agency.UUID) for agency in self.agencies]:
+                if agency in [ str(agency.UUID) for agency in self.agencies.all()]:
                     targets += [
                         f"agency/{agency.UUID}",
                         f"agency/{agency.name}",
