@@ -1,13 +1,10 @@
-import logging
 import json
-
-from datetime import timedelta
+import logging
 
 from django.conf import settings
-from django.utils import timezone
+from radio.helpers.utils import UUIDEncoder
 
-from radio.models import TalkGroup, Unit, UserAlert, Transmission
-
+from radio.models import Transmission
 from radio.signals import new_transmission
 
 if settings.SEND_TELEMETRY:
