@@ -12,8 +12,8 @@ from radio.helpers.notifications import (
     _send_transmission_notifications,
 )
 
-from radio.helpers.signals import (
-    _send_transmission_signal
+from radio.helpers.mqtt import (
+    _send_transmission_mqtt
 )
 
 from radio.helpers.transmission import (
@@ -112,11 +112,11 @@ def send_transmission_notifications(transmission: dict, *args, **kwargs) -> None
     _send_transmission_notifications(transmission)
 
 @shared_task
-def send_transmission_signal(transmission: dict, *args, **kwargs) -> None:
+def send_transmission_mqtt(transmission: dict, *args, **kwargs) -> None:
     """
     Does the logic to send user notifications
     """
-    _send_transmission_signal(transmission)
+    _send_transmission_mqtt(transmission)
 
 
 @shared_task
