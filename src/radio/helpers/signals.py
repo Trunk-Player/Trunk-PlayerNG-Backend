@@ -23,6 +23,7 @@ def _send_transmission_signal(_transmission: dict) -> None:
     _transmission = json.loads(json.dumps(_transmission, cls=UUIDEncoder))
     logging.debug(f'[+] Handling Signal for TX:{transmission.UUID}')
     new_transmission.send(
+        sender=_transmission["UUID"],
         system=transmission.system,
         _transmission=_transmission
     )
