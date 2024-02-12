@@ -1,4 +1,5 @@
 import logging
+import json
 
 from datetime import timedelta
 
@@ -22,7 +23,7 @@ def _send_transmission_signal(_transmission: dict) -> None:
     transmission:Transmission = Transmission.objects.get(
         UUID=_transmission["UUID"]
     )
-
+    _transmission = json.laods(json.dumps(_transmission, cls=UUIDEncoder))
     logging.debug(f'[+] Handling Signal for TX:{transmission.UUID}')
     new_transmission.send(
         sender=transmission,

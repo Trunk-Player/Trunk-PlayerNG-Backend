@@ -191,7 +191,7 @@ def _forward_transmission_to_remote_instance(
     try:
         data["recorder"] = str(recorder_key)
         response = requests.post(
-            f"{forwarder_url}/api/radio/transmission/create", json=data
+            f"{forwarder_url}/api/radio/transmission/create", json=json.laods(json.dumps(data, cls=UUIDEncoder))
         )
         assert response.ok
         logger.info(
@@ -217,7 +217,7 @@ def _broadcast_transmission(event: str, room: str, data: dict):
         )
         # from trunkplayer_ng.wsgi import sio
 
-        sio.emit(event, data, room=room)
+        sio.emit(event, json.laods(json.dumps(data, cls=UUIDEncoder)), room=room)
         logger.debug(f"[+] BROADCASTING TO {room}")
     except Exception as error:
         if settings.SEND_TELEMETRY:
