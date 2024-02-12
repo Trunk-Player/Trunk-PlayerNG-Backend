@@ -9,7 +9,6 @@ import socketio
 from django.conf import settings
 from django.core.files.base import ContentFile
 
-from radio.signals import new_transmission
 from radio.helpers.utils import TransmissionDetails
 from radio.models import (
     ScanList,
@@ -45,7 +44,7 @@ def _new_transmission_handler(data: dict) -> dict:
         forward_transmission,
         send_transmission_to_web,
         send_transmission_notifications,
-        send_transmission_signal
+        send_transmission_mqtt
     )
 
     logger.info(f"Got new transmission - {data['name'].split('.')[0]}", extra=data["json"])
@@ -97,7 +96,7 @@ def _new_transmission_handler(data: dict) -> dict:
 
         send_transmission_to_web.delay(socket_data, payload["talkgroup"])
         send_transmission_notifications.delay(transmission.data)
-        send_transmission_signal.delay(transmission.data)
+        send_transmission_mqtt.delay(transmission.data)
         forward_transmission.delay(data, payload["talkgroup"])
         return transmission.data
 
