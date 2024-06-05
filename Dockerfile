@@ -70,7 +70,7 @@ RUN apk del build-dependencies
 #----------------------------------------------------------------------------------------------------------------------
 # Copy the main codebase
 COPY src/ ${CODE_DIR}/
-COPY --chown=root:root chaosctl /bin/chaosctl
+COPY --chown=root:root chaosctl /usr/bin/chaosctl
 RUN  chmod +rx /usr/bin/chaosctl
 
 #----------------------------------------------------------------------------------------------------------------------
@@ -97,4 +97,4 @@ USER ${APP_USER}:${APP_GROUP}
 EXPOSE 40269
 
 # Start
-CMD ["chaosctl", "help"]
+CMD ["/usr/bin/chaosctl", "help"]

@@ -39,7 +39,7 @@ services:
     build: .
     user: 1000:1000
     command: 
-      - chaosctl
+      - /usr/bin/chaosctl
       - web
       #- --init
     env_file:
@@ -62,7 +62,7 @@ services:
     deploy:
       replicas: ${WORKER_REPLICAS}
     command: 
-      - chaosctl
+      - /usr/bin/chaosctl
       - worker
     env_file:
       - .env
@@ -82,7 +82,7 @@ services:
     build: .
     user: 1000:1000
     command: 
-      - chaosctl
+      - /usr/bin/chaosctl
       - beat
     env_file:
       - .env
@@ -102,7 +102,7 @@ services:
     build: .
     user: 1000:1000
     command: 
-      - chaosctl
+      - /usr/bin/chaosctl
       - mqtt
     env_file:
       - .env
