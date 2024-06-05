@@ -30,7 +30,7 @@ services:
   trunk-player-frontend:
     restart: always
     image: trunkplayer/trunkplayer-ng-frontend:latest
-    build: ../Trunk-PlayerNG-Frontend/
+    # build: ../Trunk-PlayerNG-Frontend/
     environment:
       NEXT_PUBLIC_BASEAPIURL: "${NEXT_PUBLIC_BASEAPIURL}"
       NEXT_PUBLIC_RECOMMENDEDBASEAPIURL: "${NEXT_PUBLIC_RECOMMENDEDBASEAPIURL}"
