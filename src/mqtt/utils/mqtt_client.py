@@ -24,6 +24,89 @@ def _send_mqtt_message_signal(sender, client, userdata, msg) -> None:
         msg=msg
     )
  
+def new_tx(_transmission: dict) -> None:
+    from mqtt.models import MqttServer
+    for mqtt_server in MqttServer.objects.filter(enabled=True):
+        _send_message(mqtt_server, _transmission)
+
+def _send_message(mqtt_server, _transmission) -> None:
+    client_id = 'tpng--' + str(mqtt_server.UUID)
+
+    systems: list[System] = mqtt_server.systems
+    agencies: list[Agency] = mqtt_server.agencies
+
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
+
+    if mqtt_server.username and mqtt_server.password:
+        client.username_pw_set(
+            username=mqtt_server.username,
+            password=mqtt_server.password,
+        )
+
+    client.connect(
+        host = mqtt_server.host,
+        port = mqtt_server.port,
+        keepalive = mqtt_server.keepalive
+    )
+    # client.loop_start()
+
+
+    targets = []
+
+    if systems:
+        if _transmission["system"] in [ str(sys.UUID) for sys in systems.all()]:
+            targets += [
+                f"system/{_transmission["system"]}",
+                f"system/{_transmission["system_name"]}",
+                f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["site_id"]}",
+                f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["name"]}",
+            ]
+
+            if _transmission["talkgroup"]:
+                if "alpha_tag" in _transmission["talkgroup"]:
+                    targets += [
+                        f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
+                        f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["alpha_tag"]}",
+                    ]
+    else:
+        targets += [
+            f"system/{_transmission["system"]}",
+            f"system/{_transmission["system_name"]}",
+            f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["site_id"]}",
+            f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["name"]}",
+        ]
+
+        if "talkgroup" in _transmission:
+            if "alpha_tag" in _transmission["talkgroup"]:
+                targets += [
+                    f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
+                    f"system/{_transmission["system_name"]}/talkgroup/{_transmission["talkgroup"]["alpha_tag"]}",
+                ]
+
+    
+    if _transmission["talkgroup"]:
+        if agencies and _transmission["talkgroup"]["agency"]:
+            for agency in _transmission["talkgroup"]["agency"]:
+                agency: Agency
+                if agency in [ str(agency.UUID) for agency in agencies.all()]:
+                    targets += [
+                        f"agency/{agency.UUID}",
+                        f"agency/{agency.name}",
+                    ]
+        else:
+            for agency in _transmission["talkgroup"]["agency"]:
+                agency: Agency
+                targets += [
+                    f"agency/{agency.UUID}",
+                    f"agency/{agency.name}",
+                ]
+    
+    for topic in targets:
+        print(topic)
+        client.publish(
+            topic=topic,
+            payload=_transmission,
+        )
 
 class MqttSystemClient():
     def __init__(self, mqtt_server) -> None:
@@ -94,7 +177,7 @@ class MqttSystemClient():
                     f"system/{_transmission["system_name"]}/site/{_transmission["recorder"]["name"]}",
                 ]
 
-                if "talkgroup" in _transmission:
+                if _transmission["talkgroup"]:
                     if "alpha_tag" in _transmission["talkgroup"]:
                         targets += [
                             f"system/{_transmission["system"]}/talkgroup/{_transmission["talkgroup"]["UUID"]}",
@@ -116,7 +199,7 @@ class MqttSystemClient():
                     ]
 
         
-        if "talkgroup" in _transmission:
+        if _transmission["talkgroup"]:
             if self.agencies and _transmission["talkgroup"]["agency"]:
                 for agency in _transmission["talkgroup"]["agency"]:
                     agency: Agency
@@ -134,6 +217,7 @@ class MqttSystemClient():
                     ]
         
         for topic in targets:
+            print(topic)
             self.client.publish(
                 topic=topic,
                 payload=_transmission,
@@ -145,8 +229,8 @@ class MqttSystemClient():
 
     def _on_connect(self, client, userdata, flags, rc, *args, **kwargs) -> None:
         logger.debug(f"Connected with result code {rc}")
-        # for topic in self.topicz:
-        #     self.client.subscribe(topic)
+        for topic in self.topicz:
+            self.client.subscribe(topic)
 
     def _on_message(self, client, userdata, msg, *args, **kwargs) -> None:
         logger.debug(f"MQTT MESSAGE: {client} {userdata} {msg}")
@@ -194,7 +278,8 @@ class MqttClientManager():
 
     def launch(self) -> None:
         for client in self.mqtt_clients:
-            gevent.spawn(client.start_mqtt_client)
+            gevent.spawn( client.start_mqtt_client())
+            #gevent.spawn(client.start_mqtt_client)
 
     def dispatch(self, _transmission: dict) -> None:
         for client in self.mqtt_clients:

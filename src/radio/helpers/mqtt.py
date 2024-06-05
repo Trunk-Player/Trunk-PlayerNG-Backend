@@ -4,7 +4,8 @@ import logging
 from django.conf import settings
 from radio.helpers.utils import UUIDEncoder
 
-from radio.models import Transmission
+from radio.models import TalkGroup, Transmission
+from radio.serializers import TalkGroupSerializer
 from radio.signals import new_transmission
 
 if settings.SEND_TELEMETRY:
@@ -45,8 +46,10 @@ def _send_transmission_mqtt(_transmission: dict) -> None:
             ]
         })
 
-    if "talkgroup" in _transmission["talkgroup"]:
-        _transmission["talkgroup"]["agency"] =  _agency
+    talkgroup = TalkGroup.objects.get(UUID=_transmission["talkgroup"])
+    _talkgroup = TalkGroupSerializer(talkgroup)
+    _transmission["talkgroup"] = _talkgroup.data
+    _transmission["talkgroup"]["agency"] =  _agency
 
     _transmission = json.dumps(_transmission, cls=UUIDEncoder)
     dispatch_transmission.delay(

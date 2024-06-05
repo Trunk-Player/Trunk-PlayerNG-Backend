@@ -21,10 +21,7 @@ class Command(BaseCommand):
         self.rabbitmq_queue = settings.MQTT_AMQP_QUQUE
         self.broker_url = settings.CELERY_BROKER_URL
         
-        from mqtt.utils.mqtt_client import MqttClientManager
-        self.mqtt_system = MqttClientManager()
-        self.mqtt_system.launch()
-    
+       
         # Start the RabbitMQ consumer in a greenlet
         gevent.spawn(self.start_rabbitmq_consumer)
 
@@ -37,6 +34,8 @@ class Command(BaseCommand):
             print('Disconnected from MQTT.')
 
     def start_rabbitmq_consumer(self):
+        from mqtt.utils.mqtt_client import new_tx
+
         # Setup RabbitMQ connection and start consuming in a non-blocking manner
         connection_params = pika.URLParameters(self.broker_url)
         connection = pika.BlockingConnection(connection_params)
@@ -52,8 +51,9 @@ class Command(BaseCommand):
                 continue
 
             try:
-                message = json.loads(message)
-                self.mqtt_system.dispatch(message)
+                _transmission = json.loads(message)
+                new_tx(_transmission)
+                print(message)
             except Exception as err:
                 print(f"ERROR: {err}")
                 print(message)

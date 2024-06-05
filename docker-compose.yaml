@@ -43,7 +43,7 @@ services:
     command: 
       - chaosctl
       - web
-      - --init
+      #- --init
     env_file:
       - .env
     environment:
@@ -114,6 +114,7 @@ services:
     depends_on:
       - database
       - rabbitmq
+      - emqx
 
   database:
     image: postgres:latest
