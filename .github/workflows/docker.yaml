@@ -35,13 +35,13 @@ jobs:
         id: meta-trunkplayer-ng-api
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/trunkplayer-ng-api:latest
+          images: trunkplayer/trunkplayer-ng-api:latest
 
       - name: Extract metadata (tags, labels) for trunkplayer-ng-nginx Image
         id: meta-trunkplayer-ng-nginx
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKER_USERNAME }}/trunkplayer-ng-nginx:latest
+          images: trunkplayer/trunkplayer-ng-nginx:latest
 
       - name: Build and push trunkplayer-ng-api Docker image
         id: build-push-trunkplayer-ng-api
