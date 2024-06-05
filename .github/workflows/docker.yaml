@@ -31,32 +31,32 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for trunkplayer-ng-api Image
-        id: meta-trunkplayer-ng-api
+      - name: metadata for trunkplayer-ng-api
+        id: meta-api
         uses: docker/metadata-action@v5
         with:
           images: trunkplayer/trunkplayer-ng-api:latest
 
-      - name: Extract metadata (tags, labels) for trunkplayer-ng-nginx Image
-        id: meta-trunkplayer-ng-nginx
+      - name: metadata for trunkplayer-ng-nginx
+        id: meta-nginx
         uses: docker/metadata-action@v5
         with:
           images: trunkplayer/trunkplayer-ng-nginx:latest
 
-      - name: Build and push trunkplayer-ng-api Docker image
-        id: build-push-trunkplayer-ng-api
+      - name: Build and push trunkplayer-ng-api
+        id: build-push-api
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ steps.meta-trunkplayer-ng-api.outputs.tags }}
-          labels: ${{ steps.meta-trunkplayer-ng-api.outputs.labels }}
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ stepsmeta-api.outputs.labels }}
 
-      - name: Build and push trunkplayer-ng-nginx Docker image
-        id: build-push-trunkplayer-ng-nginx
+      - name: Build and push trunkplayer-ng-nginx
+        id: build-push-nginx
         uses: docker/build-push-action@v5
         with:
           context: nginx/
           push: true
-          tags: ${{ steps.meta-trunkplayer-ng-nginx.outputs.tags }}
-          labels: ${{ steps.meta-trunkplayer-ng-nginx.outputs.labels }}
+          tags: ${{ steps.meta-nginx.outputs.tags }}
+          labels: ${{ steps.meta-nginx.outputs.labels }}

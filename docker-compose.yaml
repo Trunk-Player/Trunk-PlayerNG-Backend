@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   nginx:
     restart: always
     image: trunkplayer/trunkplayer-ng-nginx:latest
-    build: nginx/
-    #user: 1000:1000
+    # build: nginx/
+    # user: 1000:1000
     ports:
       - 8080:80
       - 8443:443
