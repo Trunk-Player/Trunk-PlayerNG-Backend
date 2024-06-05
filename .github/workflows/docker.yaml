@@ -50,7 +50,7 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta-api.outputs.tags }}
-          labels: ${{ stepsmeta-api.outputs.labels }}
+          labels: ${{ steps.meta-api.outputs.labels }}
 
       - name: Build and push trunkplayer-ng-nginx
         id: build-push-nginx
