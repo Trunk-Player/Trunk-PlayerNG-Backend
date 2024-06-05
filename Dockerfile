@@ -70,7 +70,7 @@ RUN apk del build-dependencies
 #----------------------------------------------------------------------------------------------------------------------
 # Copy the main codebase
 COPY src/ ${CODE_DIR}/
-COPY --chown=root:root chaosctl /usr/bin/chaosctl
+COPY --chown=root:root ./chaosctl /usr/bin/chaosctl
 RUN  chmod +rx /usr/bin/chaosctl
 
 #----------------------------------------------------------------------------------------------------------------------
